@@ -1,0 +1,205 @@
+import { useState } from 'react';
+import {
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert,
+} from 'react-native';
+import { router } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { Colors } from '@/constants/colors';
+
+type RewardType = 'money' | 'gift' | 'screen_time' | 'activity';
+
+const REWARD_TYPES: { type: RewardType; label: string; emoji: string; desc: string }[] = [
+  { type: 'money', label: 'Money', emoji: '💵', desc: 'Real cash or pocket money' },
+  { type: 'gift', label: 'Gift', emoji: '🎁', desc: 'A toy, book, or surprise' },
+  { type: 'screen_time', label: 'Screen Time', emoji: '📱', desc: 'Extra gaming or TV time' },
+  { type: 'activity', label: 'Activity', emoji: '🎡', desc: 'Trip, outing, or experience' },
+];
+
+const SUGGESTED_REWARDS = [
+  { title: '£1 pocket money', emoji: '💰', type: 'money' as RewardType, cost: 50, desc: '' },
+  { title: '£5 pocket money', emoji: '💵', type: 'money' as RewardType, cost: 200, desc: '' },
+  { title: '30 min extra screen time', emoji: '📱', type: 'screen_time' as RewardType, cost: 30, desc: 'Extra gaming or TV time' },
+  { title: 'Choose dinner tonight', emoji: '🍕', type: 'activity' as RewardType, cost: 40, desc: 'Pick what the family eats!' },
+  { title: 'Movie night pick', emoji: '🎬', type: 'activity' as RewardType, cost: 60, desc: 'Choose the movie' },
+  { title: 'Trip to the park', emoji: '🌳', type: 'activity' as RewardType, cost: 80, desc: 'A fun trip out' },
+  { title: 'Small toy or book', emoji: '🧸', type: 'gift' as RewardType, cost: 100, desc: 'Up to £5 toy or book' },
+  { title: 'New video game', emoji: '🎮', type: 'gift' as RewardType, cost: 500, desc: 'A new game of their choice' },
+];
+
+export default function CreateReward() {
+  const { family, profile } = useAuth();
+  const [type, setType] = useState<RewardType>('gift');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [emoji, setEmoji] = useState('🎁');
+  const [cost, setCost] = useState('50');
+  const [saving, setSaving] = useState(false);
+
+  function pickSuggestion(s: typeof SUGGESTED_REWARDS[0]) {
+    setTitle(s.title);
+    setEmoji(s.emoji);
+    setType(s.type);
+    setCost(String(s.cost));
+    setDescription(s.desc);
+  }
+
+  async function save() {
+    if (!title.trim()) { Alert.alert('Missing title'); return; }
+    if (!family || !profile) return;
+    setSaving(true);
+    const { error } = await supabase.from('rewards').insert({
+      family_id: family.id,
+      title: title.trim(),
+      description: description.trim() || null,
+      emoji,
+      gem_cost: parseInt(cost, 10) || 50,
+      reward_type: type,
+      created_by: profile.id,
+    });
+    setSaving(false);
+    if (error) { Alert.alert('Error', error.message); return; }
+    router.back();
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={styles.back}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>New Reward</Text>
+        <TouchableOpacity
+          style={[styles.saveBtn, saving && styles.disabled]}
+          onPress={save} disabled={saving}
+        >
+          <Text style={styles.saveBtnText}>{saving ? '…' : 'Save'}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <Text style={styles.sectionLabel}>Suggestions</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.suggestions}>
+          {SUGGESTED_REWARDS.map((s) => (
+            <TouchableOpacity
+              key={s.title}
+              style={styles.suggCard}
+              onPress={() => pickSuggestion(s)}
+            >
+              <Text style={styles.suggEmoji}>{s.emoji}</Text>
+              <Text style={styles.suggTitle} numberOfLines={2}>{s.title}</Text>
+              <Text style={styles.suggCost}>{s.cost} 💎</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        <Text style={styles.sectionLabel}>Reward Type</Text>
+        <View style={styles.typeGrid}>
+          {REWARD_TYPES.map((rt) => (
+            <TouchableOpacity
+              key={rt.type}
+              style={[styles.typeCard, type === rt.type && styles.typeCardActive]}
+              onPress={() => { setType(rt.type); setEmoji(rt.emoji); }}
+            >
+              <Text style={styles.typeEmoji}>{rt.emoji}</Text>
+              <Text style={[styles.typeLabel, type === rt.type && styles.typeLabelActive]}>
+                {rt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Title *</Text>
+          <TextInput
+            style={styles.input}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="e.g. Extra screen time"
+            placeholderTextColor={Colors.textMuted}
+          />
+        </View>
+
+        <View style={styles.row}>
+          <View style={[styles.field, { flex: 1 }]}>
+            <Text style={styles.label}>Emoji</Text>
+            <TextInput
+              style={[styles.input, styles.emojiInput]}
+              value={emoji}
+              onChangeText={setEmoji}
+              maxLength={2}
+            />
+          </View>
+          <View style={[styles.field, { flex: 2 }]}>
+            <Text style={styles.label}>💎 Gem Cost</Text>
+            <TextInput
+              style={styles.input}
+              value={cost}
+              onChangeText={setCost}
+              keyboardType="number-pad"
+            />
+          </View>
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.textarea]}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Optional details…"
+            placeholderTextColor={Colors.textMuted}
+            multiline
+          />
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.parentBg },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16,
+    borderBottomWidth: 1, borderBottomColor: Colors.parentBorder,
+  },
+  back: { color: Colors.purple, fontSize: 16, fontWeight: '600' },
+  title: { fontSize: 18, fontWeight: '800', color: Colors.textDark },
+  saveBtn: { backgroundColor: Colors.purple, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 12 },
+  disabled: { opacity: 0.5 },
+  saveBtnText: { color: Colors.textLight, fontWeight: '700' },
+  scroll: { padding: 20, paddingBottom: 40 },
+  sectionLabel: { fontSize: 13, fontWeight: '700', color: Colors.textMuted, marginBottom: 10, marginTop: 16 },
+  suggestions: { marginBottom: 8 },
+  suggCard: {
+    width: 100, backgroundColor: Colors.parentCard,
+    borderRadius: 14, padding: 12, marginRight: 10, alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
+  },
+  suggEmoji: { fontSize: 28, marginBottom: 6 },
+  suggTitle: { fontSize: 11, fontWeight: '600', color: Colors.textDark, textAlign: 'center', marginBottom: 4 },
+  suggCost: { fontSize: 11, color: Colors.gemGlow, fontWeight: '700' },
+  typeGrid: { flexDirection: 'row', gap: 10, marginBottom: 8 },
+  typeCard: {
+    flex: 1, backgroundColor: Colors.parentCard,
+    borderRadius: 14, padding: 12, alignItems: 'center',
+    borderWidth: 2, borderColor: 'transparent',
+  },
+  typeCardActive: { borderColor: Colors.purple, backgroundColor: 'rgba(108,60,225,0.06)' },
+  typeEmoji: { fontSize: 24, marginBottom: 4 },
+  typeLabel: { fontSize: 11, fontWeight: '700', color: Colors.textMid },
+  typeLabelActive: { color: Colors.purple },
+  field: { marginBottom: 16 },
+  label: { fontSize: 13, fontWeight: '700', color: Colors.textMid, marginBottom: 6 },
+  input: {
+    backgroundColor: Colors.parentCard, borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 15, color: Colors.textDark,
+    borderWidth: 1, borderColor: Colors.parentBorder,
+  },
+  emojiInput: { fontSize: 24, textAlign: 'center' },
+  textarea: { height: 80, textAlignVertical: 'top' },
+  row: { flexDirection: 'row', gap: 12 },
+});

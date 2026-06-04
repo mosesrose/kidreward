@@ -1,0 +1,13 @@
+node_modules/
+.expo/
+dist/
+web-build/
+.env
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Expo
+.expo-shared/
