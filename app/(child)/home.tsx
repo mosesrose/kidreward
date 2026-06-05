@@ -179,7 +179,7 @@ export default function ChildDashboard() {
         {/* Go to store CTA */}
         <TouchableOpacity
           style={styles.storeCta}
-          onPress={() => router.push('/(child)/rewards/index')}
+          onPress={() => router.push('/(child)/store/index')}
         >
           <LinearGradient
             colors={[Colors.childAccent, '#FF9500']}
