@@ -1,18 +1,34 @@
 import 'react-native-url-polyfill/auto';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
+import { mockSupabase } from './mock-supabase';
+
+const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK === 'true';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Use localStorage on web, AsyncStorage on native
+const storage =
+  Platform.OS === 'web'
+    ? {
+        getItem: (key: string) => Promise.resolve(localStorage.getItem(key)),
+        setItem: (key: string, value: string) => Promise.resolve(localStorage.setItem(key, value)),
+        removeItem: (key: string) => Promise.resolve(localStorage.removeItem(key)),
+      }
+    : require('@react-native-async-storage/async-storage').default;
+
+// In mock mode the real client is never created (env vars may be absent).
+const _realSupabase = USE_MOCK ? null! : createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: AsyncStorage,
+    storage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    detectSessionInUrl: Platform.OS === 'web',
   },
 });
+
+export const supabase = USE_MOCK ? mockSupabase : _realSupabase;
 
 export type Profile = {
   id: string;
@@ -43,6 +59,7 @@ export type Invite = {
   id: string;
   family_id: string;
   code: string;
+  invite_type: 'child' | 'parent';
   created_by: string;
   used_by: string | null;
   expires_at: string;

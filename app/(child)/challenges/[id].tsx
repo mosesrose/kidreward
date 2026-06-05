@@ -44,6 +44,8 @@ export default function ChildChallengeDetail() {
       challenge_id: id,
       child_id: profile.id,
       note: note.trim() || null,
+      status: 'pending',
+      submitted_at: new Date().toISOString(),
     });
     setSubmitting(false);
     if (error) { Alert.alert('Error', error.message); return; }

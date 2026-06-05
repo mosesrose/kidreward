@@ -79,6 +79,8 @@ export default function ChildRewards() {
               child_id: profile!.id,
               family_id: family!.id,
               gems_spent: reward.gem_cost,
+              status: 'pending',
+              requested_at: new Date().toISOString(),
             });
             await Promise.all([load(), refreshFamily()]);
             Alert.alert('🎉 Redeemed!', 'Your parent will see your request and confirm it soon!');

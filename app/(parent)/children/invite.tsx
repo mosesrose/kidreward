@@ -15,11 +15,14 @@ function generateCode(): string {
   return code;
 }
 
-export default function InviteChild() {
+type TabType = 'child' | 'parent';
+
+export default function InviteScreen() {
   const { family, profile } = useAuth();
-  const [invite, setInvite] = useState<Invite | null>(null);
+  const [tab, setTab] = useState<TabType>('child');
+  const [childInvite, setChildInvite] = useState<Invite | null>(null);
+  const [parentInvite, setParentInvite] = useState<Invite | null>(null);
   const [loading, setLoading] = useState(false);
-  const [existingInvites, setExistingInvites] = useState<Invite[]>([]);
 
   useEffect(() => { loadInvites(); }, [family]);
 
@@ -31,13 +34,13 @@ export default function InviteChild() {
       .eq('family_id', family.id)
       .is('used_at', null)
       .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(3);
-    setExistingInvites(data ?? []);
-    if (data && data.length > 0) setInvite(data[0]);
+      .order('created_at', { ascending: false });
+    const all = data ?? [];
+    setChildInvite(all.find(i => i.invite_type === 'child') ?? null);
+    setParentInvite(all.find(i => i.invite_type === 'parent') ?? null);
   }
 
-  async function createInvite() {
+  async function createInvite(type: TabType) {
     if (!family || !profile) return;
     setLoading(true);
     const code = generateCode();
@@ -46,6 +49,7 @@ export default function InviteChild() {
       .insert({
         family_id: family.id,
         code,
+        invite_type: type,
         created_by: profile.id,
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       })
@@ -53,18 +57,33 @@ export default function InviteChild() {
       .single();
     setLoading(false);
     if (error) { Alert.alert('Error', error.message); return; }
-    setInvite(data);
-    loadInvites();
+    if (type === 'child') setChildInvite(data);
+    else setParentInvite(data);
   }
 
-  async function shareCode(code: string) {
-    try {
-      await Share.share({
-        message: `Join my family on KidReward! 🏆\n\nUse invite code: ${code}\n\nOpen KidReward and enter this code to join.`,
-        title: 'Join KidReward',
-      });
-    } catch (_) {}
+  async function shareCode(code: string, type: TabType) {
+    const msg = type === 'child'
+      ? `Join my family on KidReward! 🏆\n\nUse invite code: ${code}\n\nSign up as a child and enter this code.`
+      : `You're invited to co-manage our family on KidReward! 👨‍👩‍👧\n\nUse invite code: ${code}\n\nSign up as a parent and enter this code.`;
+    try { await Share.share({ message: msg, title: 'Join KidReward' }); } catch (_) {}
   }
+
+  const invite = tab === 'child' ? childInvite : parentInvite;
+  const isChild = tab === 'child';
+
+  const steps = isChild
+    ? [
+        'Tap "Create Invite Code" below',
+        'Share the 6-character code with your child',
+        'Your child signs up and enters the code',
+        'They appear in your Kids list!',
+      ]
+    : [
+        'Tap "Create Invite Code" below',
+        'Share the code with the other parent',
+        'They sign up as a parent and enter the code',
+        'They can manage challenges and rewards too',
+      ];
 
   return (
     <View style={styles.container}>
@@ -72,70 +91,71 @@ export default function InviteChild() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>← Back</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Invite a Child</Text>
+        <Text style={styles.title}>Invite</Text>
         <View style={{ width: 60 }} />
+      </View>
+
+      {/* Tab selector */}
+      <View style={styles.tabs}>
+        <TouchableOpacity
+          style={[styles.tab, tab === 'child' && styles.tabActive]}
+          onPress={() => setTab('child')}
+        >
+          <Text style={[styles.tabText, tab === 'child' && styles.tabTextActive]}>👶 Child</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, tab === 'parent' && styles.tabActive]}
+          onPress={() => setTab('parent')}
+        >
+          <Text style={[styles.tabText, tab === 'parent' && styles.tabTextActive]}>👨‍👩‍👧 Co-Parent</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.description}>
-          Share an invite code with your child. They enter it in the app to join your family.
+          {isChild
+            ? 'Share an invite code with your child. They enter it in the app to join your family.'
+            : 'Invite another parent to co-manage your family. They can approve challenges and manage rewards.'}
         </Text>
 
         {invite ? (
-          <View style={styles.codeCard}>
-            <Text style={styles.codeLabel}>Invite Code</Text>
-            <Text style={styles.code}>{invite.code}</Text>
+          <View style={[styles.codeCard, !isChild && styles.codeCardParent]}>
+            <Text style={styles.codeLabel}>
+              {isChild ? 'Child Invite Code' : 'Parent Invite Code'}
+            </Text>
+            <Text style={[styles.code, !isChild && styles.codeParent]}>{invite.code}</Text>
             <Text style={styles.expiry}>
               Expires {new Date(invite.expires_at).toLocaleDateString()}
             </Text>
-
-            <TouchableOpacity
-              style={styles.shareBtn}
-              onPress={() => shareCode(invite.code)}
-            >
+            <TouchableOpacity style={[styles.shareBtn, !isChild && styles.shareBtnParent]} onPress={() => shareCode(invite.code, tab)}>
               <Text style={styles.shareBtnText}>📤 Share Code</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.newCodeBtn}
-              onPress={createInvite}
-              disabled={loading}
-            >
-              <Text style={styles.newCodeText}>
-                {loading ? 'Creating…' : '+ Create New Code'}
-              </Text>
+            <TouchableOpacity style={styles.newCodeBtn} onPress={() => createInvite(tab)} disabled={loading}>
+              <Text style={styles.newCodeText}>{loading ? 'Creating…' : '+ New Code'}</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.noCode}>
-            <Text style={styles.noCodeEmoji}>📬</Text>
+            <Text style={styles.noCodeEmoji}>{isChild ? '📬' : '👨‍👩‍👧'}</Text>
             <Text style={styles.noCodeTitle}>No active invite yet</Text>
             <TouchableOpacity
-              style={[styles.createBtn, loading && styles.disabled]}
-              onPress={createInvite}
+              style={[styles.createBtn, !isChild && styles.createBtnParent, loading && styles.disabled]}
+              onPress={() => createInvite(tab)}
               disabled={loading}
             >
-              <Text style={styles.createBtnText}>
-                {loading ? 'Creating…' : 'Create Invite Code'}
-              </Text>
+              <Text style={styles.createBtnText}>{loading ? 'Creating…' : 'Create Invite Code'}</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {/* How it works */}
         <View style={styles.howTo}>
           <Text style={styles.howToTitle}>How it works</Text>
-          {[
-            { step: '1', text: 'Tap "Create Invite Code" above' },
-            { step: '2', text: 'Share the 6-character code with your child' },
-            { step: '3', text: 'Your child signs up and enters the code' },
-            { step: '4', text: 'They appear in your Kids list!' },
-          ].map((item) => (
-            <View key={item.step} style={styles.step}>
-              <View style={styles.stepNum}>
-                <Text style={styles.stepNumText}>{item.step}</Text>
+          {steps.map((text, i) => (
+            <View key={i} style={styles.step}>
+              <View style={[styles.stepNum, !isChild && styles.stepNumParent]}>
+                <Text style={styles.stepNumText}>{i + 1}</Text>
               </View>
-              <Text style={styles.stepText}>{item.text}</Text>
+              <Text style={styles.stepText}>{text}</Text>
             </View>
           ))}
         </View>
@@ -153,49 +173,49 @@ const styles = StyleSheet.create({
   },
   back: { color: Colors.purple, fontSize: 16, fontWeight: '600', width: 60 },
   title: { fontSize: 18, fontWeight: '800', color: Colors.textDark },
+  tabs: {
+    flexDirection: 'row', margin: 20, marginBottom: 0,
+    backgroundColor: Colors.parentCard, borderRadius: 14, padding: 4,
+  },
+  tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
+  tabActive: { backgroundColor: Colors.purple },
+  tabText: { fontSize: 14, fontWeight: '700', color: Colors.textMuted },
+  tabTextActive: { color: Colors.textLight },
   scroll: { padding: 24, paddingBottom: 40 },
   description: { fontSize: 15, color: Colors.textMid, lineHeight: 22, marginBottom: 28 },
   codeCard: {
-    backgroundColor: Colors.parentCard, borderRadius: 24,
-    padding: 28, alignItems: 'center', marginBottom: 28,
+    backgroundColor: Colors.parentCard, borderRadius: 24, padding: 28, alignItems: 'center', marginBottom: 28,
     borderWidth: 2, borderColor: Colors.purple,
-    shadowColor: Colors.purple, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15, shadowRadius: 12, elevation: 4,
+    shadowColor: Colors.purple, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 4,
   },
+  codeCardParent: { borderColor: '#FF9500' },
   codeLabel: { fontSize: 13, fontWeight: '700', color: Colors.textMuted, letterSpacing: 2, marginBottom: 12 },
-  code: {
-    fontSize: 48, fontWeight: '900', color: Colors.purple,
-    letterSpacing: 8, marginBottom: 8,
-  },
+  code: { fontSize: 48, fontWeight: '900', color: Colors.purple, letterSpacing: 8, marginBottom: 8 },
+  codeParent: { color: '#FF9500' },
   expiry: { fontSize: 13, color: Colors.textMuted, marginBottom: 24 },
   shareBtn: {
-    backgroundColor: Colors.purple, paddingHorizontal: 32,
-    paddingVertical: 14, borderRadius: 14, width: '100%', alignItems: 'center', marginBottom: 10,
+    backgroundColor: Colors.purple, paddingHorizontal: 32, paddingVertical: 14,
+    borderRadius: 14, width: '100%', alignItems: 'center', marginBottom: 10,
   },
+  shareBtnParent: { backgroundColor: '#FF9500' },
   shareBtnText: { color: Colors.textLight, fontWeight: '700', fontSize: 16 },
   newCodeBtn: { paddingVertical: 12 },
   newCodeText: { color: Colors.textMuted, fontSize: 14 },
   noCode: { alignItems: 'center', paddingVertical: 40 },
   noCodeEmoji: { fontSize: 52, marginBottom: 16 },
   noCodeTitle: { fontSize: 18, fontWeight: '700', color: Colors.textDark, marginBottom: 24 },
-  createBtn: {
-    backgroundColor: Colors.purple, paddingHorizontal: 32,
-    paddingVertical: 16, borderRadius: 14,
-  },
+  createBtn: { backgroundColor: Colors.purple, paddingHorizontal: 32, paddingVertical: 16, borderRadius: 14 },
+  createBtnParent: { backgroundColor: '#FF9500' },
   disabled: { opacity: 0.5 },
   createBtnText: { color: Colors.textLight, fontWeight: '700', fontSize: 16 },
-  howTo: {
-    backgroundColor: Colors.parentCard, borderRadius: 20,
-    padding: 20, gap: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
-  },
+  howTo: { backgroundColor: Colors.parentCard, borderRadius: 20, padding: 20, gap: 16 },
   howToTitle: { fontSize: 16, fontWeight: '800', color: Colors.textDark, marginBottom: 4 },
   step: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   stepNum: {
     width: 28, height: 28, borderRadius: 14,
     backgroundColor: Colors.purple, alignItems: 'center', justifyContent: 'center',
   },
+  stepNumParent: { backgroundColor: '#FF9500' },
   stepNumText: { color: Colors.textLight, fontWeight: '700', fontSize: 13 },
   stepText: { fontSize: 14, color: Colors.textMid, flex: 1 },
 });

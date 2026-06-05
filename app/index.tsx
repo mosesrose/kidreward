@@ -1,37 +1,24 @@
-import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { router } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors } from '@/constants/colors';
 
 export default function Index() {
   const { session, profile, loading } = useAuth();
 
-  useEffect(() => {
-    if (loading) return;
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={Colors.gem} />
+      </View>
+    );
+  }
 
-    if (!session) {
-      router.replace('/(auth)/welcome');
-      return;
-    }
+  if (!session) return <Redirect href="/(auth)/welcome" />;
+  if (!profile) return <Redirect href="/(auth)/complete-profile" />;
 
-    if (!profile) {
-      router.replace('/(auth)/complete-profile');
-      return;
-    }
-
-    if (profile.role === 'parent') {
-      router.replace('/(parent)/dashboard');
-    } else {
-      router.replace('/(child)/dashboard');
-    }
-  }, [session, profile, loading]);
-
-  return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color={Colors.gem} />
-    </View>
-  );
+  if (profile.role === 'parent') return <Redirect href="/(parent)/dashboard" />;
+  return <Redirect href="/(child)/home" />;
 }
 
 const styles = StyleSheet.create({
