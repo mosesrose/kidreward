@@ -80,6 +80,7 @@ create table public.invites (
   created_by  uuid not null references public.profiles(id),
   used_by     uuid references public.profiles(id),
   expires_at  timestamptz not null default (now() + interval '7 days'),
+  invite_type text not null default 'child' check (invite_type in ('child', 'parent')),
   used_at     timestamptz,
   created_at  timestamptz default now()
 );
