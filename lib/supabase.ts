@@ -8,13 +8,22 @@ const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK === 'true';
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Use localStorage on web, AsyncStorage on native
-const storage =
-  Platform.OS === 'web'
+// SSR-safe localStorage check (undefined during expo export / Node.js SSR)
+const hasLocalStorage = Platform.OS === 'web' && typeof localStorage !== 'undefined';
+
+const storage = hasLocalStorage
+  ? {
+      // Browser: use localStorage
+      getItem: (key: string) => Promise.resolve(localStorage.getItem(key)),
+      setItem: (key: string, value: string) => Promise.resolve(localStorage.setItem(key, value)),
+      removeItem: (key: string) => Promise.resolve(localStorage.removeItem(key)),
+    }
+  : Platform.OS === 'web'
     ? {
-        getItem: (key: string) => Promise.resolve(localStorage.getItem(key)),
-        setItem: (key: string, value: string) => Promise.resolve(localStorage.setItem(key, value)),
-        removeItem: (key: string) => Promise.resolve(localStorage.removeItem(key)),
+        // SSR / build time: no-op storage (session not needed during build)
+        getItem: (_key: string) => Promise.resolve(null),
+        setItem: (_key: string, _value: string) => Promise.resolve(),
+        removeItem: (_key: string) => Promise.resolve(),
       }
     : require('@react-native-async-storage/async-storage').default;
 

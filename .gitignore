@@ -19,3 +19,14 @@ expo-env.d.ts
 # @end expo-cli
 # Local secrets — never commit
 .secrets
+
+node_modules/
+test-results/
+playwright-report/
+dist/
+.expo/
+web-build*.log
+deploy-url.txt
+
+.claude/
+*.log

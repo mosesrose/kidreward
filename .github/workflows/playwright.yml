@@ -1,0 +1,75 @@
+name: Playwright UI Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  # Run on every release tag too
+  push:
+    tags: ['v*.*.*']
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'URL to test against'
+        default: 'https://kidreward-one.vercel.app'
+        required: false
+
+jobs:
+  playwright:
+    name: Run Playwright Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run Playwright tests
+        run: npx playwright test
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ inputs.base_url || 'https://kidreward-one.vercel.app' }}
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload screenshots on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-screenshots
+          path: test-results/
+          retention-days: 7
+
+      - name: Update Notion with UI test results
+        if: always()
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_ROOT_PAGE_ID: ${{ secrets.NOTION_ROOT_PAGE_ID }}
+        run: |
+          RESULT="${{ job.status }}"
+          VERSION="${{ github.ref_name }}"
+          python3 scripts/notion_release_update.py \
+            --version "$VERSION (UI)" \
+            --ts "success" \
+            --unit "$RESULT" \
+            --schema "success" \
+            --overall "$([ '$RESULT' = 'success' ] && echo 'passed' || echo 'failed')"
