@@ -27,6 +27,15 @@ create policy "Users can update own profile"
 create policy "Users can insert own profile"
   on public.profiles for insert with check (auth.uid() = id);
 
+create policy "Parent can read child profiles"
+  on public.profiles for select using (
+    exists (
+      select 1 from public.family_members fm
+      join public.families f on f.id = fm.family_id
+      where fm.child_id = profiles.id and f.parent_id = auth.uid()
+    )
+  );
+
 -- ── Families ────────────────────────────────────────────────
 create table public.families (
   id          uuid primary key default gen_random_uuid(),
@@ -61,16 +70,23 @@ create table public.family_members (
 
 alter table public.family_members enable row level security;
 
+-- SECURITY DEFINER helper: looks up a parent's family_id without triggering RLS
+-- (needed to break circular dependency: families policy → family_members → families)
+create or replace function public.parent_family_id(p_parent_id uuid)
+returns uuid language sql security definer set search_path = public as $$
+  select id from families where parent_id = p_parent_id limit 1;
+$$;
+
 create policy "Parent can manage family members"
   on public.family_members for all using (
-    exists (
-      select 1 from public.families
-      where id = family_members.family_id and parent_id = auth.uid()
-    )
+    family_id = public.parent_family_id(auth.uid())
   );
 
 create policy "Child can read own membership"
   on public.family_members for select using (auth.uid() = child_id);
+
+create policy "Child can insert own membership"
+  on public.family_members for insert with check (auth.uid() = child_id);
 
 -- ── Invites ──────────────────────────────────────────────────
 create table public.invites (

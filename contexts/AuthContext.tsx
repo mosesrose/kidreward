@@ -58,11 +58,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function loadUserData(userId: string) {
     setLoading(true);
     try {
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      // Retry up to 5× with 1s delay — handles race where onAuthStateChange fires
+      // before signup.tsx has finished inserting the profile row
+      let prof = null;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        if (data) { prof = data; break; }
+        if (attempt < 4) await new Promise(r => setTimeout(r, 1000));
+      }
 
       setProfile(prof);
 

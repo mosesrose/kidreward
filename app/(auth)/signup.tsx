@@ -57,7 +57,12 @@ export default function Signup() {
     }
 
     setLoading(false);
-    // Auth state change will redirect automatically
+    // Explicit navigation — index.tsx only runs at "/" so we must navigate here
+    if (role === 'parent') {
+      router.replace('/(parent)/dashboard');
+    } else {
+      router.replace('/(child)/home');
+    }
   }
 
   return (
