@@ -3,12 +3,9 @@ name: Playwright UI Tests
 on:
   push:
     branches: [master]
+    tags: ['v*.*.*']
   pull_request:
     branches: [master]
-  # Run on every release tag too
-  push:
-    tags: ['v*.*.*']
-  # Manual trigger
   workflow_dispatch:
     inputs:
       base_url:

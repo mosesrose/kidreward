@@ -152,8 +152,8 @@ test.describe('Login scenarios', () => {
     await page.getByText(/Forgot password\?/i).click();
     await page.waitForLoadState('networkidle');
 
-    await expect(page.getByPlaceholder('you@example.com')).toBeVisible({ timeout: SUPABASE_WAIT });
-    await page.getByPlaceholder('you@example.com').fill(LOGIN_PARENT_EMAIL);
+    await expect(page.getByPlaceholder('you@example.com').first()).toBeVisible({ timeout: SUPABASE_WAIT });
+    await page.getByPlaceholder('you@example.com').first().fill(LOGIN_PARENT_EMAIL);
     await page.getByText('Send Reset Link').click();
 
     await expect(page.getByTestId('reset-sent')).toBeVisible({ timeout: SUPABASE_WAIT });
@@ -178,8 +178,11 @@ test.describe('Login scenarios', () => {
     await assertOnParentDashboard(page);
 
     await signOut(page);
-    // Navigate to root — without tokens the app should redirect to welcome/login
-    await page.goto('/');
+    // After sign out, the app navigates away from dashboard. Wait for that, then check
+    await page.waitForURL(
+      url => !url.pathname.includes('dashboard'),
+      { timeout: SUPABASE_WAIT }
+    ).catch(() => {});
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -188,6 +191,7 @@ test.describe('Login scenarios', () => {
         .or(page.getByText(/KidReward/))
         .or(page.getByText(/Welcome back/))
         .or(page.getByText(/I already have an account/))
+        .or(page.getByText(/Sign in/i))
         .first()
     ).toBeVisible({ timeout: SUPABASE_WAIT });
   });

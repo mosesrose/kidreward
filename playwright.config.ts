@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://kidreward-one.vercel.app';
+const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://reward-hazel.vercel.app';
 
 export default defineConfig({
   testDir: './tests/e2e',

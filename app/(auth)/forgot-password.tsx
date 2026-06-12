@@ -22,7 +22,7 @@ export default function ForgotPassword() {
     }
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.EXPO_PUBLIC_SITE_URL ?? 'https://kidreward-one.vercel.app'}/reset-password`,
+      redirectTo: `${process.env.EXPO_PUBLIC_SITE_URL ?? 'https://reward-hazel.vercel.app'}/reset-password`,
     });
     setLoading(false);
     if (error) {
