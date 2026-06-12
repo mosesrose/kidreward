@@ -34,6 +34,13 @@ export default defineConfig({
       },
     },
     {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // no channel — uses Playwright's own Chromium download
+      },
+    },
+    {
       name: 'mobile-chrome',
       use: {
         ...devices['Pixel 5'],

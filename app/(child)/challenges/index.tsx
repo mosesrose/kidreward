@@ -34,7 +34,7 @@ export default function ChildChallenges() {
     ]);
 
     setChallenges(ch ?? []);
-    const ids = new Set(comps?.map((c) => c.challenge_id) ?? []);
+    const ids = new Set<string>(comps?.map((c: { challenge_id: string }) => c.challenge_id) ?? []);
     setCompletedIds(ids);
   }, [family, profile]);
 

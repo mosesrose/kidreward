@@ -32,15 +32,15 @@ export default function ChallengesScreen() {
       .from('completions')
       .select('challenge_id')
       .eq('status', 'pending')
-      .in('challenge_id', ch.map((c) => c.id));
+      .in('challenge_id', ch.map((c: Challenge) => c.id));
 
     const map: Record<string, number> = {};
-    completions?.forEach((c) => {
+    completions?.forEach((c: { challenge_id: string }) => {
       map[c.challenge_id] = (map[c.challenge_id] ?? 0) + 1;
     });
 
     setPendingMap(map);
-    setChallenges(ch.map((c) => ({ ...c, pending_count: map[c.id] ?? 0 })));
+    setChallenges(ch.map((c: Challenge) => ({ ...c, pending_count: map[c.id] ?? 0 })));
   }, [family]);
 
   useEffect(() => { load(); }, [load]);

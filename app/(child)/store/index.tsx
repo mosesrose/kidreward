@@ -40,7 +40,7 @@ export default function ChildRewards() {
         .eq('status', 'pending'),
     ]);
     setRewards(rw ?? []);
-    setMyRedemptions(new Set(redemptions?.map((r) => r.reward_id) ?? []));
+    setMyRedemptions(new Set<string>(redemptions?.map((r: { reward_id: string }) => r.reward_id) ?? []));
   }, [family, profile]);
 
   useEffect(() => { load(); }, [load]);

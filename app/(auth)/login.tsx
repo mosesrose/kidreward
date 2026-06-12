@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  KeyboardAvoidingView, Platform, ScrollView, Alert,
+  KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -12,16 +12,18 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   async function handleLogin() {
+    setErrorMsg('');
     if (!email || !password) {
-      Alert.alert('Missing fields', 'Please enter your email and password.');
+      setErrorMsg('Please enter your email and password.');
       return;
     }
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) Alert.alert('Login failed', error.message);
+    if (error) setErrorMsg(error.message);
   }
 
   return (
@@ -39,6 +41,12 @@ export default function Login() {
           <Text style={styles.subtitle}>Sign in to your account</Text>
 
           <View style={styles.form}>
+            {errorMsg ? (
+              <View style={styles.errorBox} testID="login-error">
+                <Text style={styles.errorText}>{errorMsg}</Text>
+              </View>
+            ) : null}
+
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
               <TextInput
@@ -54,7 +62,12 @@ export default function Login() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
+              <View style={styles.passwordHeader}>
+                <Text style={styles.label}>Password</Text>
+                <TouchableOpacity onPress={() => router.push('/forgot-password' as any)}>
+                  <Text style={styles.forgotLink}>Forgot password?</Text>
+                </TouchableOpacity>
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="Your password"
@@ -103,8 +116,19 @@ const styles = StyleSheet.create({
   title: { fontSize: 32, fontWeight: '800', color: Colors.textLight, marginBottom: 8 },
   subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.6)', marginBottom: 40 },
   form: { gap: 20, marginBottom: 32 },
+  errorBox: {
+    backgroundColor: 'rgba(255,61,0,0.15)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.danger,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  errorText: { color: '#FF8A65', fontSize: 14 },
   inputGroup: { gap: 8 },
+  passwordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   label: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '600' },
+  forgotLink: { color: Colors.gem, fontSize: 13, fontWeight: '600' },
   input: {
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14,

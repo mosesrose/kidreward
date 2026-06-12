@@ -37,7 +37,7 @@ const _realSupabase = USE_MOCK ? null! : createClient(supabaseUrl, supabaseAnonK
   },
 });
 
-export const supabase = USE_MOCK ? mockSupabase : _realSupabase;
+export const supabase = (USE_MOCK ? mockSupabase : _realSupabase) as typeof _realSupabase;
 
 export type Profile = {
   id: string;

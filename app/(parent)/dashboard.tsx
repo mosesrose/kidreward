@@ -32,7 +32,7 @@ export default function ParentDashboard() {
           (await supabase
             .from('challenges')
             .select('id')
-            .eq('family_id', family.id)).data?.map((c) => c.id) ?? []
+            .eq('family_id', family.id)).data?.map((c: { id: string }) => c.id) ?? []
         )
         .order('submitted_at', { ascending: false })
         .limit(5),

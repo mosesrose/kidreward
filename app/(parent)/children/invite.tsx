@@ -36,8 +36,8 @@ export default function InviteScreen() {
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false });
     const all = data ?? [];
-    setChildInvite(all.find(i => i.invite_type === 'child') ?? null);
-    setParentInvite(all.find(i => i.invite_type === 'parent') ?? null);
+    setChildInvite(all.find((i: { invite_type: string }) => i.invite_type === 'child') ?? null);
+    setParentInvite(all.find((i: { invite_type: string }) => i.invite_type === 'parent') ?? null);
   }
 
   async function createInvite(type: TabType) {

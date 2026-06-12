@@ -79,7 +79,7 @@ test.describe('Family Pairing', () => {
     await input.fill(inviteCode);
     // Invoke onPress directly via React fiber (bypasses PressResponder event wrapper)
     await page.evaluate(() => {
-      const allEls = document.querySelectorAll('*');
+      const allEls = Array.from(document.querySelectorAll('*'));
       for (const el of allEls) {
         if (!el.textContent?.includes("Let's Go!")) continue;
         const keys = Object.keys(el);
