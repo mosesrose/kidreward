@@ -191,7 +191,7 @@ test.describe('Login scenarios', () => {
         .or(page.getByText(/Sign in/i))
         .first()
     ).toBeVisible({ timeout: SUPABASE_WAIT });
-  }, { timeout: 90_000 });
+  });
 
   test('Session persists — returning to app root re-authenticates', async ({ page }) => {
     // Fresh signup places the auth token in real localStorage
@@ -225,6 +225,62 @@ test.describe('Login scenarios', () => {
 
     const stillOnSignup = page.url().includes('signup');
     expect(alertMsg.length > 0 || stillOnSignup).toBeTruthy();
+  });
+
+  // ── Reset-password landing page ────────────────────────────────────────────
+
+  test('Reset password page exists and shows form when session is active', async ({ page }) => {
+    // Sign in as a real user so there is a valid session, then visit /reset-password
+    // This simulates arriving via the email link (which also sets a session).
+    const rpEmail = `reset.pw.${Date.now()}@kidreward-test.com`;
+    await signUp(page, 'Parent', `ResetPwUser${Date.now()}`, rpEmail);
+    await page.goto('/reset-password');
+    await page.waitForLoadState('networkidle');
+
+    // Should see the new-password form, NOT the "link invalid" state
+    await expect(page.getByText('Set new password')).toBeVisible({ timeout: SUPABASE_WAIT });
+    await expect(page.getByPlaceholder('Min 6 characters')).toBeVisible({ timeout: SUPABASE_WAIT });
+    await expect(page.getByPlaceholder('Repeat your password')).toBeVisible({ timeout: SUPABASE_WAIT });
+    await expect(page.getByText('Update Password')).toBeVisible({ timeout: SUPABASE_WAIT });
+  });
+
+  test('Reset password — mismatched passwords shows inline error', async ({ page }) => {
+    const rpEmail = `reset.mismatch.${Date.now()}@kidreward-test.com`;
+    await signUp(page, 'Parent', `ResetMismatch${Date.now()}`, rpEmail);
+    await page.goto('/reset-password');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByPlaceholder('Min 6 characters').fill('NewPass123!');
+    await page.getByPlaceholder('Repeat your password').fill('DifferentPass!');
+    await page.getByText('Update Password').click();
+
+    await expect(page.getByTestId('reset-pw-error')).toBeVisible({ timeout: SUPABASE_WAIT });
+    await expect(page.getByTestId('reset-pw-error')).toContainText(/do not match/i);
+  });
+
+  test('Reset password — short password shows inline error', async ({ page }) => {
+    const rpEmail = `reset.short.${Date.now()}@kidreward-test.com`;
+    await signUp(page, 'Parent', `ResetShort${Date.now()}`, rpEmail);
+    await page.goto('/reset-password');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByPlaceholder('Min 6 characters').fill('abc');
+    await page.getByPlaceholder('Repeat your password').fill('abc');
+    await page.getByText('Update Password').click();
+
+    await expect(page.getByTestId('reset-pw-error')).toBeVisible({ timeout: SUPABASE_WAIT });
+    await expect(page.getByTestId('reset-pw-error')).toContainText(/at least 6/i);
+  });
+
+  test('Reset password — no session shows expired link message', async ({ page }) => {
+    // Navigate directly without any auth session
+    await page.evaluate(() => { try { localStorage.clear(); } catch (_) {} });
+    await page.goto('/reset-password');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    await expect(page.getByTestId('reset-invalid')).toBeVisible({ timeout: SUPABASE_WAIT });
+    await expect(page.getByText('Request a new link')).toBeVisible({ timeout: SUPABASE_WAIT });
   });
 
 });
