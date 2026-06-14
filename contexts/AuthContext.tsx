@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
+import { router } from 'expo-router';
 import { supabase, Profile, Family, FamilyMember } from '@/lib/supabase';
 
 type AuthContextType = {
@@ -120,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     await supabase.auth.signOut();
+    router.replace('/(auth)/welcome');
   }
 
   return (

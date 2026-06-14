@@ -7,29 +7,19 @@
  */
 import { test, expect } from '@playwright/test';
 import {
-  signUp, restoreSession, clickTab, assertOnParentDashboard, assertOnChildDashboard,
+  restoreSession, clickTab, assertOnParentDashboard, assertOnChildDashboard,
+  setupFamilyPair,
 } from './helpers';
 
-// Spec-specific emails
 const STS = Date.now();
-const SPEC_PARENT_EMAIL = `test.parent.05.${STS}@kidreward-test.com`;
-const SPEC_CHILD_EMAIL  = `test.child.05.${STS}@kidreward-test.com`;
-const SPEC_PARENT_NAME  = `TestParent05_${STS}`;
-const SPEC_CHILD_NAME   = `TestChild05_${STS}`;
 
 let parentState: any;
 let childState: any;
 
 test.beforeAll(async ({ browser }) => {
-  const p = await browser.newPage();
-  await signUp(p, 'Parent', SPEC_PARENT_NAME, SPEC_PARENT_EMAIL);
-  parentState = await p.context().storageState();
-  await p.close();
-
-  const c = await browser.newPage();
-  await signUp(c, 'Child', SPEC_CHILD_NAME, SPEC_CHILD_EMAIL);
-  childState = await c.context().storageState();
-  await c.close();
+  const pair = await setupFamilyPair(browser);
+  parentState = pair.parentState;
+  childState = pair.childState;
 });
 
 test.describe('Gem Economy', () => {
@@ -39,15 +29,15 @@ test.describe('Gem Economy', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
-    if (onJoin) return false;
-    await clickTab(page, 'Home');
-    await page.waitForLoadState('networkidle');
-    return true;
+    return !onJoin;
   }
 
   test('US-019 | Child gem balance shown prominently on dashboard', async ({ page }) => {
     const ok = await goToChildHome(page);
-    if (!ok) return;
+    test.skip(!ok, 'Child not in family — pairing setup failed');
+
+    await clickTab(page, 'Home');
+    await page.waitForLoadState('networkidle');
 
     await expect(
       page.getByText('gems available', { exact: false }).or(page.getByText('💎').first()).first()
@@ -56,7 +46,10 @@ test.describe('Gem Economy', () => {
 
   test('US-019 | Gem balance is a non-negative integer', async ({ page }) => {
     const ok = await goToChildHome(page);
-    if (!ok) return;
+    test.skip(!ok, 'Child not in family — pairing setup failed');
+
+    await clickTab(page, 'Home');
+    await page.waitForLoadState('networkidle');
 
     const balanceText = await page.locator('text=/\\d+ gems available/i').first().textContent().catch(() => '0 gems available');
     const balance = parseInt(balanceText?.match(/\d+/)?.[0] ?? '0', 10);
@@ -65,8 +58,10 @@ test.describe('Gem Economy', () => {
 
   test('US-020 | Activity history visible on child dashboard', async ({ page }) => {
     const ok = await goToChildHome(page);
-    if (!ok) return;
+    test.skip(!ok, 'Child not in family — pairing setup failed');
 
+    await clickTab(page, 'Home');
+    await page.waitForLoadState('networkidle');
     await assertOnChildDashboard(page);
   });
 
@@ -99,7 +94,7 @@ test.describe('Gem Economy', () => {
     await page.waitForTimeout(1000);
 
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
-    if (onJoin) return;
+    test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
     await clickTab(page, 'Rewards');
     await page.waitForLoadState('networkidle');

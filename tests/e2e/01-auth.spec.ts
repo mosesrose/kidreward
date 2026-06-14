@@ -172,25 +172,29 @@ test.describe('Login scenarios', () => {
   });
 
   test('Sign out returns to unauthenticated screen', async ({ page }) => {
-    // Use a fresh signup so auth lives in real localStorage (no restoreSession init-script side-effects)
+    // Fresh signup so auth lives in real localStorage
     const soEmail = `signout.${Date.now()}@kidreward-test.com`;
     await signUp(page, 'Parent', `SignOutParent${Date.now()}`, soEmail);
     await assertOnParentDashboard(page);
 
     await signOut(page);
-    // After sign out, clear storage and reload — the app has no session and must show welcome
-    await page.evaluate(() => { try { localStorage.clear(); } catch (_) {} });
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
+    // AuthContext.signOut now navigates to /(auth)/welcome automatically
     await expect(
       page.getByText(/Get Started/)
-        .or(page.getByText(/KidReward/))
-        .or(page.getByText(/Welcome back/))
         .or(page.getByText(/I already have an account/))
-        .or(page.getByText(/Sign in/i))
+        .or(page.getByText(/KidReward/i))
         .first()
     ).toBeVisible({ timeout: SUPABASE_WAIT });
+
+    // Confirm the session is truly gone — navigating to / shows welcome, not dashboard
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+    await expect(
+      page.getByText(/Get Started/).or(page.getByText(/I already have an account/)).first()
+    ).toBeVisible({ timeout: SUPABASE_WAIT });
+    const url = page.url();
+    expect(url).not.toContain('dashboard');
   });
 
   test('Session persists — returning to app root re-authenticates', async ({ page }) => {

@@ -9,29 +9,19 @@
 import { test, expect } from '@playwright/test';
 import {
   signUp, restoreSession, clickTab, assertOnParentDashboard, assertOnChildDashboard,
+  setupFamilyPair,
 } from './helpers';
 
-// Spec-specific emails
 const STS = Date.now();
-const SPEC_PARENT_EMAIL = `test.parent.03.${STS}@kidreward-test.com`;
-const SPEC_CHILD_EMAIL  = `test.child.03.${STS}@kidreward-test.com`;
-const SPEC_PARENT_NAME  = `TestParent03_${STS}`;
-const SPEC_CHILD_NAME   = `TestChild03_${STS}`;
-const CHALLENGE_TITLE   = `Tidy Room Test ${STS}`;
+const CHALLENGE_TITLE = `Tidy Room Test ${STS}`;
 
 let parentState: any;
 let childState: any;
 
 test.beforeAll(async ({ browser }) => {
-  const p = await browser.newPage();
-  await signUp(p, 'Parent', SPEC_PARENT_NAME, SPEC_PARENT_EMAIL);
-  parentState = await p.context().storageState();
-  await p.close();
-
-  const c = await browser.newPage();
-  await signUp(c, 'Child', SPEC_CHILD_NAME, SPEC_CHILD_EMAIL);
-  childState = await c.context().storageState();
-  await c.close();
+  const pair = await setupFamilyPair(browser);
+  parentState = pair.parentState;
+  childState = pair.childState;
 });
 
 test.describe('Challenges', () => {
@@ -118,12 +108,8 @@ test.describe('Challenges', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    // Child may be on join screen or home
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
-    if (onJoin) {
-      // No family relationship — skip content check
-      return;
-    }
+    test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
     await clickTab(page, 'Missions');
     await page.waitForLoadState('networkidle');
@@ -139,7 +125,7 @@ test.describe('Challenges', () => {
     await page.waitForTimeout(1000);
 
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
-    if (onJoin) { return; }
+    test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
     await clickTab(page, 'Missions');
     await page.waitForLoadState('networkidle');
@@ -210,6 +196,79 @@ test.describe('Challenges', () => {
         await expect(page.getByText(CHALLENGE_TITLE)).not.toBeVisible({ timeout: 10_000 });
       }
     }
+  });
+
+  // ── Button/link coverage ───────────────────────────────────────────────────
+
+  test('Create challenge — empty title shows inline error', async ({ page }) => {
+    await restoreSession(page, parentState, '/challenges');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByText('+ New').click();
+    await page.waitForLoadState('networkidle');
+
+    // Don't pick a template — leave title empty, click Save
+    await page.getByTestId('save-challenge-btn').dispatchEvent('click');
+    await page.waitForTimeout(500);
+
+    await expect(page.getByTestId('challenge-save-error')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('challenge-save-error')).toContainText(/title/i);
+  });
+
+  test('Create challenge — ← Back button returns to challenge list', async ({ page }) => {
+    await restoreSession(page, parentState, '/challenges');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByText('+ New').click();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText('New Challenge').first()).toBeVisible({ timeout: 10_000 });
+
+    await page.getByText('← Back').click();
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByText('+ New').first()).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('Child challenge detail — ← Back button returns to mission list', async ({ page }) => {
+    await restoreSession(page, childState, '/');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
+    test.skip(!!onJoin, 'Child not in family — pairing setup failed');
+
+    await clickTab(page, 'Missions');
+    await page.waitForLoadState('networkidle');
+
+    // If a mission card exists, tap it and verify ← Back works
+    const missionCard = page.locator('[class*="card"], [class*="Card"]').first();
+    const anyText = page.getByText(CHALLENGE_TITLE).first();
+    if (await anyText.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await anyText.click();
+      await page.waitForLoadState('networkidle');
+      await expect(page.getByText('← Back')).toBeVisible({ timeout: 10_000 });
+      await page.getByText('← Back').click();
+      await page.waitForLoadState('networkidle');
+      await expect(page.getByText('Missions').or(page.getByText('Active Missions')).first()).toBeVisible({ timeout: 10_000 });
+    }
+  });
+
+  test('Child sign-out from home screen', async ({ page }) => {
+    await restoreSession(page, childState, '/');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
+    test.skip(!!onJoin, 'Child not in family — pairing setup failed');
+
+    // Find and click "Sign out" on child home
+    await page.getByText('Sign out').first().click();
+    await page.waitForLoadState('networkidle');
+
+    // Should navigate to welcome screen
+    await expect(
+      page.getByText(/Get Started/).or(page.getByText(/I already have an account/)).first()
+    ).toBeVisible({ timeout: 30_000 });
   });
 
 });

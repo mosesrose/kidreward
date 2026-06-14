@@ -162,3 +162,70 @@ export async function assertOnJoinScreen(page: Page) {
       .first()
   ).toBeVisible({ timeout: SUPABASE_WAIT });
 }
+
+/**
+ * Creates a paired parent + child account for integration tests.
+ * Parent generates invite code; child enters it and joins the family.
+ * Returns storage states for both so tests can restore sessions without re-logging in.
+ */
+export async function setupFamilyPair(browser: any): Promise<{
+  parentState: any;
+  childState: any;
+  inviteCode: string;
+}> {
+  const ts = Date.now();
+
+  // ── 1. Sign up parent and generate invite code ───────────────
+  const p = await browser.newPage();
+  await signUp(p, 'Parent', `PairParent_${ts}`, `pair.parent.${ts}@kidreward-test.com`);
+
+  await clickTab(p, 'My Kids');
+  await p.getByText('Send Invite →').first().dispatchEvent('click');
+  await p.waitForLoadState('networkidle');
+  await p.waitForTimeout(1500);
+
+  const createBtn = p.getByText('Create Invite Code');
+  if (await createBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await createBtn.dispatchEvent('click');
+    await p.waitForLoadState('networkidle');
+    await p.waitForTimeout(2000);
+  }
+
+  const codeEl = p.getByText(/^[A-Z0-9]{6}$/);
+  await codeEl.first().waitFor({ state: 'visible', timeout: 15_000 });
+  const inviteCode = (await codeEl.first().textContent())?.trim() ?? '';
+
+  const parentState = await p.context().storageState();
+  await p.close();
+
+  // ── 2. Sign up child and join family using invite code ────────
+  const c = await browser.newPage();
+  await signUp(c, 'Child', `PairChild_${ts}`, `pair.child.${ts}@kidreward-test.com`);
+
+  // Child lands on join screen
+  await c.getByPlaceholder('ABC123').waitFor({ state: 'visible', timeout: 10_000 });
+  await c.getByPlaceholder('ABC123').fill(inviteCode);
+
+  // TouchableOpacity requires React fiber invocation on web
+  await c.evaluate(() => {
+    for (const el of Array.from(document.querySelectorAll('*'))) {
+      if (!el.textContent?.includes("Let's Go!")) continue;
+      const fiberKey = Object.keys(el).find(k => k.startsWith('__reactFiber'));
+      if (!fiberKey) continue;
+      let fiber = (el as any)[fiberKey];
+      while (fiber) {
+        if (fiber.memoizedProps?.onPress) { fiber.memoizedProps.onPress(); return; }
+        fiber = fiber.return;
+      }
+    }
+  });
+
+  // Wait for join + refreshFamily + router.replace('/(child)/home') to complete
+  await c.waitForLoadState('networkidle');
+  await c.waitForTimeout(4000);
+
+  const childState = await c.context().storageState();
+  await c.close();
+
+  return { parentState, childState, inviteCode };
+}

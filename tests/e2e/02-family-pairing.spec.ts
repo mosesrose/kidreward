@@ -99,8 +99,8 @@ test.describe('Family Pairing', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
-    // After joining, navigate to home — the app's auto-redirect doesn't fire from join screen
-    await page.goto('https://kidreward-one.vercel.app/');
+    // After joining, navigate to home — gives the navigation time to complete
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 

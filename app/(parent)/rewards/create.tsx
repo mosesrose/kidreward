@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,6 +35,7 @@ export default function CreateReward() {
   const [emoji, setEmoji] = useState('🎁');
   const [cost, setCost] = useState('50');
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   function pickSuggestion(s: typeof SUGGESTED_REWARDS[0]) {
     setTitle(s.title);
@@ -45,8 +46,9 @@ export default function CreateReward() {
   }
 
   async function save() {
-    if (!title.trim()) { Alert.alert('Missing title'); return; }
-    if (!family || !profile) return;
+    setErrorMsg('');
+    if (!title.trim()) { setErrorMsg('Please add a title.'); return; }
+    if (!family || !profile) { setErrorMsg('Not ready yet — please try again.'); return; }
     setSaving(true);
     const { error } = await supabase.from('rewards').insert({
       family_id: family.id,
@@ -58,7 +60,7 @@ export default function CreateReward() {
       created_by: profile.id,
     });
     setSaving(false);
-    if (error) { Alert.alert('Error', error.message); return; }
+    if (error) { setErrorMsg(error.message); return; }
     router.back();
   }
 
@@ -70,12 +72,18 @@ export default function CreateReward() {
         </TouchableOpacity>
         <Text style={styles.title}>New Reward</Text>
         <TouchableOpacity
+          testID="save-reward-btn"
           style={[styles.saveBtn, saving && styles.disabled]}
           onPress={save} disabled={saving}
         >
           <Text style={styles.saveBtnText}>{saving ? '…' : 'Save'}</Text>
         </TouchableOpacity>
       </View>
+      {errorMsg ? (
+        <View style={styles.errorBanner} testID="reward-save-error">
+          <Text style={styles.errorBannerText}>{errorMsg}</Text>
+        </View>
+      ) : null}
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.sectionLabel}>Suggestions</Text>
@@ -169,6 +177,14 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: Colors.purple, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 12 },
   disabled: { opacity: 0.5 },
   saveBtnText: { color: Colors.textLight, fontWeight: '700' },
+  errorBanner: {
+    backgroundColor: 'rgba(255,61,0,0.10)',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.danger,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  errorBannerText: { color: Colors.danger, fontSize: 14, fontWeight: '600' },
   scroll: { padding: 20, paddingBottom: 40 },
   sectionLabel: { fontSize: 13, fontWeight: '700', color: Colors.textMuted, marginBottom: 10, marginTop: 16 },
   suggestions: { marginBottom: 8 },

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, Switch,
+  TextInput, Switch,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,6 +18,7 @@ export default function CreateChallenge() {
   const [bonus, setBonus] = useState('0');
   const [repeatType, setRepeatType] = useState<'once' | 'daily' | 'weekly'>('once');
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   function pickTemplate(t: ChallengeTemplate) {
     setSelected(t);
@@ -29,8 +30,9 @@ export default function CreateChallenge() {
   }
 
   async function save() {
-    if (!title.trim()) { Alert.alert('Missing title'); return; }
-    if (!family || !profile) return;
+    setErrorMsg('');
+    if (!title.trim()) { setErrorMsg('Please add a title.'); return; }
+    if (!family || !profile) { setErrorMsg('Not ready yet — please try again.'); return; }
 
     setSaving(true);
     const { error } = await supabase.from('challenges').insert({
@@ -46,7 +48,7 @@ export default function CreateChallenge() {
       created_by: profile.id,
     });
     setSaving(false);
-    if (error) { Alert.alert('Error', error.message); return; }
+    if (error) { setErrorMsg(error.message); return; }
     router.back();
   }
 
@@ -58,12 +60,18 @@ export default function CreateChallenge() {
         </TouchableOpacity>
         <Text style={styles.title}>New Challenge</Text>
         <TouchableOpacity
+          testID="save-challenge-btn"
           style={[styles.saveBtn, saving && styles.disabled]}
           onPress={save} disabled={saving}
         >
           <Text style={styles.saveBtnText}>{saving ? '…' : 'Save'}</Text>
         </TouchableOpacity>
       </View>
+      {errorMsg ? (
+        <View style={styles.errorBanner} testID="challenge-save-error">
+          <Text style={styles.errorBannerText}>{errorMsg}</Text>
+        </View>
+      ) : null}
 
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Templates */}
@@ -171,6 +179,14 @@ const styles = StyleSheet.create({
   },
   disabled: { opacity: 0.5 },
   saveBtnText: { color: Colors.textLight, fontWeight: '700' },
+  errorBanner: {
+    backgroundColor: 'rgba(255,61,0,0.10)',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.danger,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  errorBannerText: { color: Colors.danger, fontSize: 14, fontWeight: '600' },
   scroll: { padding: 20, gap: 4, paddingBottom: 40 },
   sectionLabel: { fontSize: 13, fontWeight: '700', color: Colors.textMuted, marginBottom: 10, marginTop: 16 },
   templates: { marginBottom: 8 },

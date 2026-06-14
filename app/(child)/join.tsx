@@ -4,6 +4,7 @@ import {
   Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
@@ -63,7 +64,7 @@ export default function JoinFamily() {
 
     setJoining(false);
     await refreshFamily();
-    // Navigation will happen automatically via dashboard useEffect
+    router.replace('/(child)/home');
   }
 
   return (
