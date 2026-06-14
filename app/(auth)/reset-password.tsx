@@ -49,12 +49,15 @@ export default function ResetPassword() {
     }
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       setErrorMsg(error.message);
-    } else {
-      setDone(true);
+      return;
     }
+    // Clear the recovery session so the login page starts fresh
+    await supabase.auth.signOut();
+    setLoading(false);
+    setDone(true);
   }
 
   if (done) {
@@ -64,7 +67,7 @@ export default function ResetPassword() {
           <View style={styles.successBox} testID="reset-done">
             <Text style={styles.successTitle}>Password updated! 🎉</Text>
             <Text style={styles.successText}>You can now sign in with your new password.</Text>
-            <TouchableOpacity style={styles.signInBtn} onPress={() => router.replace('/(auth)/login')}>
+            <TouchableOpacity style={styles.signInBtn} onPress={() => router.replace('/login' as any)}>
               <Text style={styles.signInBtnText}>Go to Sign In</Text>
             </TouchableOpacity>
           </View>

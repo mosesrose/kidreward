@@ -283,4 +283,62 @@ test.describe('Login scenarios', () => {
     await expect(page.getByText('Request a new link')).toBeVisible({ timeout: SUPABASE_WAIT });
   });
 
+  test('Reset password — after update, session is cleared and login page is shown', async ({ page }) => {
+    // Simulate arriving on reset-password with an active session (as the email link would)
+    const rpEmail = `reset.flow.${Date.now()}@kidreward-test.com`;
+    await signUp(page, 'Parent', `ResetFlow${Date.now()}`, rpEmail);
+    await page.goto('/reset-password');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByPlaceholder('Min 6 characters').fill('NewPass456!');
+    await page.getByPlaceholder('Repeat your password').fill('NewPass456!');
+    await page.getByText('Update Password').click();
+
+    // Success screen shown
+    await expect(page.getByTestId('reset-done')).toBeVisible({ timeout: SUPABASE_WAIT });
+
+    // After tapping "Go to Sign In", user must see the login page — NOT be silently redirected to dashboard
+    await page.getByText('Go to Sign In').click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    await expect(
+      page.getByPlaceholder('Your password')
+        .or(page.getByText(/Sign In/))
+        .first()
+    ).toBeVisible({ timeout: SUPABASE_WAIT });
+    // Must NOT be on the dashboard
+    const url = page.url();
+    expect(url).not.toContain('dashboard');
+  });
+
+  test('Reset password — user can sign in with new password after reset', async ({ page }) => {
+    const rpEmail = `reset.signin.${Date.now()}@kidreward-test.com`;
+    const newPassword = 'UpdatedPass789!';
+
+    // Step 1: create account with original password
+    await signUp(page, 'Parent', `ResetSignIn${Date.now()}`, rpEmail);
+
+    // Step 2: visit reset-password page (session is active, simulating recovery flow)
+    await page.goto('/reset-password');
+    await page.waitForLoadState('networkidle');
+    await page.getByPlaceholder('Min 6 characters').fill(newPassword);
+    await page.getByPlaceholder('Repeat your password').fill(newPassword);
+    await page.getByText('Update Password').click();
+    await expect(page.getByTestId('reset-done')).toBeVisible({ timeout: SUPABASE_WAIT });
+
+    // Step 3: go to sign in
+    await page.getByText('Go to Sign In').click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    // Step 4: sign in with the new password
+    await page.getByPlaceholder('you@example.com').first().fill(rpEmail);
+    await page.getByPlaceholder('Your password').fill(newPassword);
+    await page.getByText('Sign In', { exact: true }).click();
+
+    // Should land on parent dashboard
+    await assertOnParentDashboard(page);
+  });
+
 });
