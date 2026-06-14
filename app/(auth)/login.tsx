@@ -22,8 +22,13 @@ export default function Login() {
     }
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) setErrorMsg(error.message);
+    if (error) {
+      setLoading(false);
+      setErrorMsg(error.message);
+      return;
+    }
+    // Navigate to root so index.tsx can redirect to the correct dashboard by role
+    router.replace('/');
   }
 
   return (
