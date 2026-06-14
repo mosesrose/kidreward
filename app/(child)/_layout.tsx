@@ -13,13 +13,13 @@ export default function ChildLayout() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: Colors.childCard,
-          borderTopColor: 'rgba(255,255,255,0.08)',
+          borderTopColor: Colors.border,
           height: 70,
           paddingBottom: 10,
         },
-        tabBarActiveTintColor: Colors.childAccent2,
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.35)',
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
+        tabBarActiveTintColor: Colors.childAccent,
+        tabBarInactiveTintColor: Colors.textMuted,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
       <Tabs.Screen

@@ -1,51 +1,57 @@
+// Coral Sunset palette — see Notion · Strategy · Business Model
+// Child mode: cream + coral. Parent mode: cream + ink + purple.
 export const Colors = {
   // Brand
-  purple: '#6C3CE1',
-  purpleLight: '#9B6EF3',
-  purpleDark: '#4A24A8',
+  purple: '#7A3CE1',
+  purpleLight: '#A076F0',
+  purpleDark: '#5A2BA8',
 
-  // Child theme
-  childBg: '#1A0A3C',
-  childCard: '#2D1B69',
-  childAccent: '#FF6B35',
-  childAccent2: '#FFD700',
-  childGreen: '#00E676',
+  // Child theme (uplifting cream, coral primary action)
+  childBg: '#FFF7ED',
+  childCard: '#FFFFFF',
+  childAccent: '#FF6B5C',       // coral — primary action
+  childAccent2: '#FFB84D',      // yellow — streak / celebration
+  childGreen: '#3DB78A',        // muted teal — success states
 
-  // Parent theme
-  parentBg: '#F8F6FF',
+  // Parent theme (same cream, ink + purple primary)
+  parentBg: '#FFF7ED',
   parentCard: '#FFFFFF',
-  parentBorder: '#E8E0FF',
+  parentBorder: '#F3E7D8',
 
   // Gems
-  gem: '#00D4FF',
-  gemGlow: '#0099BB',
+  gem: '#7A3CE1',               // canonical gem color = brand purple
+  gemGlow: '#FF6B5C',            // coral accent for child-mode gem callouts
 
   // Status
-  success: '#00C853',
-  warning: '#FFB300',
-  danger: '#FF3D00',
-  pending: '#FF9100',
+  success: '#3DB78A',
+  warning: '#FFB84D',
+  danger: '#E55545',
+  pending: '#FFB84D',
 
   // Text
-  textDark: '#1A1A2E',
-  textMid: '#4A4A6A',
+  textDark: '#1A1530',           // ink
+  textMid: '#5C4F7A',
   textLight: '#FFFFFF',
-  textMuted: '#9E9EB5',
+  textMuted: '#8A7AA8',
 
-  // Challenge categories
+  // Surfaces
+  border: '#F3E7D8',
+  surfaceSoft: '#FDECC8',        // peach soft callout
+
+  // Challenge categories — softened to fit cream palette
   cat: {
-    phone: '#FF6B6B',
-    outdoor: '#51CF66',
-    social: '#FF9FF3',
-    family: '#FFA94D',
-    morning: '#FFD43B',
-    sibling: '#74C0FC',
-    chores: '#63E6BE',
-    room: '#A9E34B',
-    garden: '#69DB7C',
-    cooking: '#FF8787',
-    math: '#748FFC',
-    homework: '#DA77F2',
-    behavior: '#F783AC',
+    phone: '#FF8E8E',
+    outdoor: '#7DCC8F',
+    social: '#F5A8D8',
+    family: '#FFB07A',
+    morning: '#FFD66B',
+    sibling: '#9DBFE8',
+    chores: '#8FD9C2',
+    room: '#C2DE85',
+    garden: '#94D89E',
+    cooking: '#FFA0A0',
+    math: '#A4B0F0',
+    homework: '#C99CE2',
+    behavior: '#F0A0BC',
   },
 };
