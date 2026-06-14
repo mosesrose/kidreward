@@ -45,7 +45,6 @@ export default function ChildLayout() {
       />
       <Tabs.Screen name="challenges/[id]" options={{ href: null }} />
       <Tabs.Screen name="join" options={{ href: null }} />
-      <Tabs.Screen name="rewards/index" options={{ href: null }} />
     </Tabs>
   );
 }

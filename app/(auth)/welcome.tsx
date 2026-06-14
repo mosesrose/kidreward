@@ -8,7 +8,7 @@ const { width } = Dimensions.get('window');
 export default function Welcome() {
   return (
     <LinearGradient
-      colors={[Colors.childBg, Colors.childCard, Colors.purple]}
+      colors={['#FF8A5B', '#FF6B5C', '#7A3CE1']}
       style={styles.container}
       start={{ x: 0.2, y: 0 }}
       end={{ x: 0.8, y: 1 }}
@@ -46,12 +46,26 @@ export default function Welcome() {
           onPress={() => router.push('/(auth)/signup')}
         >
           <LinearGradient
-            colors={[Colors.gem, Colors.gemGlow]}
+            colors={[Colors.purple, Colors.purpleLight]}
             style={styles.primaryBtnGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
           >
-            <Text style={styles.primaryBtnText}>Get Started ✨</Text>
+            <Text style={styles.primaryBtnText}>I'm a Parent 👨‍👩‍👧</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.inviteBtn}
+          onPress={() => router.push('/(auth)/signup-child' as any)}
+        >
+          <LinearGradient
+            colors={['#FFB84D', '#FF8A5B']}
+            style={styles.primaryBtnGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <Text style={styles.inviteBtnText}>Join with invite code 🎉</Text>
           </LinearGradient>
         </TouchableOpacity>
 
@@ -100,8 +114,10 @@ const styles = StyleSheet.create({
   featureText: { color: 'rgba(255,255,255,0.9)', fontSize: 15, flex: 1 },
   buttons: { gap: 12 },
   primaryBtn: { borderRadius: 16, overflow: 'hidden' },
+  inviteBtn: { borderRadius: 16, overflow: 'hidden' },
   primaryBtnGradient: { paddingVertical: 18, alignItems: 'center' },
-  primaryBtnText: { color: Colors.textDark, fontSize: 18, fontWeight: '800' },
+  primaryBtnText: { color: Colors.textLight, fontSize: 18, fontWeight: '800' },
+  inviteBtnText: { color: Colors.textDark, fontSize: 18, fontWeight: '800' },
   secondaryBtn: { paddingVertical: 16, alignItems: 'center' },
   secondaryBtnText: { color: 'rgba(255,255,255,0.7)', fontSize: 16 },
 });

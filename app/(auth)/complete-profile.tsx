@@ -24,7 +24,7 @@ export default function CompleteProfile() {
   }
 
   return (
-    <LinearGradient colors={[Colors.childBg, Colors.childCard]} style={styles.bg}>
+    <LinearGradient colors={['#FF8A5B', '#FF6B5C', '#7A3CE1']} style={styles.bg}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Pick your avatar! 🎨</Text>
         <Text style={styles.subtitle}>Choose an emoji that represents you</Text>
