@@ -209,8 +209,10 @@ export async function setupFamilyPair(browser: any): Promise<{
   const codeAlreadyThere = await existingCode.first().isVisible({ timeout: 2000 }).catch(() => false);
 
   if (!codeAlreadyThere) {
-    // Click "Create Invite Code" via React fiber (TouchableOpacity doesn't respond to DOM click)
-    await pressReact(p, 'Create Invite Code');
+    // dispatchEvent('click') works for this button (confirmed by US-005 test passing)
+    const createBtn = p.getByText('Create Invite Code', { exact: true });
+    await createBtn.first().waitFor({ state: 'visible', timeout: 10_000 });
+    await createBtn.first().dispatchEvent('click');
     await p.waitForLoadState('networkidle');
     await p.waitForTimeout(3000);
   }
