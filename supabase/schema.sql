@@ -93,6 +93,7 @@ create table public.invites (
   id          uuid primary key default gen_random_uuid(),
   family_id   uuid not null references public.families(id) on delete cascade,
   code        text not null unique,
+  email       text,                                            -- child's email; invite only valid for this address
   created_by  uuid not null references public.profiles(id),
   used_by     uuid references public.profiles(id),
   expires_at  timestamptz not null default (now() + interval '7 days'),

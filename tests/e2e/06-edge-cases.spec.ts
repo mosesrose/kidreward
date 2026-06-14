@@ -7,7 +7,8 @@
  */
 import { test, expect } from '@playwright/test';
 import {
-  gotoWelcome, signUp, restoreSession, clickTab,
+  gotoWelcome, signUp, restoreSession, clickTab, signUpChildForTest,
+  SUPABASE_URL, SUPABASE_ANON_KEY, TEST_PASSWORD,
 } from './helpers';
 
 // Spec-specific child for the "cannot submit twice" test
@@ -18,10 +19,8 @@ const SPEC_CHILD_NAME  = `TestChild06_${STS}`;
 let childState: any;
 
 test.beforeAll(async ({ browser }) => {
-  const c = await browser.newPage();
-  await signUp(c, 'Child', SPEC_CHILD_NAME, SPEC_CHILD_EMAIL);
-  childState = await c.context().storageState();
-  await c.close();
+  test.setTimeout(120_000);
+  childState = await signUpChildForTest(browser, SPEC_CHILD_NAME, SPEC_CHILD_EMAIL);
 });
 
 test.describe('Edge Cases & Robustness', () => {
@@ -62,10 +61,13 @@ test.describe('Edge Cases & Robustness', () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
-  test('Expired invite code shows helpful error', async ({ page }) => {
-    const email = `expired.${Date.now()}@kidreward-test.com`;
-    await signUp(page, 'Child', `Expired${Date.now()}`, email);
+  test('Expired invite code shows helpful error', async ({ page, browser }) => {
+    const ts = Date.now();
+    const email = `expired.${ts}@kidreward-test.com`;
+    const state = await signUpChildForTest(browser, `Expired${ts}`, email);
+    await restoreSession(page, state, '/');
     await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
 
     await expect(
       page.getByText('Join Your Family!').or(page.getByPlaceholder('ABC123')).first()

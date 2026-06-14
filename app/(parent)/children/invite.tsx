@@ -133,7 +133,10 @@ export default function InviteScreen() {
               {isChild ? 'Child Invite Code' : 'Parent Invite Code'}
             </Text>
             {isChild && invite.email ? (
-              <Text style={styles.inviteEmail}>For: {invite.email}</Text>
+              <View style={styles.emailBadge}>
+                <Text style={styles.emailBadgeLabel}>LOCKED TO EMAIL</Text>
+                <Text style={styles.emailBadgeValue}>{invite.email}</Text>
+              </View>
             ) : null}
             <Text style={[styles.code, !isChild && styles.codeParent]}>{invite.code}</Text>
             <Text style={styles.expiry}>
@@ -239,7 +242,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 12,
     fontSize: 15, color: Colors.textDark, backgroundColor: Colors.parentCard,
   },
-  inviteEmail: { fontSize: 14, color: Colors.textMid, marginBottom: 8 },
+  emailBadge: {
+    backgroundColor: Colors.purple + '18',
+    borderRadius: 10, paddingVertical: 8, paddingHorizontal: 16,
+    marginBottom: 14, alignItems: 'center', width: '100%',
+  },
+  emailBadgeLabel: { fontSize: 10, fontWeight: '700', color: Colors.textMuted, letterSpacing: 1.5, marginBottom: 3 },
+  emailBadgeValue: { fontSize: 14, fontWeight: '700', color: Colors.purple },
   createBtn: { backgroundColor: Colors.purple, paddingHorizontal: 32, paddingVertical: 16, borderRadius: 14 },
   createBtnParent: { backgroundColor: '#FF9500' },
   disabled: { opacity: 0.5 },

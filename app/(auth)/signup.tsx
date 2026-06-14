@@ -1,17 +1,14 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  KeyboardAvoidingView, Platform, ScrollView, Alert,
+  KeyboardAvoidingView, Platform, ScrollView, Alert, // eslint-disable-line
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 
-type Role = 'parent' | 'child';
-
 export default function Signup() {
-  const [role, setRole] = useState<Role>('parent');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,8 +35,8 @@ export default function Signup() {
     const { error: profileError } = await supabase.from('profiles').insert({
       id: data.user.id,
       name: name.trim(),
-      role,
-      avatar_emoji: role === 'parent' ? '👨‍👩‍👧' : '🧒',
+      role: 'parent',
+      avatar_emoji: '👨‍👩‍👧',
     });
 
     if (profileError) {
@@ -48,21 +45,13 @@ export default function Signup() {
       return;
     }
 
-    // If parent, create their family
-    if (role === 'parent') {
-      await supabase.from('families').insert({
-        name: `${name.trim()}'s Family`,
-        parent_id: data.user.id,
-      });
-    }
+    await supabase.from('families').insert({
+      name: `${name.trim()}'s Family`,
+      parent_id: data.user.id,
+    });
 
     setLoading(false);
-    // Explicit navigation — index.tsx only runs at "/" so we must navigate here
-    if (role === 'parent') {
-      router.replace('/(parent)/dashboard');
-    } else {
-      router.replace('/(child)/home');
-    }
+    router.replace('/(parent)/dashboard');
   }
 
   return (
@@ -76,34 +65,15 @@ export default function Signup() {
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
 
-          <Text style={styles.title}>Create account 🎉</Text>
-          <Text style={styles.subtitle}>Who are you?</Text>
-
-          {/* Role selector */}
-          <View style={styles.roleRow}>
-            {(['parent', 'child'] as Role[]).map((r) => (
-              <TouchableOpacity
-                key={r}
-                style={[styles.roleCard, role === r && styles.roleCardActive]}
-                onPress={() => setRole(r)}
-              >
-                <Text style={styles.roleEmoji}>{r === 'parent' ? '👨‍👩‍👧' : '🧒'}</Text>
-                <Text style={[styles.roleLabel, role === r && styles.roleLabelActive]}>
-                  {r === 'parent' ? 'Parent' : 'Child'}
-                </Text>
-                <Text style={styles.roleDesc}>
-                  {r === 'parent' ? 'Set challenges & rewards' : 'Complete tasks & earn gems'}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <Text style={styles.title}>Parent sign up 👨‍👩‍👧</Text>
+          <Text style={styles.subtitle}>Create your account to get started</Text>
 
           <View style={styles.form}>
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Your name</Text>
               <TextInput
                 style={styles.input}
-                placeholder={role === 'parent' ? 'e.g. Mum or Dad' : 'e.g. Alex'}
+                placeholder="e.g. Mum or Dad"
                 placeholderTextColor={Colors.textMuted}
                 value={name}
                 onChangeText={setName}
@@ -171,21 +141,6 @@ const styles = StyleSheet.create({
   backText: { color: 'rgba(255,255,255,0.6)', fontSize: 16 },
   title: { fontSize: 32, fontWeight: '800', color: Colors.textLight, marginBottom: 8 },
   subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.6)', marginBottom: 20 },
-  roleRow: { flexDirection: 'row', gap: 12, marginBottom: 28 },
-  roleCard: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  roleCardActive: { borderColor: Colors.gem, backgroundColor: 'rgba(0,212,255,0.1)' },
-  roleEmoji: { fontSize: 32, marginBottom: 6 },
-  roleLabel: { color: 'rgba(255,255,255,0.6)', fontWeight: '700', fontSize: 16, marginBottom: 4 },
-  roleLabelActive: { color: Colors.gem },
-  roleDesc: { color: 'rgba(255,255,255,0.4)', fontSize: 11, textAlign: 'center' },
   form: { gap: 18, marginBottom: 28 },
   inputGroup: { gap: 8 },
   label: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '600' },

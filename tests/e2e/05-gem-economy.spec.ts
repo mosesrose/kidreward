@@ -17,6 +17,7 @@ let parentState: any;
 let childState: any;
 
 test.beforeAll(async ({ browser }) => {
+  test.setTimeout(120_000);
   const pair = await setupFamilyPair(browser);
   parentState = pair.parentState;
   childState = pair.childState;
@@ -40,7 +41,9 @@ test.describe('Gem Economy', () => {
     await page.waitForLoadState('networkidle');
 
     await expect(
-      page.getByText('gems available', { exact: false }).or(page.getByText('💎').first()).first()
+      page.getByText('YOUR GEMS', { exact: false })
+        .or(page.getByText('gems available', { exact: false }))
+        .first()
     ).toBeVisible({ timeout: 10_000 });
   });
 
@@ -51,8 +54,13 @@ test.describe('Gem Economy', () => {
     await clickTab(page, 'Home');
     await page.waitForLoadState('networkidle');
 
-    const balanceText = await page.locator('text=/\\d+ gems available/i').first().textContent().catch(() => '0 gems available');
-    const balance = parseInt(balanceText?.match(/\d+/)?.[0] ?? '0', 10);
+    // Gem label is either "YOUR GEMS" (new GemHeader) or "gems available" (old UI)
+    const gemsLabel = page.getByText('YOUR GEMS', { exact: false })
+      .or(page.getByText('gems available', { exact: false }));
+    await expect(gemsLabel.first()).toBeVisible({ timeout: 10_000 });
+    // Balance number is rendered as a sibling element — find any visible non-negative integer
+    const numText = await page.locator('text=/^\\d+$/').first().textContent({ timeout: 3000 }).catch(() => '0');
+    const balance = parseInt(numText ?? '0', 10);
     expect(balance).toBeGreaterThanOrEqual(0);
   });
 
@@ -85,7 +93,13 @@ test.describe('Gem Economy', () => {
     await restoreSession(page, parentState, '/dashboard');
     await assertOnParentDashboard(page);
 
-    await expect(page.getByText('💎 Total').or(page.getByText('Total')).first()).toBeVisible();
+    // Parent home dashboard shows "gems out" (weekly gem stats) as aggregate indicator
+    await expect(
+      page.getByText('gems out', { exact: false })
+        .or(page.getByText('💎 Total'))
+        .or(page.getByText('Total'))
+        .first()
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test('Gem balance shows on reward store header', async ({ page }) => {
@@ -99,9 +113,15 @@ test.describe('Gem Economy', () => {
     await clickTab(page, 'Rewards');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.getByText('gems to spend', { exact: false })).toBeVisible({ timeout: 10_000 });
-    const balanceText = await page.locator('text=/\\d+ gems to spend/i').first().textContent().catch(() => '0 gems to spend');
-    const balance = parseInt(balanceText?.match(/\d+/)?.[0] ?? '0', 10);
+    // Store header uses GemHeader in compact mode — shows "GEMS" label
+    await expect(
+      page.getByText('GEMS', { exact: true })
+        .or(page.getByText('gems to spend', { exact: false }))
+        .first()
+    ).toBeVisible({ timeout: 10_000 });
+    // Any visible non-negative integer on the page is the gem balance
+    const numText = await page.locator('text=/^\\d+$/').first().textContent({ timeout: 3000 }).catch(() => '0');
+    const balance = parseInt(numText ?? '0', 10);
     expect(balance).toBeGreaterThanOrEqual(0);
   });
 

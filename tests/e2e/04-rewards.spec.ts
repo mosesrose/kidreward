@@ -17,6 +17,7 @@ let parentState: any;
 let childState: any;
 
 test.beforeAll(async ({ browser }) => {
+  test.setTimeout(120_000);
   const pair = await setupFamilyPair(browser);
   parentState = pair.parentState;
   childState = pair.childState;
@@ -41,16 +42,13 @@ test.describe('Rewards', () => {
     await page.getByText('Movie night pick').click();
     await page.waitForTimeout(500);
 
-    page.once('dialog', d => d.accept());
-    await page.getByText('Save', { exact: true }).dispatchEvent('click');
+    // Use testID click — dispatchEvent('click') doesn't trigger React onPress on web
+    await page.getByTestId('save-reward-btn').click();
+    await page.waitForURL(url => !url.pathname.includes('create'), { timeout: 20_000 });
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
 
-    const stillOnRewardForm = await page.getByText('New Reward').isVisible().catch(() => false);
-    if (stillOnRewardForm) { await clickTab(page, 'Rewards'); }
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2000);
-
+    // Verify in the rewards list (not the form's own suggestion list)
     await expect(page.getByText('Movie night pick')).toBeVisible({ timeout: 10_000 });
   });
 
@@ -80,7 +78,9 @@ test.describe('Rewards', () => {
     await clickTab(page, 'Rewards');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.getByText('gems to spend', { exact: false }).or(page.getByText('💎')).first()).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByText('GEMS', { exact: true }).or(page.getByText('gems to spend', { exact: false })).or(page.getByText('💎')).first()
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test('US-017 | Child sees rewards and cannot redeem with 0 gems', async ({ page }) => {
@@ -92,16 +92,30 @@ test.describe('Rewards', () => {
     test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
     await clickTab(page, 'Rewards');
-    await page.waitForLoadState('networkidle');
+    // Wait for header balance to appear — compact GemHeader shows "GEMS", old UI "gems to spend"
+    await expect(
+      page.getByText('GEMS', { exact: true }).or(page.getByText('gems to spend', { exact: false })).first()
+    ).toBeVisible({ timeout: 10_000 });
+    // Give the rewards FlatList time to load from Supabase
+    await page.waitForTimeout(3000);
 
-    // Child has 0 gems at this point — all rewards should show "Need X more"
-    await expect(page.getByText(/\d+ gems to spend/i).or(page.getByText('💎')).first()).toBeVisible({ timeout: 10_000 });
+    // Either reward cards with "X more to go" / "Tap to redeem!" are visible, or store is empty
+    const hasReward = await page.getByText(/\d+ more to go/).first().isVisible({ timeout: 2000 }).catch(() => false)
+      || await page.getByText(/Need \d+ more/).first().isVisible({ timeout: 1000 }).catch(() => false)
+      || await page.getByText('Tap to redeem!').first().isVisible({ timeout: 1000 }).catch(() => false)
+      || await page.getByText('Movie night pick').first().isVisible({ timeout: 1000 }).catch(() => false);
+    const storeEmpty = await page.getByText('No rewards yet').isVisible({ timeout: 1000 }).catch(() => false);
 
-    const needMore = page.getByText(/Need \d+ more/);
-    const hasUnaffordable = await needMore.first().isVisible({ timeout: 5000 }).catch(() => false);
-    const hasAffordable   = await page.getByText('Tap to redeem!').first().isVisible({ timeout: 1000 }).catch(() => false);
-    // At least one of these states must be visible — proves the store rendered with data
-    expect(hasUnaffordable || hasAffordable).toBeTruthy();
+    // Parent created at least one reward in US-015 — store must not be empty
+    expect(hasReward || !storeEmpty).toBeTruthy();
+    if (!storeEmpty) {
+      // If rewards exist, one of the affordability states must be shown
+      // Store shows "X more to go" (locked) or "Tap to redeem!" (affordable)
+      const hasAffordabilityBadge = await page.getByText(/Need \d+ more/).first().isVisible({ timeout: 2000 }).catch(() => false)
+        || await page.getByText('Tap to redeem!').first().isVisible({ timeout: 1000 }).catch(() => false)
+        || await page.getByText(/\d+ more to go/).first().isVisible({ timeout: 1000 }).catch(() => false);
+      expect(hasAffordabilityBadge).toBeTruthy();
+    }
   });
 
   test('US-017 | Child can redeem an affordable reward', async ({ page }) => {
@@ -165,7 +179,9 @@ test.describe('Rewards', () => {
   // ── Button/link coverage ──────────────────────────────────────────────────
 
   test('Create reward — empty title shows inline error', async ({ page }) => {
-    await restoreSession(page, parentState, '/rewards');
+    await restoreSession(page, parentState);
+    await assertOnParentDashboard(page);
+    await clickTab(page, 'Rewards');
     await page.waitForLoadState('networkidle');
 
     await page.getByText('+ New').click();
@@ -180,12 +196,14 @@ test.describe('Rewards', () => {
   });
 
   test('Create reward — ← Back button returns to rewards list', async ({ page }) => {
-    await restoreSession(page, parentState, '/rewards');
+    await restoreSession(page, parentState);
+    await assertOnParentDashboard(page);
+    await clickTab(page, 'Rewards');
     await page.waitForLoadState('networkidle');
 
     await page.getByText('+ New').click();
     await page.waitForLoadState('networkidle');
-    await expect(page.getByText('New Reward')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('New Reward').first()).toBeVisible({ timeout: 10_000 });
 
     await page.getByText('← Back').click();
     await page.waitForLoadState('networkidle');

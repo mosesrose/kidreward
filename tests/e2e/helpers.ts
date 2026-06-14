@@ -51,19 +51,17 @@ export async function gotoWelcome(page: Page) {
 
 export async function signUp(
   page: Page,
-  role: 'Parent' | 'Child',
+  _role: 'Parent',
   name: string,
   email: string,
   password = TEST_PASSWORD
 ) {
   await gotoWelcome(page);
-  await clickByText(page, 'Get Started');
+  // Welcome screen now has separate paths: "I'm a Parent" → parent signup
+  await page.getByText("I'm a Parent", { exact: false }).click();
   await page.waitForLoadState('networkidle');
 
-  // Click the role card
-  await page.getByText(role, { exact: true }).first().click();
-
-  await page.getByPlaceholder(/Mum or Dad|e\.g\. Alex/).fill(name);
+  await page.getByPlaceholder('e.g. Mum or Dad').fill(name);
   await page.getByPlaceholder('you@example.com').fill(email);
   await page.getByPlaceholder('Min 6 characters').fill(password);
 
@@ -108,6 +106,41 @@ export async function signOut(page: Page) {
   await page.waitForLoadState('networkidle');
 }
 
+/**
+ * Creates a child account via REST API (bypasses the invite-gated UI) and returns
+ * a storageState with a real session — useful for tests that need a child without a
+ * family (e.g., testing the join screen or session-restore).
+ */
+export async function signUpChildForTest(
+  browser: any,
+  name: string,
+  email: string,
+  password = TEST_PASSWORD
+): Promise<any> {
+  // 1. Create auth + profile via REST (no invite needed for test setup)
+  const signUpResp = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+    method: 'POST',
+    headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const signUpData: any = await signUpResp.json();
+  const childUserId = signUpData?.user?.id;
+  const childJwt = signUpData?.session?.access_token ?? signUpData?.access_token;
+  if (childUserId && childJwt) {
+    await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${childJwt}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ id: childUserId, name, role: 'child', avatar_emoji: '🧒' }),
+    });
+  }
+  // 2. Log in via browser to capture real storageState
+  const page = await browser.newPage();
+  await login(page, email, password);
+  const state = await page.context().storageState();
+  await page.close();
+  return state;
+}
+
 // ── Assertion helpers ─────────────────────────────────────────
 export async function assertOnParentDashboard(page: Page) {
   await expect(
@@ -121,7 +154,10 @@ export async function assertOnParentDashboard(page: Page) {
 export async function assertOnChildDashboard(page: Page) {
   await expect(
     page.getByText(/Hey,/)
+      .or(page.getByText(/Hi /))
       .or(page.getByText('Active Missions'))
+      .or(page.getByText('No missions yet'))
+      .or(page.getByText('YOUR GEMS'))
       .or(page.getByText('gems available', { exact: false }))
       .first()
   ).toBeVisible({ timeout: SUPABASE_WAIT });
@@ -179,10 +215,30 @@ async function pressReact(page: any, label: string) {
   }, label);
 }
 
+export const SUPABASE_URL = 'https://nvrexzvpjklwfgvqcpoe.supabase.co';
+export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52cmV4enZwamtsd2ZndnFjcG9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1ODE3MjgsImV4cCI6MjA5NjE1NzcyOH0.tvoIpKWFSh71jAGiIxHdagm8B2subh3e7fxbAgvw9qM';
+
+/** Extract Supabase JWT + userId from a Playwright storageState snapshot (Node.js-side, no browser). */
+function extractAuthFromState(state: any): { jwt: string; userId: string } | null {
+  const origins: any[] = state?.origins ?? [];
+  for (const origin of origins) {
+    for (const item of (origin.localStorage ?? [])) {
+      try {
+        if (!item.value?.includes('access_token')) continue;
+        const parsed = JSON.parse(item.value);
+        const jwt = parsed?.access_token ?? parsed?.session?.access_token;
+        const userId = parsed?.user?.id ?? parsed?.session?.user?.id;
+        if (jwt && userId) return { jwt, userId };
+      } catch {}
+    }
+  }
+  return null;
+}
+
 /**
  * Creates a paired parent + child account for integration tests.
- * Parent generates invite code via UI; child enters it and joins the family.
- * Returns storage states for both so tests can restore sessions without re-logging in.
+ * All Supabase REST API calls run from Node.js (test runner), not from inside the
+ * browser page — this avoids CORS, async eval, and dual-DOM timing issues.
  */
 export async function setupFamilyPair(browser: any): Promise<{
   parentState: any;
@@ -191,53 +247,83 @@ export async function setupFamilyPair(browser: any): Promise<{
 }> {
   const ts = Date.now();
 
-  // ── 1. Sign up parent and generate invite code ───────────────────────────────
+  // ── 1. Sign up parent ──────────────────────────────────────────────────────────
   const p = await browser.newPage();
   await signUp(p, 'Parent', `PairParent_${ts}`, `pair.parent.${ts}@kidreward-test.com`);
-
-  // Navigate via Quick Actions "Invite Child" card on the dashboard
-  await p.waitForLoadState('networkidle');
-  await p.waitForTimeout(1500);
-
-  // Click the "Invite Child" Quick Action button via React fiber
-  await pressReact(p, 'Invite Child');
-  await p.waitForLoadState('networkidle');
-  await p.waitForTimeout(2000);
-
-  // Check if invite code already exists
-  const existingCode = p.getByText(/^[A-Z0-9]{6}$/);
-  const codeAlreadyThere = await existingCode.first().isVisible({ timeout: 2000 }).catch(() => false);
-
-  if (!codeAlreadyThere) {
-    // dispatchEvent('click') works for this button (confirmed by US-005 test passing)
-    const createBtn = p.getByText('Create Invite Code', { exact: true });
-    await createBtn.first().waitFor({ state: 'visible', timeout: 10_000 });
-    await createBtn.first().dispatchEvent('click');
-    await p.waitForLoadState('networkidle');
-    await p.waitForTimeout(3000);
-  }
-
-  const codeEl = p.getByText(/^[A-Z0-9]{6}$/);
-  await codeEl.first().waitFor({ state: 'visible', timeout: 20_000 });
-  const inviteCode = (await codeEl.first().textContent())?.trim() ?? '';
+  // Wait for dashboard to fully load (confirms family row exists in DB)
+  await assertOnParentDashboard(p);
+  await p.waitForTimeout(1000);
 
   const parentState = await p.context().storageState();
   await p.close();
 
-  // ── 2. Sign up child and join family using invite code ────────
+  // ── 2. Extract JWT + userId from storageState (Node.js) ───────────────────────
+  const auth = extractAuthFromState(parentState);
+  if (!auth) throw new Error('setupFamilyPair: could not extract parent JWT from storageState');
+
+  // ── 3. Get family_id via Supabase REST API (Node.js fetch — no CORS) ──────────
+  const famResp = await fetch(
+    `${SUPABASE_URL}/rest/v1/families?parent_id=eq.${auth.userId}&select=id`,
+    { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${auth.jwt}` } }
+  );
+  const families: any[] = await famResp.json();
+  if (!Array.isArray(families) || families.length === 0) {
+    throw new Error(`setupFamilyPair: no family found for parent ${auth.userId}. Response: ${JSON.stringify(families)}`);
+  }
+  const familyId = families[0].id;
+
+  // ── 4. Create invite code via Supabase REST API (Node.js) ─────────────────────
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let inviteCode = '';
+  for (let i = 0; i < 6; i++) inviteCode += chars[Math.floor(Math.random() * chars.length)];
+  const childEmailForPair = `pair.child.${ts}@kidreward-test.com`;
+
+  const invResp = await fetch(`${SUPABASE_URL}/rest/v1/invites`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${auth.jwt}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({
+      family_id: familyId,
+      code: inviteCode,
+      email: childEmailForPair,
+      invite_type: 'child',
+      created_by: auth.userId,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    }),
+  });
+  if (!invResp.ok) {
+    const err = await invResp.text();
+    throw new Error(`setupFamilyPair: failed to create invite — ${err}`);
+  }
+
+  // ── 5. Sign up child via new invite-gated UI flow ────────────────────────────
+  // Children can no longer sign up without an invite code (P0 requirement).
+  // We use the invite created in step 4 to go through signup-child.tsx.
   const c = await browser.newPage();
-  await signUp(c, 'Child', `PairChild_${ts}`, `pair.child.${ts}@kidreward-test.com`);
-
-  // Child lands on join screen — enter invite code
-  await c.getByPlaceholder('ABC123').waitFor({ state: 'visible', timeout: 10_000 });
-  await c.getByPlaceholder('ABC123').fill(inviteCode);
-
-  // TouchableOpacity requires React fiber invocation on web
-  await pressReact(c, "Let's Go!");
-
-  // Wait for join + refreshFamily + router.replace('/(child)/home') to complete
+  await gotoWelcome(c);
+  await c.getByText('Join with invite code', { exact: false }).click();
   await c.waitForLoadState('networkidle');
-  await c.waitForTimeout(4000);
+  await c.waitForTimeout(500);
+
+  await c.getByTestId('invite-code-input').fill(inviteCode);
+  await c.getByTestId('validate-code-btn').click();
+  await c.waitForLoadState('networkidle');
+  await c.waitForTimeout(1000);
+
+  // Email is pre-filled and locked from invite.email — only name and password needed
+  await c.getByPlaceholder('e.g. Alex').fill(`PairChild_${ts}`);
+  // Do NOT fill email — it is locked (read-only) when the invite includes an email address
+  await c.getByPlaceholder('Min 6 characters').fill(TEST_PASSWORD);
+  await c.getByTestId('create-child-account-btn').click();
+
+  // Wait for redirect to child home (signup-child inserts family_member + marks invite used)
+  await c.waitForURL((url: URL) => url.pathname.includes('child') || url.pathname === '/', { timeout: SUPABASE_WAIT });
+  await c.waitForLoadState('networkidle');
+  await c.waitForTimeout(2000);
 
   const childState = await c.context().storageState();
   await c.close();

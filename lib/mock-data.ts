@@ -184,7 +184,7 @@ export const mockStore: {
   invites: [
     {
       id: 'invite-1', family_id: 'mock-family-id', code: 'ABC123',
-      invite_type: 'child' as const,
+      email: null, invite_type: 'child' as const,
       created_by: 'mock-parent-id', used_by: null,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       used_at: null, created_at: new Date(Date.now() - 3_600_000).toISOString(),

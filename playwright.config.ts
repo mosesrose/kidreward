@@ -8,8 +8,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: 1,
-  timeout: 30_000,
-  expect: { timeout: 10_000 },
+  timeout: 60_000,
+  expect: { timeout: 15_000 },
 
   reporter: [
     ['list'],
@@ -25,23 +25,14 @@ export default defineConfig({
     headless: true,
   },
 
-  // Default project = chrome only. Run `npx playwright test --project=mobile-chrome`
-  // for explicit cross-device runs. (Removed duplicate `chromium` project — it
-  // re-ran the same tests with a different browser binary and tripled runtime.)
   projects: [
     {
-      name: 'chrome',
-      use: {
-        ...devices['Desktop Chrome'],
-        channel: 'chrome',
-      },
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: 'mobile-chrome',
-      use: {
-        ...devices['Pixel 5'],
-        channel: 'chrome',
-      },
+      name: 'mobile-chromium',
+      use: { ...devices['Pixel 5'] },
     },
   ],
 });

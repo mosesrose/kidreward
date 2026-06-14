@@ -68,6 +68,7 @@ export type Invite = {
   id: string;
   family_id: string;
   code: string;
+  email: string | null;
   invite_type: 'child' | 'parent';
   created_by: string;
   used_by: string | null;
