@@ -163,9 +163,25 @@ export async function assertOnJoinScreen(page: Page) {
   ).toBeVisible({ timeout: SUPABASE_WAIT });
 }
 
+/** Fire React onPress for the first element whose text contains `label`. */
+async function pressReact(page: any, label: string) {
+  await page.evaluate((lbl: string) => {
+    for (const el of Array.from(document.querySelectorAll('*'))) {
+      if (!el.textContent?.includes(lbl)) continue;
+      const fiberKey = Object.keys(el).find(k => k.startsWith('__reactFiber'));
+      if (!fiberKey) continue;
+      let fiber = (el as any)[fiberKey];
+      while (fiber) {
+        if (fiber.memoizedProps?.onPress) { fiber.memoizedProps.onPress(); return; }
+        fiber = fiber.return;
+      }
+    }
+  }, label);
+}
+
 /**
  * Creates a paired parent + child account for integration tests.
- * Parent generates invite code; child enters it and joins the family.
+ * Parent generates invite code via UI; child enters it and joins the family.
  * Returns storage states for both so tests can restore sessions without re-logging in.
  */
 export async function setupFamilyPair(browser: any): Promise<{
@@ -175,24 +191,32 @@ export async function setupFamilyPair(browser: any): Promise<{
 }> {
   const ts = Date.now();
 
-  // ── 1. Sign up parent and generate invite code ───────────────
+  // ── 1. Sign up parent and generate invite code ───────────────────────────────
   const p = await browser.newPage();
   await signUp(p, 'Parent', `PairParent_${ts}`, `pair.parent.${ts}@kidreward-test.com`);
 
-  await clickTab(p, 'My Kids');
-  await p.getByText('Send Invite →').first().dispatchEvent('click');
+  // Navigate via Quick Actions "Invite Child" card on the dashboard
   await p.waitForLoadState('networkidle');
   await p.waitForTimeout(1500);
 
-  const createBtn = p.getByText('Create Invite Code');
-  if (await createBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await createBtn.dispatchEvent('click');
+  // Click the "Invite Child" Quick Action button via React fiber
+  await pressReact(p, 'Invite Child');
+  await p.waitForLoadState('networkidle');
+  await p.waitForTimeout(2000);
+
+  // Check if invite code already exists
+  const existingCode = p.getByText(/^[A-Z0-9]{6}$/);
+  const codeAlreadyThere = await existingCode.first().isVisible({ timeout: 2000 }).catch(() => false);
+
+  if (!codeAlreadyThere) {
+    // Click "Create Invite Code" via React fiber (TouchableOpacity doesn't respond to DOM click)
+    await pressReact(p, 'Create Invite Code');
     await p.waitForLoadState('networkidle');
-    await p.waitForTimeout(2000);
+    await p.waitForTimeout(3000);
   }
 
   const codeEl = p.getByText(/^[A-Z0-9]{6}$/);
-  await codeEl.first().waitFor({ state: 'visible', timeout: 15_000 });
+  await codeEl.first().waitFor({ state: 'visible', timeout: 20_000 });
   const inviteCode = (await codeEl.first().textContent())?.trim() ?? '';
 
   const parentState = await p.context().storageState();
@@ -202,23 +226,12 @@ export async function setupFamilyPair(browser: any): Promise<{
   const c = await browser.newPage();
   await signUp(c, 'Child', `PairChild_${ts}`, `pair.child.${ts}@kidreward-test.com`);
 
-  // Child lands on join screen
+  // Child lands on join screen — enter invite code
   await c.getByPlaceholder('ABC123').waitFor({ state: 'visible', timeout: 10_000 });
   await c.getByPlaceholder('ABC123').fill(inviteCode);
 
   // TouchableOpacity requires React fiber invocation on web
-  await c.evaluate(() => {
-    for (const el of Array.from(document.querySelectorAll('*'))) {
-      if (!el.textContent?.includes("Let's Go!")) continue;
-      const fiberKey = Object.keys(el).find(k => k.startsWith('__reactFiber'));
-      if (!fiberKey) continue;
-      let fiber = (el as any)[fiberKey];
-      while (fiber) {
-        if (fiber.memoizedProps?.onPress) { fiber.memoizedProps.onPress(); return; }
-        fiber = fiber.return;
-      }
-    }
-  });
+  await pressReact(c, "Let's Go!");
 
   // Wait for join + refreshFamily + router.replace('/(child)/home') to complete
   await c.waitForLoadState('networkidle');
