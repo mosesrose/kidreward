@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   desc: { fontSize: 14, color: Colors.textMid, textAlign: 'center', marginBottom: 14 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
   metaBadge: {
-    backgroundColor: 'rgba(0,212,255,0.1)',
+    backgroundColor: 'rgba(122,60,225,0.1)',
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10,
   },
   bonusBadge: { backgroundColor: 'rgba(255,215,0,0.15)' },

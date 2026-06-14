@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Alert,
-  Share, ScrollView,
+  Share, ScrollView, TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +23,7 @@ export default function InviteScreen() {
   const [childInvite, setChildInvite] = useState<Invite | null>(null);
   const [parentInvite, setParentInvite] = useState<Invite | null>(null);
   const [loading, setLoading] = useState(false);
+  const [childEmail, setChildEmail] = useState('');
 
   useEffect(() => { loadInvites(); }, [family]);
 
@@ -42,17 +43,25 @@ export default function InviteScreen() {
 
   async function createInvite(type: TabType) {
     if (!family || !profile) return;
+    if (type === 'child' && childEmail.trim() && !childEmail.includes('@')) {
+      Alert.alert('Invalid email', 'Please enter a valid email address for your child.');
+      return;
+    }
     setLoading(true);
     const code = generateCode();
+    const insertPayload: Record<string, any> = {
+      family_id: family.id,
+      code,
+      invite_type: type,
+      created_by: profile.id,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+    if (type === 'child' && childEmail.trim()) {
+      insertPayload.email = childEmail.trim().toLowerCase();
+    }
     const { data, error } = await supabase
       .from('invites')
-      .insert({
-        family_id: family.id,
-        code,
-        invite_type: type,
-        created_by: profile.id,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      })
+      .insert(insertPayload)
       .select()
       .single();
     setLoading(false);
@@ -123,6 +132,9 @@ export default function InviteScreen() {
             <Text style={styles.codeLabel}>
               {isChild ? 'Child Invite Code' : 'Parent Invite Code'}
             </Text>
+            {isChild && invite.email ? (
+              <Text style={styles.inviteEmail}>For: {invite.email}</Text>
+            ) : null}
             <Text style={[styles.code, !isChild && styles.codeParent]}>{invite.code}</Text>
             <Text style={styles.expiry}>
               Expires {new Date(invite.expires_at).toLocaleDateString()}
@@ -130,7 +142,7 @@ export default function InviteScreen() {
             <TouchableOpacity style={[styles.shareBtn, !isChild && styles.shareBtnParent]} onPress={() => shareCode(invite.code, tab)}>
               <Text style={styles.shareBtnText}>📤 Share Code</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.newCodeBtn} onPress={() => createInvite(tab)} disabled={loading}>
+            <TouchableOpacity style={styles.newCodeBtn} onPress={() => { setChildEmail(''); createInvite(tab); }} disabled={loading}>
               <Text style={styles.newCodeText}>{loading ? 'Creating…' : '+ New Code'}</Text>
             </TouchableOpacity>
           </View>
@@ -138,10 +150,26 @@ export default function InviteScreen() {
           <View style={styles.noCode}>
             <Text style={styles.noCodeEmoji}>{isChild ? '📬' : '👨‍👩‍👧'}</Text>
             <Text style={styles.noCodeTitle}>No active invite yet</Text>
+            {isChild && (
+              <View style={styles.emailRow}>
+                <Text style={styles.emailLabel}>Child's email (required)</Text>
+                <TextInput
+                  style={styles.emailInput}
+                  value={childEmail}
+                  onChangeText={setChildEmail}
+                  placeholder="child@example.com"
+                  placeholderTextColor="#AAA"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  testID="child-email-input"
+                />
+              </View>
+            )}
             <TouchableOpacity
-              style={[styles.createBtn, !isChild && styles.createBtnParent, loading && styles.disabled]}
+              style={[styles.createBtn, !isChild && styles.createBtnParent, (loading || (isChild && !childEmail.trim())) && styles.disabled]}
               onPress={() => createInvite(tab)}
-              disabled={loading}
+              disabled={loading || (isChild && !childEmail.trim())}
+              testID="create-invite-btn"
             >
               <Text style={styles.createBtnText}>{loading ? 'Creating…' : 'Create Invite Code'}</Text>
             </TouchableOpacity>
@@ -203,7 +231,15 @@ const styles = StyleSheet.create({
   newCodeText: { color: Colors.textMuted, fontSize: 14 },
   noCode: { alignItems: 'center', paddingVertical: 40 },
   noCodeEmoji: { fontSize: 52, marginBottom: 16 },
-  noCodeTitle: { fontSize: 18, fontWeight: '700', color: Colors.textDark, marginBottom: 24 },
+  noCodeTitle: { fontSize: 18, fontWeight: '700', color: Colors.textDark, marginBottom: 16 },
+  emailRow: { width: '100%', marginBottom: 20 },
+  emailLabel: { fontSize: 13, fontWeight: '600', color: Colors.textMid, marginBottom: 8 },
+  emailInput: {
+    borderWidth: 1, borderColor: Colors.parentBorder, borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 15, color: Colors.textDark, backgroundColor: Colors.parentCard,
+  },
+  inviteEmail: { fontSize: 14, color: Colors.textMid, marginBottom: 8 },
   createBtn: { backgroundColor: Colors.purple, paddingHorizontal: 32, paddingVertical: 16, borderRadius: 14 },
   createBtnParent: { backgroundColor: '#FF9500' },
   disabled: { opacity: 0.5 },

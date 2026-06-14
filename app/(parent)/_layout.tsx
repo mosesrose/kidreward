@@ -14,13 +14,13 @@ export default function ParentLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1A0A3C',
-          borderTopColor: 'rgba(255,255,255,0.1)',
+          backgroundColor: Colors.parentCard,
+          borderTopColor: Colors.parentBorder,
           height: 70,
           paddingBottom: 10,
         },
-        tabBarActiveTintColor: Colors.gem,
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.4)',
+        tabBarActiveTintColor: Colors.purple,
+        tabBarInactiveTintColor: Colors.textMuted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >

@@ -25,19 +25,15 @@ export default defineConfig({
     headless: true,
   },
 
+  // Default project = chrome only. Run `npx playwright test --project=mobile-chrome`
+  // for explicit cross-device runs. (Removed duplicate `chromium` project — it
+  // re-ran the same tests with a different browser binary and tripled runtime.)
   projects: [
     {
       name: 'chrome',
       use: {
         ...devices['Desktop Chrome'],
-        channel: 'chrome',   // uses the system-installed Chrome
-      },
-    },
-    {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        // no channel — uses Playwright's own Chromium download
+        channel: 'chrome',
       },
     },
     {

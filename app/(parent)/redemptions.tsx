@@ -150,10 +150,10 @@ const styles = StyleSheet.create({
   childName: { fontSize: 13, color: Colors.textMid, marginTop: 2 },
   date: { fontSize: 11, color: Colors.textMuted, marginTop: 2 },
   gemsSpent: {
-    backgroundColor: 'rgba(0,212,255,0.1)',
+    backgroundColor: 'rgba(122,60,225,0.1)',
     paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
   },
-  gemsSpentText: { color: Colors.gemGlow, fontWeight: '700', fontSize: 13 },
+  gemsSpentText: { color: Colors.purple, fontWeight: '700', fontSize: 13 },
   statusRow: { marginBottom: 10 },
   statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, alignSelf: 'flex-start' },
   statusText: { fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },

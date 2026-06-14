@@ -143,10 +143,10 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: '700', color: Colors.textDark },
   cardMeta: { fontSize: 12, color: Colors.textMuted, marginTop: 3 },
   gemBadge: {
-    backgroundColor: 'rgba(0,212,255,0.1)',
+    backgroundColor: 'rgba(122,60,225,0.1)',
     paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
   },
-  gemText: { color: Colors.gemGlow, fontWeight: '700', fontSize: 13 },
+  gemText: { color: Colors.purple, fontWeight: '700', fontSize: 13 },
   pendingBadge: {
     marginTop: 10, backgroundColor: 'rgba(255,145,0,0.1)',
     borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,

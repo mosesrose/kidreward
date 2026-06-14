@@ -93,7 +93,7 @@ export default function RewardsScreen() {
                 value={item.is_active}
                 onValueChange={() => toggleActive(item)}
                 trackColor={{ false: Colors.parentBorder, true: Colors.purple }}
-                thumbColor={item.is_active ? Colors.gem : '#ccc'}
+                thumbColor={item.is_active ? '#fff' : '#ccc'}
               />
             </View>
           </View>
@@ -131,8 +131,8 @@ const styles = StyleSheet.create({
   rewardInfo: { flex: 1 },
   rewardTitle: { fontSize: 16, fontWeight: '700', color: Colors.textDark },
   rewardDesc: { fontSize: 12, color: Colors.textMuted, marginTop: 3 },
-  costBadge: { backgroundColor: 'rgba(0,212,255,0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
-  costText: { color: Colors.gemGlow, fontWeight: '800', fontSize: 14 },
+  costBadge: { backgroundColor: 'rgba(122,60,225,0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
+  costText: { color: Colors.purple, fontWeight: '800', fontSize: 14 },
   toggleRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 14, paddingVertical: 10,
