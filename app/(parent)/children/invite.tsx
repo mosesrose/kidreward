@@ -70,6 +70,15 @@ export default function InviteScreen() {
     if (error) { Alert.alert('Error', error.message); return; }
     if (type === 'child') setChildInvite(data);
     else setParentInvite(data);
+
+    // Send email to child if email-gated invite
+    if (type === 'child' && emailToUse) {
+      supabase.functions.invoke('send-invite-email', {
+        body: { email: emailToUse, code, familyName: family?.name },
+      }).then(({ error: emailErr }) => {
+        if (emailErr) console.warn('Invite email failed:', emailErr.message);
+      });
+    }
   }
 
   async function shareCode(code: string, type: TabType) {
@@ -78,6 +87,7 @@ export default function InviteScreen() {
       : `You're invited to co-manage our family on KidReward! 👨‍👩‍👧\n\nUse invite code: ${code}\n\nSign up as a parent and enter this code.`;
     try { await Share.share({ message: msg, title: 'Join KidReward' }); } catch (_) {}
   }
+
 
   const invite = tab === 'child' ? childInvite : parentInvite;
   const isChild = tab === 'child';
