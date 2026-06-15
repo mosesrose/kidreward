@@ -41,9 +41,10 @@ export default function InviteScreen() {
     setParentInvite(all.find((i: { invite_type: string }) => i.invite_type === 'parent') ?? null);
   }
 
-  async function createInvite(type: TabType) {
+  async function createInvite(type: TabType, emailOverride?: string) {
     if (!family || !profile) return;
-    if (type === 'child' && childEmail.trim() && !childEmail.includes('@')) {
+    const emailToUse = (emailOverride ?? childEmail).trim();
+    if (type === 'child' && emailToUse && !emailToUse.includes('@')) {
       Alert.alert('Invalid email', 'Please enter a valid email address for your child.');
       return;
     }
@@ -56,8 +57,8 @@ export default function InviteScreen() {
       created_by: profile.id,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     };
-    if (type === 'child' && childEmail.trim()) {
-      insertPayload.email = childEmail.trim().toLowerCase();
+    if (type === 'child' && emailToUse) {
+      insertPayload.email = emailToUse.toLowerCase();
     }
     const { data, error } = await supabase
       .from('invites')
@@ -145,7 +146,7 @@ export default function InviteScreen() {
             <TouchableOpacity style={[styles.shareBtn, !isChild && styles.shareBtnParent]} onPress={() => shareCode(invite.code, tab)}>
               <Text style={styles.shareBtnText}>📤 Share Code</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.newCodeBtn} onPress={() => { setChildEmail(''); createInvite(tab); }} disabled={loading}>
+            <TouchableOpacity style={styles.newCodeBtn} onPress={() => createInvite(tab, isChild ? (invite.email ?? '') : undefined)} disabled={loading}>
               <Text style={styles.newCodeText}>{loading ? 'Creating…' : '+ New Code'}</Text>
             </TouchableOpacity>
           </View>
