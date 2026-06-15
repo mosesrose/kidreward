@@ -29,7 +29,11 @@ serve(async (req) => {
     }
 
     const family = familyName ?? 'your family';
-    const appUrl = 'https://reward-hazel.vercel.app';
+    const appUrl = Deno.env.get('APP_URL') ?? 'https://kidreward-one.vercel.app';
+    // Use the verified sender domain set as a Supabase secret, or fall back to
+    // Resend's onboarding sender (which can only deliver to the Resend account
+    // owner's own email — fine for local dev, must set RESEND_FROM in prod).
+    const fromAddress = Deno.env.get('RESEND_FROM') ?? 'KidReward <onboarding@resend.dev>';
 
     const html = `
 <!DOCTYPE html>
@@ -63,7 +67,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'KidReward <noreply@kidreward.app>',
+        from: fromAddress,
         to: [email],
         subject: `You're invited to join ${family} on KidReward! 🏆`,
         html,
