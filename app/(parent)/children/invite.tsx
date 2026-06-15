@@ -37,7 +37,8 @@ export default function InviteScreen() {
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false });
     const all = data ?? [];
-    setChildInvite(all.find((i: { invite_type: string }) => i.invite_type === 'child') ?? null);
+    // Only accept child invites that have an email — old email-less invites are treated as expired
+    setChildInvite(all.find((i: any) => i.invite_type === 'child' && i.email) ?? null);
     setParentInvite(all.find((i: { invite_type: string }) => i.invite_type === 'parent') ?? null);
   }
 
