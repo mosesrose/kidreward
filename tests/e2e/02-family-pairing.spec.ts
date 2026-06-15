@@ -6,7 +6,7 @@
 import { test, expect } from '@playwright/test';
 import {
   TEST_PASSWORD, signUp, gotoWelcome, restoreSession, clickTab, assertOnParentDashboard,
-  signUpChildForTest, SUPABASE_WAIT,
+  signUpChildForTest, SUPABASE_WAIT, SUPABASE_URL, SUPABASE_ANON_KEY,
 } from './helpers';
 
 // Spec-specific emails — avoids collision with other spec files sharing the same TS
@@ -154,6 +154,52 @@ test.describe('Family Pairing', () => {
     await page.waitForTimeout(300);
     const ariaDisabled = await btn.getAttribute('aria-disabled');
     expect(ariaDisabled === null || ariaDisabled === 'false').toBeTruthy();
+  });
+
+  test('Regression: email-less invite (pre-migration) shows creation form not stale card', async ({ page }) => {
+    // Simulate an invite created before the email column existed (email = null).
+    // The invite screen must discard it and show the email-input creation form,
+    // not silently display a card with no LOCKED TO EMAIL badge.
+    test.setTimeout(120_000);
+    const ts = Date.now();
+    const pEmail = `regression.noemail.${ts}@kidreward-test.com`;
+
+    // Create a fresh parent
+    const p = await page.context().browser()!.newPage();
+    await signUp(p, 'Parent', `RegParent${ts}`, pEmail);
+    const pAuth = await p.context().storageState();
+    await p.close();
+
+    // Extract JWT + family_id
+    const jwt = pAuth.origins?.flatMap((o: any) => o.localStorage ?? [])
+      .map((i: any) => { try { const d = JSON.parse(i.value); return d?.access_token; } catch { return null; } })
+      .find(Boolean);
+    const userId = pAuth.origins?.flatMap((o: any) => o.localStorage ?? [])
+      .map((i: any) => { try { const d = JSON.parse(i.value); return d?.user?.id; } catch { return null; } })
+      .find(Boolean);
+    const famResp = await fetch(`${SUPABASE_URL}/rest/v1/families?parent_id=eq.${userId}&select=id`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${jwt}` } });
+    const [{ id: familyId }] = await famResp.json();
+
+    // Insert an invite WITHOUT email (simulates pre-migration data)
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = ''; for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    await fetch(`${SUPABASE_URL}/rest/v1/invites`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ family_id: familyId, code, invite_type: 'child', created_by: userId, expires_at: new Date(Date.now() + 7 * 86400000).toISOString() }),
+    });
+
+    // Open invite screen as that parent — must see creation form, not the email-less card
+    await restoreSession(page, pAuth);               // restores session, lands on dashboard
+    await page.goto('/children/invite');             // explicit navigation to invite screen
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1500);
+
+    // Email input must be visible (creation form shown, not stale card)
+    await expect(page.getByTestId('child-email-input')).toBeVisible({ timeout: 10_000 });
+    // The old email-less invite code must NOT be shown
+    await expect(page.getByText(code)).not.toBeVisible({ timeout: 3_000 });
   });
 
   test('Invalid invite code shows error', async ({ page }) => {
