@@ -97,6 +97,7 @@ jobs:
 
       - name: Update Notion with UI test results
         if: always()
+        continue-on-error: true
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_ROOT_PAGE_ID: ${{ secrets.NOTION_ROOT_PAGE_ID }}
