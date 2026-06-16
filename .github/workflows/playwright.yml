@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: 'URL to test against'
-        default: 'https://kidreward-one.vercel.app'
+        description: 'URL to test against (leave blank to use the freshly deployed URL)'
+        default: ''
         required: false
 
 jobs:
