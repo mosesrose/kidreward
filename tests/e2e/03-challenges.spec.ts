@@ -567,7 +567,7 @@ test.describe('Challenges', () => {
     await page.waitForTimeout(1000);
 
     // Parent list shows the challenge title and Kindness chip
-    await expect(page.getByText(title, { exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(title, { exact: true }).first()).toBeVisible({ timeout: 10_000 });
     const kindnessChips = await page.getByText('Kindness').all();
     const anyKindnessVisible = (await Promise.all(kindnessChips.map(el => el.isVisible().catch(() => false)))).some(Boolean);
     expect(anyKindnessVisible).toBeTruthy();
@@ -584,7 +584,7 @@ test.describe('Challenges', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
-    await expect(page.getByText(title, { exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(title, { exact: true }).first()).toBeVisible({ timeout: 10_000 });
     const childKindnessChips = await page.getByText('Kindness').all();
     const anyChildKindnessVisible = (await Promise.all(childKindnessChips.map(el => el.isVisible().catch(() => false)))).some(Boolean);
     expect(anyChildKindnessVisible).toBeTruthy();
