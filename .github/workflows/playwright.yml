@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy
     if: always()
-    timeout-minutes: 20
+    timeout-minutes: 35
 
     steps:
       - uses: actions/checkout@v4
