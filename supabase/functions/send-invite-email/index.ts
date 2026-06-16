@@ -60,6 +60,20 @@ serve(async (req) => {
 </body>
 </html>`;
 
+    const text = `KidReward — You've been invited!
+
+Your invite code: ${code}
+
+You've been invited to join ${family} on KidReward, where kids earn gems for completing challenges and redeem them for real rewards.
+
+How to get started:
+1. Open ${appUrl}
+2. Tap "Join with invite code"
+3. Enter your code: ${code}
+4. Sign up using this email address
+
+This invite expires in 7 days and can only be used once.`;
+
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -69,8 +83,9 @@ serve(async (req) => {
       body: JSON.stringify({
         from: fromAddress,
         to: [email],
-        subject: `You're invited to join ${family} on KidReward! 🏆`,
+        subject: `Your KidReward invite code: ${code}`,
         html,
+        text,
       }),
     });
 

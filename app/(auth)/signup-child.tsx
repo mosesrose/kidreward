@@ -38,6 +38,7 @@ export default function SignupChild() {
       .select('id, family_id, invite_type, email, families(name)')
       .eq('code', trimmed)
       .eq('invite_type', 'child')
+      .eq('status', 'pending')
       .is('used_at', null)
       .gt('expires_at', new Date().toISOString())
       .single();

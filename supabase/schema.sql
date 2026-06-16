@@ -98,6 +98,7 @@ create table public.invites (
   used_by     uuid references public.profiles(id),
   expires_at  timestamptz not null default (now() + interval '7 days'),
   invite_type text not null default 'child' check (invite_type in ('child', 'parent')),
+  status      text not null default 'pending' check (status in ('pending', 'used', 'cancelled')),
   used_at     timestamptz,
   created_at  timestamptz default now()
 );

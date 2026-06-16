@@ -43,13 +43,19 @@ test.describe('Family Pairing', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    // Email is required for child invites — fill it before creating
+    // Open the "Invite a Child" form
+    const addBtn = page.getByTestId('add-child-invite-btn');
+    if (await addBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await addBtn.click();
+      await page.waitForTimeout(500);
+    }
+
+    // Fill email and create
     const emailInput = page.getByTestId('child-email-input');
     if (await emailInput.isVisible({ timeout: 3000 }).catch(() => false)) {
       await emailInput.fill(SPEC_CHILD_EMAIL);
     }
 
-    // Create invite code
     const createBtn = page.getByTestId('create-invite-btn');
     if (await createBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await createBtn.dispatchEvent('click');
@@ -69,18 +75,7 @@ test.describe('Family Pairing', () => {
   test('Parent invite shows child email on existing invite card', async ({ page }) => {
     test.skip(!inviteCode, 'Skipped — invite not yet generated');
 
-    await restoreSession(page, parentState, '/dashboard');
-    await assertOnParentDashboard(page);
-
-    await clickTab(page, 'My Kids');
-    // Use either button label (no-kids state: "Send Invite →", with-kids: "+ Invite")
-    const sendBtn = page.getByText('Send Invite →', { exact: true });
-    const addBtn  = page.getByText('+ Invite', { exact: true });
-    if (await sendBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await sendBtn.first().dispatchEvent('click');
-    } else {
-      await addBtn.first().dispatchEvent('click');
-    }
+    await restoreSession(page, parentState, '/children/invite');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
@@ -105,18 +100,15 @@ test.describe('Family Pairing', () => {
     const input = page.getByPlaceholder('ABC123');
     await input.fill(inviteCode);
     await expect(page.getByText('6/6 characters')).toBeVisible({ timeout: 10_000 });
-    // dispatchEvent bypasses CSS pointer-events without needing the full PressResponder chain
     await page.getByText("Let's Go!").first().dispatchEvent('click');
-    // Wait for the async join() to complete (Supabase insert + refreshFamily)
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(3000);
 
-    // After joining, navigate to home — gives the navigation time to complete
+    // After joining, navigate to home
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
-    // Should now see child dashboard with missions
     await expect(
       page.getByText('Active Missions').or(page.getByText('No missions yet')).first()
     ).toBeVisible({ timeout: 15_000 });
@@ -136,30 +128,135 @@ test.describe('Family Pairing', () => {
   });
 
   test('Parent invite: create button disabled until child email is entered', async ({ page }) => {
-    // Navigate directly to the invite screen (avoids unstable tab-click navigation)
     await restoreSession(page, parentState, '/children/invite');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
-    // If an existing invite is shown, skip (button not visible)
-    const emailInputVisible = await page.getByTestId('child-email-input').isVisible({ timeout: 3000 }).catch(() => false);
-    if (!emailInputVisible) { return; }
+    // Open the invite form
+    const addBtn = page.getByTestId('add-child-invite-btn');
+    await expect(addBtn).toBeVisible({ timeout: 5_000 });
+    await addBtn.click();
+    await page.waitForTimeout(300);
 
-    // With empty email, create button has aria-disabled=true (React Native Web uses aria-disabled, not HTML disabled)
+    // With empty email, create button has aria-disabled=true
     const btn = page.getByTestId('create-invite-btn');
     await expect(btn).toHaveAttribute('aria-disabled', 'true', { timeout: 5_000 });
 
-    // After filling email, button becomes interactive (aria-disabled=false or attribute removed)
+    // After filling email, button becomes interactive
     await page.getByTestId('child-email-input').fill('child@example.com');
     await page.waitForTimeout(300);
     const ariaDisabled = await btn.getAttribute('aria-disabled');
     expect(ariaDisabled === null || ariaDisabled === 'false').toBeTruthy();
   });
 
+  test('Multiple parallel invites — two child invites visible simultaneously', async ({ page }) => {
+    test.setTimeout(60_000);
+    const ts = Date.now();
+
+    await restoreSession(page, parentState, '/children/invite');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    const email1 = `multi1.${ts}@kidreward-test.com`;
+    const email2 = `multi2.${ts}@kidreward-test.com`;
+
+    // Create first invite
+    await page.getByTestId('add-child-invite-btn').click();
+    await page.getByTestId('child-email-input').fill(email1);
+    await page.getByTestId('create-invite-btn').dispatchEvent('click');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    // Create second invite
+    await page.getByTestId('add-child-invite-btn').click();
+    await page.getByTestId('child-email-input').fill(email2);
+    await page.getByTestId('create-invite-btn').dispatchEvent('click');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    // Both emails should be visible
+    await expect(page.getByText(email1, { exact: false })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(email2, { exact: false })).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('Cancel invite — invite card disappears from list', async ({ page }) => {
+    test.setTimeout(60_000);
+    const ts = Date.now();
+    const email = `cancel.${ts}@kidreward-test.com`;
+
+    await restoreSession(page, parentState, '/children/invite');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // Create an invite to cancel
+    await page.getByTestId('add-child-invite-btn').click();
+    await page.getByTestId('child-email-input').fill(email);
+    await page.getByTestId('create-invite-btn').dispatchEvent('click');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    // Find and note the code shown
+    await expect(page.getByText(email, { exact: false })).toBeVisible({ timeout: 10_000 });
+
+    // Click the cancel button (✕) — find it near the email badge
+    const cancelBtns = page.locator('[data-testid^="cancel-btn-"]');
+    await cancelBtns.last().click();
+    await page.waitForTimeout(500);
+
+    // Confirm the alert
+    page.once('dialog', async d => d.accept());
+    // React Native Alert on web — look for "Cancel invite" button
+    const confirmBtn = page.getByText('Cancel invite', { exact: true });
+    if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await confirmBtn.click();
+    }
+    await page.waitForTimeout(1000);
+
+    // Email should be gone from list
+    await expect(page.getByText(email, { exact: false })).not.toBeVisible({ timeout: 5_000 });
+  });
+
+  test('Resend invite — new code replaces old code', async ({ page }) => {
+    test.setTimeout(60_000);
+    const ts = Date.now();
+    const email = `resend.${ts}@kidreward-test.com`;
+
+    await restoreSession(page, parentState, '/children/invite');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // Create an invite
+    await page.getByTestId('add-child-invite-btn').click();
+    await page.getByTestId('child-email-input').fill(email);
+    await page.getByTestId('create-invite-btn').dispatchEvent('click');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    await expect(page.getByText(email, { exact: false })).toBeVisible({ timeout: 10_000 });
+
+    // Note the original code
+    const codeEl = page.getByText(/^[A-Z0-9]{6}$/).first();
+    const originalCode = (await codeEl.textContent())?.trim() ?? '';
+    expect(originalCode).toHaveLength(6);
+
+    // Click Resend
+    const resendBtns = page.locator('[data-testid^="resend-btn-"]');
+    await resendBtns.last().click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2500);
+
+    // A new code should be visible — different from original
+    const newCodeEl = page.getByText(/^[A-Z0-9]{6}$/).first();
+    await expect(newCodeEl).toBeVisible({ timeout: 10_000 });
+    const newCode = (await newCodeEl.textContent())?.trim() ?? '';
+    expect(newCode).toHaveLength(6);
+    expect(newCode).not.toBe(originalCode);
+
+    // Email still associated with new invite
+    await expect(page.getByText(email, { exact: false })).toBeVisible({ timeout: 5_000 });
+  });
+
   test('Regression: email-less invite (pre-migration) shows creation form not stale card', async ({ page }) => {
-    // Simulate an invite created before the email column existed (email = null).
-    // The invite screen must discard it and show the email-input creation form,
-    // not silently display a card with no LOCKED TO EMAIL badge.
     test.setTimeout(120_000);
     const ts = Date.now();
     const pEmail = `regression.noemail.${ts}@kidreward-test.com`;
@@ -190,20 +287,19 @@ test.describe('Family Pairing', () => {
       body: JSON.stringify({ family_id: familyId, code, invite_type: 'child', created_by: userId, expires_at: new Date(Date.now() + 7 * 86400000).toISOString() }),
     });
 
-    // Open invite screen as that parent — must see creation form, not the email-less card
-    await restoreSession(page, pAuth);               // restores session, lands on dashboard
-    await page.goto('/children/invite');             // explicit navigation to invite screen
+    // Open invite screen — must see the add button (not a stale email-less card)
+    await restoreSession(page, pAuth);
+    await page.goto('/children/invite');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1500);
 
-    // Email input must be visible (creation form shown, not stale card)
-    await expect(page.getByTestId('child-email-input')).toBeVisible({ timeout: 10_000 });
+    // "Invite a Child" button visible (empty-state UI shown, not stale card)
+    await expect(page.getByTestId('add-child-invite-btn')).toBeVisible({ timeout: 10_000 });
     // The old email-less invite code must NOT be shown
     await expect(page.getByText(code)).not.toBeVisible({ timeout: 3_000 });
   });
 
   test('Invalid invite code shows error', async ({ page }) => {
-    // Test via the signup-child flow (no child session needed — avoids slow REST signup)
     await gotoWelcome(page);
     await page.getByText('Join with invite code', { exact: false }).click();
     await page.waitForLoadState('networkidle');

@@ -20,9 +20,10 @@ type TabType = 'child' | 'parent';
 export default function InviteScreen() {
   const { family, profile } = useAuth();
   const [tab, setTab] = useState<TabType>('child');
-  const [childInvite, setChildInvite] = useState<Invite | null>(null);
+  const [childInvites, setChildInvites] = useState<Invite[]>([]);
   const [parentInvite, setParentInvite] = useState<Invite | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [childEmail, setChildEmail] = useState('');
 
   useEffect(() => { loadInvites(); }, [family]);
@@ -33,12 +34,11 @@ export default function InviteScreen() {
       .from('invites')
       .select('*')
       .eq('family_id', family.id)
-      .is('used_at', null)
+      .eq('status', 'pending')
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false });
     const all = data ?? [];
-    // Only accept child invites that have an email — old email-less invites are treated as expired
-    setChildInvite(all.find((i: any) => i.invite_type === 'child' && i.email) ?? null);
+    setChildInvites(all.filter((i: any) => i.invite_type === 'child' && i.email));
     setParentInvite(all.find((i: { invite_type: string }) => i.invite_type === 'parent') ?? null);
   }
 
@@ -57,6 +57,7 @@ export default function InviteScreen() {
       invite_type: type,
       created_by: profile.id,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'pending',
     };
     if (type === 'child' && emailToUse) {
       insertPayload.email = emailToUse.toLowerCase();
@@ -68,10 +69,15 @@ export default function InviteScreen() {
       .single();
     setLoading(false);
     if (error) { Alert.alert('Error', error.message); return; }
-    if (type === 'child') setChildInvite(data);
-    else setParentInvite(data);
 
-    // Send email to child if email-gated invite
+    if (type === 'child') {
+      setChildInvites(prev => [data, ...prev]);
+      setShowForm(false);
+      setChildEmail('');
+    } else {
+      setParentInvite(data);
+    }
+
     if (type === 'child' && emailToUse) {
       supabase.functions.invoke('send-invite-email', {
         body: { email: emailToUse, code, familyName: family?.name },
@@ -81,6 +87,18 @@ export default function InviteScreen() {
     }
   }
 
+  async function cancelInvite(inviteId: string) {
+    await supabase.from('invites').update({ status: 'cancelled' }).eq('id', inviteId);
+    setChildInvites(prev => prev.filter(i => i.id !== inviteId));
+  }
+
+  async function resendInvite(invite: Invite) {
+    setLoading(true);
+    await supabase.from('invites').update({ status: 'cancelled' }).eq('id', invite.id);
+    setChildInvites(prev => prev.filter(i => i.id !== invite.id));
+    await createInvite('child', invite.email ?? '');
+  }
+
   async function shareCode(code: string, type: TabType) {
     const msg = type === 'child'
       ? `Join my family on KidReward! 🏆\n\nUse invite code: ${code}\n\nSign up as a child and enter this code.`
@@ -88,23 +106,14 @@ export default function InviteScreen() {
     try { await Share.share({ message: msg, title: 'Join KidReward' }); } catch (_) {}
   }
 
-
-  const invite = tab === 'child' ? childInvite : parentInvite;
   const isChild = tab === 'child';
 
-  const steps = isChild
-    ? [
-        'Tap "Create Invite Code" below',
-        'Share the 6-character code with your child',
-        'Your child signs up and enters the code',
-        'They appear in your Kids list!',
-      ]
-    : [
-        'Tap "Create Invite Code" below',
-        'Share the code with the other parent',
-        'They sign up as a parent and enter the code',
-        'They can manage challenges and rewards too',
-      ];
+  const parentSteps = [
+    'Tap "Create Invite Code" below',
+    'Share the code with the other parent',
+    'They sign up as a parent and enter the code',
+    'They can manage challenges and rewards too',
+  ];
 
   return (
     <View style={styles.container}>
@@ -135,38 +144,24 @@ export default function InviteScreen() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.description}>
           {isChild
-            ? 'Share an invite code with your child. They enter it in the app to join your family.'
+            ? 'Invite each child by email. They receive a locked invite code only usable with that email.'
             : 'Invite another parent to co-manage your family. They can approve challenges and manage rewards.'}
         </Text>
 
-        {invite ? (
-          <View style={[styles.codeCard, !isChild && styles.codeCardParent]}>
-            <Text style={styles.codeLabel}>
-              {isChild ? 'Child Invite Code' : 'Parent Invite Code'}
-            </Text>
-            {isChild && invite.email ? (
-              <View style={styles.emailBadge}>
-                <Text style={styles.emailBadgeLabel}>LOCKED TO EMAIL</Text>
-                <Text style={styles.emailBadgeValue}>{invite.email}</Text>
-              </View>
-            ) : null}
-            <Text style={[styles.code, !isChild && styles.codeParent]}>{invite.code}</Text>
-            <Text style={styles.expiry}>
-              Expires {new Date(invite.expires_at).toLocaleDateString()}
-            </Text>
-            <TouchableOpacity style={[styles.shareBtn, !isChild && styles.shareBtnParent]} onPress={() => shareCode(invite.code, tab)}>
-              <Text style={styles.shareBtnText}>📤 Share Code</Text>
+        {isChild ? (
+          <>
+            {/* Invite a Child button */}
+            <TouchableOpacity
+              style={styles.addBtn}
+              onPress={() => setShowForm(f => !f)}
+              testID="add-child-invite-btn"
+            >
+              <Text style={styles.addBtnText}>{showForm ? '✕ Cancel' : '+ Invite a Child'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.newCodeBtn} onPress={() => createInvite(tab, isChild ? (invite.email ?? '') : undefined)} disabled={loading}>
-              <Text style={styles.newCodeText}>{loading ? 'Creating…' : '+ New Code'}</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.noCode}>
-            <Text style={styles.noCodeEmoji}>{isChild ? '📬' : '👨‍👩‍👧'}</Text>
-            <Text style={styles.noCodeTitle}>No active invite yet</Text>
-            {isChild && (
-              <View style={styles.emailRow}>
+
+            {/* Inline new-invite form */}
+            {showForm && (
+              <View style={styles.formCard}>
                 <Text style={styles.emailLabel}>Child's email (required)</Text>
                 <TextInput
                   style={styles.emailInput}
@@ -176,32 +171,121 @@ export default function InviteScreen() {
                   placeholderTextColor="#AAA"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  autoFocus
                   testID="child-email-input"
                 />
+                <TouchableOpacity
+                  style={[styles.createBtn, (loading || !childEmail.trim()) && styles.disabled]}
+                  onPress={() => createInvite('child')}
+                  disabled={loading || !childEmail.trim()}
+                  testID="create-invite-btn"
+                >
+                  <Text style={styles.createBtnText}>{loading ? 'Creating…' : 'Send Invite'}</Text>
+                </TouchableOpacity>
               </View>
             )}
-            <TouchableOpacity
-              style={[styles.createBtn, !isChild && styles.createBtnParent, (loading || (isChild && !childEmail.trim())) && styles.disabled]}
-              onPress={() => createInvite(tab)}
-              disabled={loading || (isChild && !childEmail.trim())}
-              testID="create-invite-btn"
-            >
-              <Text style={styles.createBtnText}>{loading ? 'Creating…' : 'Create Invite Code'}</Text>
-            </TouchableOpacity>
-          </View>
+
+            {/* Pending invite list */}
+            {childInvites.length > 0 && (
+              <>
+                <Text style={styles.sectionLabel}>PENDING INVITES</Text>
+                {childInvites.map(invite => (
+                  <View key={invite.id} style={styles.codeCard} testID={`invite-card-${invite.code}`}>
+                    <View style={styles.emailBadge}>
+                      <Text style={styles.emailBadgeLabel}>LOCKED TO EMAIL</Text>
+                      <Text style={styles.emailBadgeValue} testID={`invite-email-${invite.code}`}>{invite.email}</Text>
+                    </View>
+                    <Text style={styles.code} testID={`invite-code-${invite.code}`}>{invite.code}</Text>
+                    <Text style={styles.expiry}>
+                      Expires {new Date(invite.expires_at).toLocaleDateString()}
+                    </Text>
+                    <View style={styles.actionRow}>
+                      <TouchableOpacity
+                        style={styles.shareBtn}
+                        onPress={() => shareCode(invite.code, 'child')}
+                        testID={`share-btn-${invite.code}`}
+                      >
+                        <Text style={styles.actionBtnText}>📤 Share</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.resendBtn}
+                        onPress={() => resendInvite(invite)}
+                        disabled={loading}
+                        testID={`resend-btn-${invite.code}`}
+                      >
+                        <Text style={styles.actionBtnText}>🔄 Resend</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.cancelBtn}
+                        onPress={() => {
+                          Alert.alert('Cancel invite?', `Remove the invite for ${invite.email}?`, [
+                            { text: 'Keep', style: 'cancel' },
+                            { text: 'Cancel invite', style: 'destructive', onPress: () => cancelInvite(invite.id) },
+                          ]);
+                        }}
+                        testID={`cancel-btn-${invite.code}`}
+                      >
+                        <Text style={styles.cancelBtnText}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </>
+            )}
+
+            {childInvites.length === 0 && !showForm && (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyEmoji}>📬</Text>
+                <Text style={styles.emptyTitle}>No pending invites</Text>
+                <Text style={styles.emptySubtitle}>Tap "+ Invite a Child" above to get started.</Text>
+              </View>
+            )}
+          </>
+        ) : (
+          /* Co-parent tab — unchanged single invite UI */
+          parentInvite ? (
+            <View style={[styles.codeCard, styles.codeCardParent]}>
+              <Text style={styles.codeLabel}>Parent Invite Code</Text>
+              <Text style={[styles.code, styles.codeParent]}>{parentInvite.code}</Text>
+              <Text style={styles.expiry}>
+                Expires {new Date(parentInvite.expires_at).toLocaleDateString()}
+              </Text>
+              <TouchableOpacity style={[styles.shareBtn, styles.shareBtnParent]} onPress={() => shareCode(parentInvite.code, 'parent')}>
+                <Text style={styles.actionBtnText}>📤 Share Code</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.newCodeBtn} onPress={() => createInvite('parent')} disabled={loading}>
+                <Text style={styles.newCodeText}>{loading ? 'Creating…' : '+ New Code'}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>👨‍👩‍👧</Text>
+              <Text style={styles.emptyTitle}>No active invite yet</Text>
+              <TouchableOpacity
+                style={[styles.createBtn, styles.createBtnParent, loading && styles.disabled]}
+                onPress={() => createInvite('parent')}
+                disabled={loading}
+                testID="create-invite-btn"
+              >
+                <Text style={styles.createBtnText}>{loading ? 'Creating…' : 'Create Invite Code'}</Text>
+              </TouchableOpacity>
+            </View>
+          )
         )}
 
-        <View style={styles.howTo}>
-          <Text style={styles.howToTitle}>How it works</Text>
-          {steps.map((text, i) => (
-            <View key={i} style={styles.step}>
-              <View style={[styles.stepNum, !isChild && styles.stepNumParent]}>
-                <Text style={styles.stepNumText}>{i + 1}</Text>
+        {!isChild && (
+          <View style={styles.howTo}>
+            <Text style={styles.howToTitle}>How it works</Text>
+            {parentSteps.map((text, i) => (
+              <View key={i} style={styles.step}>
+                <View style={styles.stepNumParent}>
+                  <Text style={styles.stepNumText}>{i + 1}</Text>
+                </View>
+                <Text style={styles.stepText}>{text}</Text>
               </View>
-              <Text style={styles.stepText}>{text}</Text>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -225,54 +309,81 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 14, fontWeight: '700', color: Colors.textMuted },
   tabTextActive: { color: Colors.textLight },
   scroll: { padding: 24, paddingBottom: 40 },
-  description: { fontSize: 15, color: Colors.textMid, lineHeight: 22, marginBottom: 28 },
-  codeCard: {
-    backgroundColor: Colors.parentCard, borderRadius: 24, padding: 28, alignItems: 'center', marginBottom: 28,
-    borderWidth: 2, borderColor: Colors.purple,
-    shadowColor: Colors.purple, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 4,
+  description: { fontSize: 15, color: Colors.textMid, lineHeight: 22, marginBottom: 20 },
+  addBtn: {
+    backgroundColor: Colors.purple, borderRadius: 14,
+    paddingVertical: 14, alignItems: 'center', marginBottom: 16,
   },
-  codeCardParent: { borderColor: '#FF9500' },
-  codeLabel: { fontSize: 13, fontWeight: '700', color: Colors.textMuted, letterSpacing: 2, marginBottom: 12 },
-  code: { fontSize: 48, fontWeight: '900', color: Colors.purple, letterSpacing: 8, marginBottom: 8 },
-  codeParent: { color: '#FF9500' },
-  expiry: { fontSize: 13, color: Colors.textMuted, marginBottom: 24 },
-  shareBtn: {
-    backgroundColor: Colors.purple, paddingHorizontal: 32, paddingVertical: 14,
-    borderRadius: 14, width: '100%', alignItems: 'center', marginBottom: 10,
+  addBtnText: { color: Colors.textLight, fontWeight: '700', fontSize: 16 },
+  formCard: {
+    backgroundColor: Colors.parentCard, borderRadius: 20, padding: 20,
+    marginBottom: 20, borderWidth: 1, borderColor: Colors.parentBorder,
   },
-  shareBtnParent: { backgroundColor: '#FF9500' },
-  shareBtnText: { color: Colors.textLight, fontWeight: '700', fontSize: 16 },
-  newCodeBtn: { paddingVertical: 12 },
-  newCodeText: { color: Colors.textMuted, fontSize: 14 },
-  noCode: { alignItems: 'center', paddingVertical: 40 },
-  noCodeEmoji: { fontSize: 52, marginBottom: 16 },
-  noCodeTitle: { fontSize: 18, fontWeight: '700', color: Colors.textDark, marginBottom: 16 },
-  emailRow: { width: '100%', marginBottom: 20 },
   emailLabel: { fontSize: 13, fontWeight: '600', color: Colors.textMid, marginBottom: 8 },
   emailInput: {
     borderWidth: 1, borderColor: Colors.parentBorder, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, color: Colors.textDark, backgroundColor: Colors.parentCard,
+    fontSize: 15, color: Colors.textDark, backgroundColor: Colors.parentBg,
+    marginBottom: 14,
   },
+  sectionLabel: {
+    fontSize: 11, fontWeight: '700', color: Colors.textMuted, letterSpacing: 1.5,
+    marginBottom: 12,
+  },
+  codeCard: {
+    backgroundColor: Colors.parentCard, borderRadius: 20, padding: 20, marginBottom: 16,
+    borderWidth: 2, borderColor: Colors.purple,
+    shadowColor: Colors.purple, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 3,
+  },
+  codeCardParent: { borderColor: '#FF9500' },
+  codeLabel: { fontSize: 13, fontWeight: '700', color: Colors.textMuted, letterSpacing: 2, marginBottom: 12, textAlign: 'center' },
   emailBadge: {
     backgroundColor: Colors.purple + '18',
-    borderRadius: 10, paddingVertical: 8, paddingHorizontal: 16,
-    marginBottom: 14, alignItems: 'center', width: '100%',
+    borderRadius: 10, paddingVertical: 6, paddingHorizontal: 14,
+    marginBottom: 10, alignItems: 'center',
   },
-  emailBadgeLabel: { fontSize: 10, fontWeight: '700', color: Colors.textMuted, letterSpacing: 1.5, marginBottom: 3 },
-  emailBadgeValue: { fontSize: 14, fontWeight: '700', color: Colors.purple },
-  createBtn: { backgroundColor: Colors.purple, paddingHorizontal: 32, paddingVertical: 16, borderRadius: 14 },
+  emailBadgeLabel: { fontSize: 10, fontWeight: '700', color: Colors.textMuted, letterSpacing: 1.5, marginBottom: 2 },
+  emailBadgeValue: { fontSize: 13, fontWeight: '700', color: Colors.purple },
+  code: { fontSize: 36, fontWeight: '900', color: Colors.purple, letterSpacing: 6, marginBottom: 4, textAlign: 'center' },
+  codeParent: { color: '#FF9500' },
+  expiry: { fontSize: 12, color: Colors.textMuted, marginBottom: 14, textAlign: 'center' },
+  actionRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  shareBtn: {
+    flex: 1, backgroundColor: Colors.purple, paddingVertical: 10,
+    borderRadius: 10, alignItems: 'center',
+  },
+  shareBtnParent: { backgroundColor: '#FF9500' },
+  resendBtn: {
+    flex: 1, backgroundColor: Colors.purple + '22', paddingVertical: 10,
+    borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: Colors.purple,
+  },
+  cancelBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: '#FF3B3022', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: '#FF3B30',
+  },
+  cancelBtnText: { color: '#FF3B30', fontWeight: '700', fontSize: 14 },
+  actionBtnText: { color: Colors.purple, fontWeight: '700', fontSize: 13 },
+  newCodeBtn: { paddingVertical: 10, alignItems: 'center' },
+  newCodeText: { color: Colors.textMuted, fontSize: 14 },
+  emptyState: { alignItems: 'center', paddingVertical: 40 },
+  emptyEmoji: { fontSize: 48, marginBottom: 12 },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: Colors.textDark, marginBottom: 8 },
+  emptySubtitle: { fontSize: 14, color: Colors.textMuted, textAlign: 'center' },
+  createBtn: {
+    backgroundColor: Colors.purple, paddingHorizontal: 32, paddingVertical: 14,
+    borderRadius: 14, marginTop: 16, alignItems: 'center', width: '100%',
+  },
   createBtnParent: { backgroundColor: '#FF9500' },
   disabled: { opacity: 0.5 },
   createBtnText: { color: Colors.textLight, fontWeight: '700', fontSize: 16 },
-  howTo: { backgroundColor: Colors.parentCard, borderRadius: 20, padding: 20, gap: 16 },
+  howTo: { backgroundColor: Colors.parentCard, borderRadius: 20, padding: 20, gap: 16, marginTop: 24 },
   howToTitle: { fontSize: 16, fontWeight: '800', color: Colors.textDark, marginBottom: 4 },
   step: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  stepNum: {
+  stepNumParent: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: Colors.purple, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#FF9500', alignItems: 'center', justifyContent: 'center',
   },
-  stepNumParent: { backgroundColor: '#FF9500' },
   stepNumText: { color: Colors.textLight, fontWeight: '700', fontSize: 13 },
   stepText: { fontSize: 14, color: Colors.textMid, flex: 1 },
 });

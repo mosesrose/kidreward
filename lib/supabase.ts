@@ -75,6 +75,7 @@ export type Invite = {
   expires_at: string;
   used_at: string | null;
   created_at: string;
+  status: 'pending' | 'used' | 'cancelled';
 };
 
 export type Challenge = {
