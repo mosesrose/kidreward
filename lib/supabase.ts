@@ -1,6 +1,7 @@
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
+import type { ChallengeValue } from '@/constants/challenges';
 import { mockSupabase } from './mock-supabase';
 
 const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK === 'true';
@@ -91,6 +92,7 @@ export type Challenge = {
   status: 'active' | 'completed' | 'archived';
   repeat_type: 'once' | 'daily' | 'weekly';
   due_date: string | null;
+  value: ChallengeValue | null;
   created_by: string;
   created_at: string;
 };

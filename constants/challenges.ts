@@ -154,3 +154,25 @@ export const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export const AVATAR_OPTIONS = ['🧒', '👦', '👧', '🧑', '🦸', '🧙', '🦊', '🐼', '🦁', '🐸', '🚀', '⭐'];
+
+export type ChallengeValue =
+  | 'responsibility' | 'kindness' | 'patience'
+  | 'curiosity' | 'courage' | 'empathy';
+
+export const CHALLENGE_VALUES: {
+  key: ChallengeValue;
+  label: string;
+  emoji: string;
+  color: string;
+}[] = [
+  { key: 'responsibility', label: 'Responsibility', emoji: '🏆', color: '#4B634D' },
+  { key: 'kindness',       label: 'Kindness',       emoji: '💛', color: '#D97706' },
+  { key: 'patience',       label: 'Patience',       emoji: '⏳', color: '#6366F1' },
+  { key: 'curiosity',      label: 'Curiosity',      emoji: '🔍', color: '#0EA5E9' },
+  { key: 'courage',        label: 'Courage',        emoji: '🦁', color: '#DC2626' },
+  { key: 'empathy',        label: 'Empathy',        emoji: '💜', color: '#7C3AED' },
+];
+
+export const VALUE_COLORS: Record<ChallengeValue, string> = Object.fromEntries(
+  CHALLENGE_VALUES.map(v => [v.key, v.color])
+) as Record<ChallengeValue, string>;
