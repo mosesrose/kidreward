@@ -30,3 +30,4 @@ deploy-url.txt
 
 .claude/
 *.log
+.vercel

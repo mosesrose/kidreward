@@ -166,7 +166,7 @@ export async function assertOnChildDashboard(page: Page) {
 // ── Session restore (avoids login rate-limits) ───────────────
 // After signUp/login, call page.context().storageState() to capture auth state.
 // Then in tests, call restoreSession(page, savedState) instead of login().
-export async function restoreSession(page: Page, state: any, _targetPath = '/') {
+export async function restoreSession(page: Page, state: any, targetPath = '/') {
   // addInitScript runs BEFORE any page script on every navigation,
   // so Supabase reads the auth token from localStorage on first load.
   await page.addInitScript((s: any) => {
@@ -177,11 +177,17 @@ export async function restoreSession(page: Page, state: any, _targetPath = '/') 
       }
     }
   }, state);
-  // Always navigate to '/' — Vercel reliably serves index.html there.
-  // The app's auth router then redirects to the correct page.
+  // Land on '/' first so the app's auth router resolves role/session before
+  // we deep-link — landing cold on a nested route can race the auth bootstrap.
   await page.goto('/');
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(3000);
+
+  if (targetPath !== '/') {
+    await page.goto(targetPath);
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1500);
+  }
 }
 
 export async function assertOnAvatarPicker(page: Page) {

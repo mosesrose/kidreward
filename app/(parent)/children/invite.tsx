@@ -25,6 +25,7 @@ export default function InviteScreen() {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [childEmail, setChildEmail] = useState('');
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
 
   useEffect(() => { loadInvites(); }, [family]);
 
@@ -199,35 +200,52 @@ export default function InviteScreen() {
                     <Text style={styles.expiry}>
                       Expires {new Date(invite.expires_at).toLocaleDateString()}
                     </Text>
-                    <View style={styles.actionRow}>
-                      <TouchableOpacity
-                        style={styles.shareBtn}
-                        onPress={() => shareCode(invite.code, 'child')}
-                        testID={`share-btn-${invite.code}`}
-                      >
-                        <Text style={styles.actionBtnText}>📤 Share</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.resendBtn}
-                        onPress={() => resendInvite(invite)}
-                        disabled={loading}
-                        testID={`resend-btn-${invite.code}`}
-                      >
-                        <Text style={styles.actionBtnText}>🔄 Resend</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.cancelBtn}
-                        onPress={() => {
-                          Alert.alert('Cancel invite?', `Remove the invite for ${invite.email}?`, [
-                            { text: 'Keep', style: 'cancel' },
-                            { text: 'Cancel invite', style: 'destructive', onPress: () => cancelInvite(invite.id) },
-                          ]);
-                        }}
-                        testID={`cancel-btn-${invite.code}`}
-                      >
-                        <Text style={styles.cancelBtnText}>✕</Text>
-                      </TouchableOpacity>
-                    </View>
+                    {confirmCancelId === invite.id ? (
+                      <View style={styles.confirmRow}>
+                        <Text style={styles.confirmText}>Remove the invite for {invite.email}?</Text>
+                        <View style={styles.confirmButtonsRow}>
+                          <TouchableOpacity
+                            style={styles.keepBtn}
+                            onPress={() => setConfirmCancelId(null)}
+                            testID={`keep-btn-${invite.code}`}
+                          >
+                            <Text style={styles.keepBtnText}>Keep</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.confirmCancelBtn}
+                            onPress={() => { setConfirmCancelId(null); cancelInvite(invite.id); }}
+                            testID={`confirm-cancel-btn-${invite.code}`}
+                          >
+                            <Text style={styles.confirmCancelBtnText}>Cancel invite</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ) : (
+                      <View style={styles.actionRow}>
+                        <TouchableOpacity
+                          style={styles.shareBtn}
+                          onPress={() => shareCode(invite.code, 'child')}
+                          testID={`share-btn-${invite.code}`}
+                        >
+                          <Text style={styles.actionBtnText}>📤 Share</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.resendBtn}
+                          onPress={() => resendInvite(invite)}
+                          disabled={loading}
+                          testID={`resend-btn-${invite.code}`}
+                        >
+                          <Text style={styles.actionBtnText}>🔄 Resend</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.cancelBtn}
+                          onPress={() => setConfirmCancelId(invite.id)}
+                          testID={`cancel-btn-${invite.code}`}
+                        >
+                          <Text style={styles.cancelBtnText}>✕</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
                 ))}
               </>
@@ -363,6 +381,19 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#FF3B30',
   },
   cancelBtnText: { color: '#FF3B30', fontWeight: '700', fontSize: 14 },
+  confirmRow: { gap: 10 },
+  confirmText: { fontSize: 13, color: Colors.textMid, textAlign: 'center' },
+  confirmButtonsRow: { flexDirection: 'row', gap: 8 },
+  keepBtn: {
+    flex: 1, backgroundColor: Colors.purple + '18', paddingVertical: 10,
+    borderRadius: 10, alignItems: 'center',
+  },
+  keepBtnText: { color: Colors.purple, fontWeight: '700', fontSize: 13 },
+  confirmCancelBtn: {
+    flex: 1, backgroundColor: '#FF3B30', paddingVertical: 10,
+    borderRadius: 10, alignItems: 'center',
+  },
+  confirmCancelBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   actionBtnText: { color: Colors.purple, fontWeight: '700', fontSize: 13 },
   newCodeBtn: { paddingVertical: 10, alignItems: 'center' },
   newCodeText: { color: Colors.textMuted, fontSize: 14 },

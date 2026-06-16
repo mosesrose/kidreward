@@ -7,8 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "playwright test --project=chrome",
-    "test:mobile": "playwright test --project=mobile-chrome",
+    "test": "playwright test --project=chromium",
+    "test:mobile": "playwright test --project=mobile-chromium",
     "test:all": "playwright test"
   },
   "dependencies": {
