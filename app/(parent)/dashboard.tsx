@@ -32,7 +32,7 @@ export default function ParentDashboard() {
         .eq('family_id', family.id),
       supabase
         .from('completions')
-        .select('*, challenges(*), profiles(*)')
+        .select('*, challenges(*), profiles!completions_child_id_fkey(*)')
         .eq('status', 'pending')
         .in('challenge_id', challengeIds)
         .order('submitted_at', { ascending: false })

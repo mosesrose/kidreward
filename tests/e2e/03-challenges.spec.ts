@@ -192,38 +192,223 @@ test.describe('Challenges', () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
-  test('US-013 | Parent approves submission and gems are awarded', async ({ page }) => {
-    await restoreSession(page, parentState, '/challenges');
+  test('US-013 | Regression: child submits a challenge and parent can approve it from the UI', async ({ page }) => {
+    // Reproduces a reported bug: a parent saw a submission was "pending for
+    // review" but had no way to approve it from the UI. This walks the exact
+    // real-world path end-to-end (no vacuous `if` guards) — parent creates a
+    // challenge, child submits it, parent discovers + approves it from the
+    // dashboard "Review" CTA → challenge list → challenge detail.
+    test.setTimeout(90_000);
+    const ts = Date.now();
+    const title = `Approve Flow Test ${ts}`;
+
+    // ── Parent creates a fresh, uniquely-titled custom challenge ──
+    await restoreSession(page, parentState, '/dashboard');
+    await assertOnParentDashboard(page);
+    await clickTab(page, 'Challenges');
+    await page.getByText('+ New').click();
     await page.waitForLoadState('networkidle');
 
-    const challengeCard = page.getByText(CHALLENGE_TITLE);
-    if (await challengeCard.isVisible().catch(() => false)) {
-      await challengeCard.click();
-      await page.waitForLoadState('networkidle');
+    await page.getByPlaceholder('e.g. Keep room tidy').fill(title);
+    await page.getByTestId('save-challenge-btn').click();
+    await page.waitForURL(url => !url.pathname.includes('create'), { timeout: 20_000 });
+    // router.back() can land on the tab's list OR pop an extra entry depending
+    // on Expo Router's web history state — navigate explicitly instead of
+    // trusting wherever back() landed, so this assertion is deterministic.
+    await page.goto('/challenges');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+    await expect(page.getByText(title)).toBeVisible({ timeout: 10_000 });
 
-      const approveBtn = page.getByRole('button', { name: /Approve/i });
-      if (await approveBtn.isVisible().catch(() => false)) {
-        await approveBtn.click();
-        await page.waitForLoadState('networkidle');
-        await expect(
-          page.getByText('approved').or(page.getByText('awarded')).first()
-        ).toBeVisible({ timeout: 10_000 });
+    // ── Child submits "I Did It!" for this exact challenge ──
+    await restoreSession(page, childState, '/');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
+    test.skip(!!onJoin, 'Child not in family — pairing setup failed');
+
+    await clickTab(page, 'Missions');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    async function anyVisible(text: string) {
+      const all = await page.getByText(text, { exact: true }).all();
+      for (const el of all) {
+        if (await el.isVisible().catch(() => false)) return true;
       }
+      return false;
     }
+    await expect.poll(() => anyVisible(title), { timeout: 15_000, message: 'challenge never appeared on Missions tab' }).toBe(true);
+
+    // Fire onPress via React fiber injection (Expo Router web overlay intercepts pointer events)
+    await page.evaluate((t: string) => {
+      for (const el of Array.from(document.querySelectorAll('*'))) {
+        if (el.textContent?.trim() !== t) continue;
+        const fiberKey = Object.keys(el).find(k => k.startsWith('__reactFiber'));
+        if (!fiberKey) continue;
+        let fiber = (el as any)[fiberKey];
+        while (fiber) {
+          if (fiber.memoizedProps?.onPress) { fiber.memoizedProps.onPress(); return; }
+          fiber = fiber.return;
+        }
+      }
+    }, title);
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1500);
+
+    await expect(page.getByText('I did it!', { exact: false })).toBeVisible({ timeout: 10_000 });
+
+    page.once('dialog', async d => d.accept()); // handle Alert.alert('Submitted', ...)
+    await page.evaluate(() => {
+      for (const el of Array.from(document.querySelectorAll('*'))) {
+        if (!el.textContent?.toLowerCase().includes('i did it')) continue;
+        const fiberKey = Object.keys(el).find(k => k.startsWith('__reactFiber'));
+        if (!fiberKey) continue;
+        let fiber = (el as any)[fiberKey];
+        while (fiber) {
+          if (fiber.memoizedProps?.onPress) { fiber.memoizedProps.onPress(); return; }
+          fiber = fiber.return;
+        }
+      }
+    });
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    await expect(
+      page.getByText('Waiting for parent').or(page.getByText('Waiting for review'))
+        .or(page.getByText('Submitted')).first()
+    ).toBeVisible({ timeout: 10_000 });
+
+    // ── Parent discovers it via the real dashboard path and approves it ──
+    await restoreSession(page, parentState, '/dashboard');
+    await assertOnParentDashboard(page);
+
+    await expect(page.getByText(/Review \d+ submission/i)).toBeVisible({ timeout: 15_000 });
+    await page.getByText(/Review \d+ submission/i).click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // The challenge card itself must be visible, with a pending badge somewhere
+    // on the list screen, so the parent can actually discover which one to open.
+    await expect(page.getByText(title, { exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/waiting for review/i).first()).toBeVisible({ timeout: 10_000 });
+
+    await page.getByText(title, { exact: true }).click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // Confirm we actually landed on this challenge's detail page before
+    // looking for the action buttons, so a failure here is unambiguous.
+    await expect(page.getByText(/^Submissions \(/)).toBeVisible({ timeout: 10_000 });
+
+    const approveBtn = page.locator('[data-testid^="approve-btn-"]').first();
+    await expect(approveBtn).toBeVisible({ timeout: 10_000 });
+    await approveBtn.dispatchEvent('click');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    await expect(
+      page.getByText('approved').or(page.getByText('awarded', { exact: false })).first()
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test('Parent can reject a submission', async ({ page }) => {
-    await restoreSession(page, parentState, '/challenges');
+    test.setTimeout(90_000);
+    const ts = Date.now();
+    const title = `Reject Flow Test ${ts}`;
+
+    // ── Parent creates a fresh, uniquely-titled custom challenge ──
+    await restoreSession(page, parentState, '/dashboard');
+    await assertOnParentDashboard(page);
+    await clickTab(page, 'Challenges');
+    await page.getByText('+ New').click();
     await page.waitForLoadState('networkidle');
 
-    const rejectBtn = page.getByRole('button', { name: /Reject/i });
-    if (await rejectBtn.first().isVisible().catch(() => false)) {
-      await rejectBtn.first().click();
-      await page.waitForLoadState('networkidle');
-      await expect(
-        page.getByText('rejected').or(page.getByText('Rejected')).first()
-      ).toBeVisible({ timeout: 10_000 });
+    await page.getByPlaceholder('e.g. Keep room tidy').fill(title);
+    await page.getByTestId('save-challenge-btn').click();
+    await page.waitForURL(url => !url.pathname.includes('create'), { timeout: 20_000 });
+    // Navigate explicitly rather than trusting wherever router.back() landed —
+    // Expo Router's web history handling isn't guaranteed to land on the list.
+    await page.goto('/challenges');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+    await expect(page.getByText(title)).toBeVisible({ timeout: 10_000 });
+
+    // ── Child submits "I Did It!" for this exact challenge ──
+    await restoreSession(page, childState, '/');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
+    test.skip(!!onJoin, 'Child not in family — pairing setup failed');
+
+    await clickTab(page, 'Missions');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    async function anyVisible(text: string) {
+      const all = await page.getByText(text, { exact: true }).all();
+      for (const el of all) {
+        if (await el.isVisible().catch(() => false)) return true;
+      }
+      return false;
     }
+    await expect.poll(() => anyVisible(title), { timeout: 15_000, message: 'challenge never appeared on Missions tab' }).toBe(true);
+
+    await page.evaluate((t: string) => {
+      for (const el of Array.from(document.querySelectorAll('*'))) {
+        if (el.textContent?.trim() !== t) continue;
+        const fiberKey = Object.keys(el).find(k => k.startsWith('__reactFiber'));
+        if (!fiberKey) continue;
+        let fiber = (el as any)[fiberKey];
+        while (fiber) {
+          if (fiber.memoizedProps?.onPress) { fiber.memoizedProps.onPress(); return; }
+          fiber = fiber.return;
+        }
+      }
+    }, title);
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1500);
+
+    await expect(page.getByText('I did it!', { exact: false })).toBeVisible({ timeout: 10_000 });
+
+    page.once('dialog', async d => d.accept());
+    await page.evaluate(() => {
+      for (const el of Array.from(document.querySelectorAll('*'))) {
+        if (!el.textContent?.toLowerCase().includes('i did it')) continue;
+        const fiberKey = Object.keys(el).find(k => k.startsWith('__reactFiber'));
+        if (!fiberKey) continue;
+        let fiber = (el as any)[fiberKey];
+        while (fiber) {
+          if (fiber.memoizedProps?.onPress) { fiber.memoizedProps.onPress(); return; }
+          fiber = fiber.return;
+        }
+      }
+    });
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    // ── Parent rejects it ──
+    await restoreSession(page, parentState, '/challenges');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    await page.getByText(title, { exact: true }).click();
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    await expect(page.getByText(/^Submissions \(/)).toBeVisible({ timeout: 10_000 });
+
+    const rejectBtn = page.locator('[data-testid^="reject-btn-"]').first();
+    await expect(rejectBtn).toBeVisible({ timeout: 10_000 });
+    await rejectBtn.dispatchEvent('click');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    await expect(
+      page.getByText('rejected').or(page.getByText('Rejected')).first()
+    ).toBeVisible({ timeout: 10_000 });
   });
 
   test('US-014 | Parent can archive a challenge', async ({ page }) => {

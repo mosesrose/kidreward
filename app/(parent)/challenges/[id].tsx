@@ -22,7 +22,7 @@ export default function ChallengeDetail() {
       supabase.from('challenges').select('*').eq('id', id).single(),
       supabase
         .from('completions')
-        .select('*, profiles(*)')
+        .select('*, profiles!completions_child_id_fkey(*)')
         .eq('challenge_id', id)
         .order('submitted_at', { ascending: false }),
     ]);
@@ -149,12 +149,14 @@ export default function ChallengeDetail() {
               {c.status === 'pending' && (
                 <View style={styles.actionRow}>
                   <TouchableOpacity
+                    testID={`reject-btn-${c.id}`}
                     style={styles.rejectBtn}
                     onPress={() => reject(c)}
                   >
                     <Text style={styles.rejectText}>✗ Reject</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
+                    testID={`approve-btn-${c.id}`}
                     style={styles.approveBtn}
                     onPress={() => approve(c)}
                   >
