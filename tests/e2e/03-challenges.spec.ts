@@ -389,6 +389,11 @@ test.describe('Challenges', () => {
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
+    await expect(
+      page.getByText('Waiting for parent').or(page.getByText('Waiting for review'))
+        .or(page.getByText('Submitted')).first()
+    ).toBeVisible({ timeout: 10_000 });
+
     // ── Parent rejects it ──
     await restoreSession(page, parentState, '/challenges');
     await page.waitForLoadState('networkidle');
