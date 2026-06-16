@@ -198,9 +198,10 @@ test.describe('Family Pairing', () => {
     // Find and note the code shown
     await expect(page.getByText(email, { exact: false })).toBeVisible({ timeout: 10_000 });
 
-    // Click the cancel button (✕) — find it near the email badge
+    // Click the cancel button (✕) — new invites are prepended, so the one
+    // we just created is the first card in the list, not the last.
     const cancelBtns = page.locator('[data-testid^="cancel-btn-"]');
-    await cancelBtns.last().click();
+    await cancelBtns.first().click();
     await page.waitForTimeout(500);
 
     // Confirm the alert
@@ -239,9 +240,10 @@ test.describe('Family Pairing', () => {
     const originalCode = (await codeEl.textContent())?.trim() ?? '';
     expect(originalCode).toHaveLength(6);
 
-    // Click Resend
+    // Click Resend — new invites are prepended, so the one we just created
+    // is the first card in the list, not the last.
     const resendBtns = page.locator('[data-testid^="resend-btn-"]');
-    await resendBtns.last().click();
+    await resendBtns.first().click();
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2500);
 
