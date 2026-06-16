@@ -8,6 +8,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import GemHeader from '@/components/GemHeader';
+import { CHALLENGE_VALUES } from '@/constants/challenges';
+
+function ValueChip({ value }: { value: string | null | undefined }) {
+  if (!value) return null;
+  const v = CHALLENGE_VALUES.find(x => x.key === value);
+  if (!v) return null;
+  return (
+    <View style={{
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      backgroundColor: `${v.color}30`, paddingHorizontal: 8, paddingVertical: 3,
+      borderRadius: 20, marginTop: 4, alignSelf: 'flex-start',
+    }}>
+      <Text style={{ fontSize: 11 }}>{v.emoji}</Text>
+      <Text style={{ fontSize: 11, fontWeight: '700', color: v.color }}>{v.label}</Text>
+    </View>
+  );
+}
 
 export default function ChildChallenges() {
   const { family, profile, membership } = useAuth();
@@ -100,6 +117,7 @@ export default function ChildChallenges() {
                   <Text style={styles.cardMeta}>
                     {item.repeat_type === 'daily' ? 'Daily' : item.repeat_type === 'weekly' ? 'Weekly' : 'Once'} · {capitalize(item.category)}
                   </Text>
+                  <ValueChip value={item.value} />
                 </View>
                 {done ? (
                   <Text style={styles.cardWaiting}>Waiting</Text>

@@ -5,6 +5,23 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import { CHALLENGE_VALUES } from '@/constants/challenges';
+
+function ValueChip({ value }: { value: string | null | undefined }) {
+  if (!value) return null;
+  const v = CHALLENGE_VALUES.find(x => x.key === value);
+  if (!v) return null;
+  return (
+    <View style={{
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      backgroundColor: `${v.color}20`, paddingHorizontal: 10, paddingVertical: 4,
+      borderRadius: 20, alignSelf: 'center', marginTop: 8,
+    }}>
+      <Text style={{ fontSize: 12 }}>{v.emoji}</Text>
+      <Text style={{ fontSize: 12, fontWeight: '700', color: v.color }}>{v.label}</Text>
+    </View>
+  );
+}
 
 export default function ChallengeDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -106,6 +123,7 @@ export default function ChallengeDetail() {
           {challenge.description && (
             <Text style={styles.desc}>{challenge.description}</Text>
           )}
+          <ValueChip value={challenge.value} />
           <View style={styles.metaRow}>
             <View style={styles.metaBadge}>
               <Text style={styles.metaBadgeText}>+{challenge.gem_reward} 💎</Text>

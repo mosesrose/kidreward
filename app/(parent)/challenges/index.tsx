@@ -7,7 +7,23 @@ import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
-import { CATEGORY_COLORS } from '@/constants/challenges';
+import { CATEGORY_COLORS, CHALLENGE_VALUES } from '@/constants/challenges';
+
+function ValueChip({ value }: { value: string | null | undefined }) {
+  if (!value) return null;
+  const v = CHALLENGE_VALUES.find(x => x.key === value);
+  if (!v) return null;
+  return (
+    <View style={{
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      backgroundColor: `${v.color}20`, paddingHorizontal: 8, paddingVertical: 3,
+      borderRadius: 20, marginTop: 4, alignSelf: 'flex-start',
+    }}>
+      <Text style={{ fontSize: 11 }}>{v.emoji}</Text>
+      <Text style={{ fontSize: 11, fontWeight: '700', color: v.color }}>{v.label}</Text>
+    </View>
+  );
+}
 
 type ChallengeWithPending = Challenge & { pending_count: number };
 
@@ -94,6 +110,7 @@ export default function ChallengesScreen() {
                      item.repeat_type === 'weekly' ? '📆 Weekly' : '1️⃣ Once'}
                     {item.due_date ? `  •  Due ${item.due_date}` : ''}
                   </Text>
+                  <ValueChip value={item.value} />
                 </View>
                 <View style={styles.gemBadge}>
                   <Text style={styles.gemText}>+{item.gem_reward}💎</Text>
