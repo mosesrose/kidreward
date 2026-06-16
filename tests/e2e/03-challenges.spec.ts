@@ -532,8 +532,24 @@ test.describe('Challenges', () => {
 
     await page.getByPlaceholder('e.g. Keep room tidy').fill(title);
 
-    // Select the Kindness value chip
-    await page.getByTestId('value-chip-kindness').click();
+    // Scroll the value picker into view (it's below the fold inside RN's ScrollView)
+    // then fire onPress via React fiber — same pattern used for mission cards above.
+    await page.evaluate(() => {
+      const el = document.querySelector('[data-testid="value-chip-kindness"]');
+      if (el) el.scrollIntoView({ behavior: 'instant', block: 'center' });
+    });
+    await page.waitForTimeout(300);
+    await page.evaluate(() => {
+      const el = document.querySelector('[data-testid="value-chip-kindness"]');
+      if (!el) return;
+      const fiberKey = Object.keys(el).find(k => k.startsWith('__reactFiber'));
+      if (!fiberKey) return;
+      let fiber = (el as any)[fiberKey];
+      while (fiber) {
+        if (fiber.memoizedProps?.onPress) { fiber.memoizedProps.onPress(); return; }
+        fiber = fiber.return;
+      }
+    });
     await page.waitForTimeout(300);
 
     await page.getByTestId('save-challenge-btn').click();
