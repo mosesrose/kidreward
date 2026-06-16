@@ -395,7 +395,14 @@ test.describe('Challenges', () => {
     ).toBeVisible({ timeout: 10_000 });
 
     // ── Parent rejects it ──
-    await restoreSession(page, parentState, '/challenges');
+    // Note: '/challenges' is an ambiguous URL — both the (parent) and (child)
+    // groups have a route at that literal path (groups don't appear in the
+    // URL). Landing there directly right after a child session can resolve
+    // to the leftover child stack. Go through '/dashboard' (parent-only)
+    // and navigate via the real UI instead, like the approve test above.
+    await restoreSession(page, parentState, '/dashboard');
+    await assertOnParentDashboard(page);
+    await clickTab(page, 'Challenges');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
