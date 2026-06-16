@@ -75,7 +75,7 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test
         env:
-          PLAYWRIGHT_BASE_URL: ${{ inputs.base_url || needs.deploy.outputs.url || 'https://reward-hazel.vercel.app' }}
+          PLAYWRIGHT_BASE_URL: ${{ inputs.base_url || 'https://reward-hazel.vercel.app' }}
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
 
