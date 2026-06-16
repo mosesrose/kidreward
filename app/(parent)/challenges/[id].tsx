@@ -57,14 +57,20 @@ export default function ChallengeDetail() {
     load();
   }
 
-  async function archiveChallenge() {
-    Alert.alert('Archive challenge?', 'This will hide it from your kids.', [
+  async function deleteChallenge() {
+    const hasActiveSubmission = completions.some((c) => c.status === 'pending');
+
+    const message = hasActiveSubmission
+      ? 'A child has an active submission waiting for review on this challenge. Deleting it will permanently remove that submission too. This cannot be undone.'
+      : 'This will permanently delete the challenge. This cannot be undone.';
+
+    Alert.alert('Delete challenge?', message, [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Archive', style: 'destructive',
+        text: 'Delete', style: 'destructive',
         onPress: async () => {
-          await supabase.from('challenges').update({ status: 'archived' }).eq('id', id);
-          router.back();
+          await supabase.from('challenges').delete().eq('id', id);
+          router.replace('/(parent)/challenges');
         },
       },
     ]);
@@ -87,8 +93,8 @@ export default function ChallengeDetail() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>← Back</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={archiveChallenge}>
-          <Text style={styles.archiveText}>Archive</Text>
+        <TouchableOpacity testID="delete-challenge-btn" onPress={deleteChallenge}>
+          <Text style={styles.archiveText}>Delete</Text>
         </TouchableOpacity>
       </View>
 

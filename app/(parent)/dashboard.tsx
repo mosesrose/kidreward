@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Completion, FamilyMember } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
@@ -51,7 +51,10 @@ export default function ParentDashboard() {
     setWeekGems((weekComps ?? []).reduce((s, c: any) => s + (c.gems_awarded ?? 0), 0));
   }, [family]);
 
-  useEffect(() => { load(); }, [load]);
+  // Tab screens stay mounted across navigation, so a plain useEffect-on-mount
+  // would never re-run when coming back from approving/rejecting a
+  // submission elsewhere. Refetch every time this tab regains focus instead.
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const onRefresh = async () => {
     setRefreshing(true);

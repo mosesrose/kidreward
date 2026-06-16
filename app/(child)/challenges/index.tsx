@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
@@ -39,7 +39,10 @@ export default function ChildChallenges() {
     setCompletedIds(ids);
   }, [family, profile]);
 
-  useEffect(() => { load(); }, [load]);
+  // This tab stays mounted when navigating to a mission's detail and back,
+  // so a mount-only effect would miss newly created challenges. Refetch on
+  // every focus instead.
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const visible = challenges.filter(c =>
     filter === 'active' ? !completedIds.has(c.id) : completedIds.has(c.id)
