@@ -128,6 +128,9 @@ create table public.challenges (
   status       text not null default 'active' check (status in ('active', 'completed', 'archived')),
   repeat_type  text not null default 'once' check (repeat_type in ('once', 'daily', 'weekly')),
   due_date     date,
+  value        text check (value is null or value in (
+                 'responsibility','kindness','patience','curiosity','courage','empathy'
+               )),
   created_by   uuid not null references public.profiles(id),
   created_at   timestamptz default now()
 );
