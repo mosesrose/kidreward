@@ -315,4 +315,47 @@ test.describe('Family Pairing', () => {
     await expect(page.getByTestId('invite-code-input')).toBeVisible({ timeout: 10_000 });
   });
 
+  test('Deep-link invite (?code=...) auto-validates and skips straight to account creation', async ({ page }) => {
+    test.setTimeout(60_000);
+    const ts = Date.now();
+    const email = `deeplink.${ts}@kidreward-test.com`;
+
+    // Create a fresh invite via the parent UI so we have a real, valid code.
+    await restoreSession(page, parentState, '/children/invite');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    await page.getByTestId('add-child-invite-btn').click();
+    await page.getByTestId('child-email-input').fill(email);
+    await page.getByTestId('create-invite-btn').dispatchEvent('click');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    await expect(page.getByText(email, { exact: false })).toBeVisible({ timeout: 10_000 });
+    const codeEl = page.getByText(/^[A-Z0-9]{6}$/).first();
+    const deepLinkCode = (await codeEl.textContent())?.trim() ?? '';
+    expect(deepLinkCode).toHaveLength(6);
+
+    // Simulate clicking the email's link in a brand-new, signed-out browser context
+    // (this test's `page` fixture has never been signed in, like a real recipient).
+    const fresh = await page.context().browser()!.newPage();
+    await fresh.goto(`/signup-child?code=${deepLinkCode}`);
+
+    // Auto-validation skips the manual code-entry step entirely — lands on
+    // account creation with the email pre-filled and locked from the invite.
+    await expect(fresh.getByTestId('create-child-account-btn')).toBeVisible({ timeout: 15_000 });
+    await expect(fresh.getByTestId('invite-code-input')).not.toBeVisible();
+    await expect(fresh.getByText("Email set by your parent's invite", { exact: false })).toBeVisible();
+    await fresh.close();
+  });
+
+  test('Deep-link invite with an invalid code falls back to manual entry', async ({ page }) => {
+    await page.goto('/signup-child?code=ZZZZZZ');
+    await page.waitForLoadState('networkidle');
+
+    // Falls back to the manual code-entry step with an explanatory message.
+    await expect(page.getByTestId('invite-code-input')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('link-error-text')).toBeVisible();
+  });
+
 });

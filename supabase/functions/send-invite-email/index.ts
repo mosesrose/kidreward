@@ -29,7 +29,8 @@ serve(async (req) => {
     }
 
     const family = familyName ?? 'your family';
-    const appUrl = Deno.env.get('APP_URL') ?? 'https://kidreward-one.vercel.app';
+    const appUrl = Deno.env.get('APP_URL') ?? 'https://reward-hazel.vercel.app';
+    const joinUrl = `${appUrl}/signup-child?code=${encodeURIComponent(code)}`;
     // Use the verified sender domain set as a Supabase secret, or fall back to
     // Resend's onboarding sender (which can only deliver to the Resend account
     // owner's own email — fine for local dev, must set RESEND_FROM in prod).
@@ -48,8 +49,14 @@ serve(async (req) => {
     <p style="margin: 0; color: #5C4F7A;">You've been invited to join <strong>${family}</strong> on KidReward — where kids earn gems for completing challenges and redeem them for real rewards!</p>
   </div>
 
-  <h2 style="font-size: 16px; color: #1A0A2E;">How to get started:</h2>
-  <ol style="color: #5C4F7A; line-height: 2;">
+  <div style="text-align: center; margin: 24px 0;">
+    <a href="${joinUrl}" style="display: inline-block; background: #6C3CE1; color: #FFFFFF; font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: 12px; text-decoration: none;">Join ${family} 🎉</a>
+  </div>
+
+  <p style="color: #8B7BA8; font-size: 13px;">Tapping the button signs you straight in with your code already filled in — no typing needed.</p>
+
+  <h2 style="font-size: 14px; color: #1A0A2E;">Button not working?</h2>
+  <ol style="color: #5C4F7A; line-height: 2; font-size: 14px;">
     <li>Open <a href="${appUrl}" style="color: #6C3CE1;">${appUrl}</a></li>
     <li>Tap <strong>"Join with invite code"</strong></li>
     <li>Enter your code: <strong>${code}</strong></li>
@@ -66,7 +73,10 @@ Your invite code: ${code}
 
 You've been invited to join ${family} on KidReward, where kids earn gems for completing challenges and redeem them for real rewards.
 
-How to get started:
+Tap this link to join — your code is already filled in, no typing needed:
+${joinUrl}
+
+Button not working? Do it manually:
 1. Open ${appUrl}
 2. Tap "Join with invite code"
 3. Enter your code: ${code}

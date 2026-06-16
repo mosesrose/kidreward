@@ -1,21 +1,23 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  KeyboardAvoidingView, Platform, ScrollView, Alert,
+  KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors } from '@/constants/colors';
 
-type Step = 'code' | 'details';
+type Step = 'code' | 'verifying' | 'details';
 
 export default function SignupChild() {
   const { refreshFamily } = useAuth();
+  const params = useLocalSearchParams<{ code?: string }>();
   const [step, setStep] = useState<Step>('code');
   const [code, setCode] = useState('');
   const [validating, setValidating] = useState(false);
+  const [linkError, setLinkError] = useState('');
   const [inviteId, setInviteId] = useState('');
   const [familyId, setFamilyId] = useState('');
   const [familyName, setFamilyName] = useState('');
@@ -26,8 +28,21 @@ export default function SignupChild() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function validateCode() {
-    const trimmed = code.trim().toUpperCase();
+  // Invite emails deep-link here with ?code=XXXXXX — auto-validate so the
+  // recipient lands straight on account creation without typing anything.
+  // Manual entry (the 'code' step) is only shown as a fallback.
+  useEffect(() => {
+    const incoming = typeof params.code === 'string' ? params.code.trim().toUpperCase() : '';
+    if (incoming.length === 6) {
+      setCode(incoming);
+      setStep('verifying');
+      validateCode(incoming);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function validateCode(codeOverride?: string) {
+    const trimmed = (codeOverride ?? code).trim().toUpperCase();
     if (trimmed.length !== 6) {
       Alert.alert('Invalid code', 'The invite code is 6 characters long.');
       return;
@@ -45,7 +60,13 @@ export default function SignupChild() {
 
     setValidating(false);
     if (error || !invite) {
-      Alert.alert('Code not found', 'This code is invalid, expired, or not a child invite. Ask your parent for a new one!');
+      if (codeOverride) {
+        // Came from a deep link — fall back to manual entry instead of an alert.
+        setLinkError("That invite link didn't work — it may be expired. Enter your code below.");
+        setStep('code');
+      } else {
+        Alert.alert('Code not found', 'This code is invalid, expired, or not a child invite. Ask your parent for a new one!');
+      }
       return;
     }
     setInviteId(invite.id);
@@ -55,6 +76,7 @@ export default function SignupChild() {
     if (emailFromInvite) setEmail(emailFromInvite); // sync so handleSignup sends correct email
     const fn = (invite as any).families?.name ?? 'your family';
     setFamilyName(fn);
+    setLinkError('');
     setStep('details');
   }
 
@@ -123,17 +145,29 @@ export default function SignupChild() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <TouchableOpacity style={styles.back} onPress={() => step === 'details' ? setStep('code') : router.back()}>
-            <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
+          {step !== 'verifying' && (
+            <TouchableOpacity style={styles.back} onPress={() => step === 'details' ? setStep('code') : router.back()}>
+              <Text style={styles.backText}>← Back</Text>
+            </TouchableOpacity>
+          )}
 
-          {step === 'code' ? (
+          {step === 'verifying' ? (
+            <View style={styles.verifyingBox} testID="verifying-invite">
+              <Text style={styles.emoji}>🔎</Text>
+              <Text style={styles.title}>Verifying your invite…</Text>
+              <ActivityIndicator color={Colors.gem} size="large" style={{ marginTop: 16 }} />
+            </View>
+          ) : step === 'code' ? (
             <>
               <Text style={styles.emoji}>🎉</Text>
               <Text style={styles.title}>Enter invite code</Text>
               <Text style={styles.subtitle}>
                 Ask your parent for their 6-character invite code
               </Text>
+
+              {linkError ? (
+                <Text style={styles.linkError} testID="link-error-text">{linkError}</Text>
+              ) : null}
 
               <View style={styles.codeContainer}>
                 <TextInput
@@ -153,7 +187,7 @@ export default function SignupChild() {
 
               <TouchableOpacity
                 style={[styles.submitBtn, (validating || code.length < 6) && styles.disabled]}
-                onPress={validateCode}
+                onPress={() => validateCode()}
                 disabled={validating || code.length < 6}
                 testID="validate-code-btn"
               >
@@ -274,6 +308,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   hint: { color: 'rgba(255,255,255,0.35)', fontSize: 13, marginBottom: 28 },
+  verifyingBox: { alignItems: 'center', paddingTop: 80 },
+  linkError: {
+    color: '#FF6B35', fontSize: 14, textAlign: 'center',
+    marginBottom: 16, lineHeight: 20,
+  },
   submitBtn: { width: '100%', borderRadius: 16, overflow: 'hidden', marginBottom: 24 },
   disabled: { opacity: 0.4 },
   submitGradient: { paddingVertical: 18, alignItems: 'center' },
