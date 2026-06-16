@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
-import { CHALLENGE_TEMPLATES, CATEGORY_COLORS, ChallengeTemplate } from '@/constants/challenges';
+import { CHALLENGE_TEMPLATES, CATEGORY_COLORS, ChallengeTemplate, CHALLENGE_VALUES, ChallengeValue } from '@/constants/challenges';
 
 export default function CreateChallenge() {
   const { family, profile } = useAuth();
@@ -17,6 +17,7 @@ export default function CreateChallenge() {
   const [gems, setGems] = useState('10');
   const [bonus, setBonus] = useState('0');
   const [repeatType, setRepeatType] = useState<'once' | 'daily' | 'weekly'>('once');
+  const [value, setValue] = useState<ChallengeValue | null>(null);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -44,6 +45,7 @@ export default function CreateChallenge() {
       gem_reward: parseInt(gems, 10) || 10,
       bonus_gems: parseInt(bonus, 10) || 0,
       repeat_type: repeatType,
+      value: value,
       status: 'active',
       created_by: profile.id,
     });
@@ -158,6 +160,27 @@ export default function CreateChallenge() {
             ))}
           </View>
         </View>
+        <View style={styles.field}>
+          <Text style={styles.label}>Value Taught</Text>
+          <View style={styles.valueGrid}>
+            {CHALLENGE_VALUES.map((v) => (
+              <TouchableOpacity
+                testID={`value-chip-${v.key}`}
+                key={v.key}
+                style={[
+                  styles.valueChip,
+                  value === v.key && { backgroundColor: v.color, borderColor: v.color },
+                ]}
+                onPress={() => setValue(prev => prev === v.key ? null : v.key)}
+              >
+                <Text style={styles.valueChipEmoji}>{v.emoji}</Text>
+                <Text style={[styles.valueChipLabel, value === v.key && styles.valueChipLabelActive]}>
+                  {v.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
       </ScrollView>
     </View>
   );
@@ -217,4 +240,14 @@ const styles = StyleSheet.create({
   segmentActive: { backgroundColor: Colors.purple },
   segmentText: { fontSize: 14, fontWeight: '600', color: Colors.textMid },
   segmentTextActive: { color: Colors.textLight },
+  valueGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  valueChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 20, borderWidth: 1.5, borderColor: Colors.parentBorder,
+    backgroundColor: Colors.parentCard,
+  },
+  valueChipEmoji: { fontSize: 14 },
+  valueChipLabel: { fontSize: 13, fontWeight: '600', color: Colors.textMid },
+  valueChipLabelActive: { color: Colors.textLight },
 });
