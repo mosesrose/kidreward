@@ -532,29 +532,37 @@ test.describe('Challenges', () => {
 
     await page.getByPlaceholder('e.g. Keep room tidy').fill(title);
 
-    // Scroll the value picker into view (it's below the fold inside RN's ScrollView)
-    // then fire onPress via React fiber — same pattern used for mission cards above.
+    // The value picker sits below the Repeat control inside RN's ScrollView.
+    // We scroll the RN scroll container itself (not the window) so the chips
+    // are rendered and visible, then fire a native click on the DOM element.
     await page.evaluate(() => {
-      const el = document.querySelector('[data-testid="value-chip-kindness"]');
-      if (el) el.scrollIntoView({ behavior: 'instant', block: 'center' });
-    });
-    await page.waitForTimeout(300);
-    await page.evaluate(() => {
-      const el = document.querySelector('[data-testid="value-chip-kindness"]');
-      if (!el) return;
-      const fiberKey = Object.keys(el).find(k => k.startsWith('__reactFiber'));
-      if (!fiberKey) return;
-      let fiber = (el as any)[fiberKey];
-      while (fiber) {
-        if (fiber.memoizedProps?.onPress) { fiber.memoizedProps.onPress(); return; }
-        fiber = fiber.return;
+      // Find the RN ScrollView container (first overflow:scroll ancestor of the title input)
+      const titleEl = document.querySelector('input, [data-testid="save-challenge-btn"]');
+      let scrollEl: Element | null = titleEl;
+      while (scrollEl && getComputedStyle(scrollEl).overflow !== 'scroll' && getComputedStyle(scrollEl).overflowY !== 'scroll') {
+        scrollEl = scrollEl.parentElement;
       }
+      if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
     });
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(600);
+    const chipFound = await page.evaluate(() => {
+      const el = document.querySelector('[data-testid="value-chip-kindness"]');
+      if (!el) return false;
+      el.scrollIntoView({ behavior: 'instant', block: 'center' });
+      (el as HTMLElement).click();
+      return true;
+    });
+    if (!chipFound) throw new Error('value-chip-kindness not found in DOM after scroll');
+    await page.waitForTimeout(500); // let React flush the state update
 
     await page.getByTestId('save-challenge-btn').click();
     await page.waitForURL(url => !url.pathname.includes('create'), { timeout: 20_000 });
-    await page.goto('/challenges');
+
+    // Navigate to parent challenges via dashboard → tab click to avoid the ambiguous
+    // /challenges URL resolving to the child route in some test-runner states.
+    await restoreSession(page, parentState, '/dashboard');
+    await assertOnParentDashboard(page);
+    await clickTab(page, 'Challenges');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(1000);
 
