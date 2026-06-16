@@ -518,4 +518,52 @@ test.describe('Challenges', () => {
     ).toBeVisible({ timeout: 30_000 });
   });
 
+  test('US-VALUE | Parent creates challenge with value tag; both parent list and child missions show the chip', async ({ page }) => {
+    test.setTimeout(90_000);
+    const ts = Date.now();
+    const title = `Value Tag Test ${ts}`;
+
+    // ── Parent creates a challenge with Kindness tag ──
+    await restoreSession(page, parentState, '/dashboard');
+    await assertOnParentDashboard(page);
+    await clickTab(page, 'Challenges');
+    await page.getByText('+ New').click();
+    await page.waitForLoadState('networkidle');
+
+    await page.getByPlaceholder('e.g. Keep room tidy').fill(title);
+
+    // Select the Kindness value chip
+    await page.getByTestId('value-chip-kindness').click();
+    await page.waitForTimeout(300);
+
+    await page.getByTestId('save-challenge-btn').click();
+    await page.waitForURL(url => !url.pathname.includes('create'), { timeout: 20_000 });
+    await page.goto('/challenges');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // Parent list shows the challenge title and Kindness chip
+    await expect(page.getByText(title, { exact: true })).toBeVisible({ timeout: 10_000 });
+    const kindnessChips = await page.getByText('Kindness').all();
+    const anyKindnessVisible = (await Promise.all(kindnessChips.map(el => el.isVisible().catch(() => false)))).some(Boolean);
+    expect(anyKindnessVisible).toBeTruthy();
+
+    // ── Child mission list also shows the Kindness chip ──
+    await restoreSession(page, childState, '/');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
+    test.skip(!!onJoin, 'Child not in family — pairing setup failed');
+
+    await clickTab(page, 'Missions');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    await expect(page.getByText(title, { exact: true })).toBeVisible({ timeout: 10_000 });
+    const childKindnessChips = await page.getByText('Kindness').all();
+    const anyChildKindnessVisible = (await Promise.all(childKindnessChips.map(el => el.isVisible().catch(() => false)))).some(Boolean);
+    expect(anyChildKindnessVisible).toBeTruthy();
+  });
+
 });
