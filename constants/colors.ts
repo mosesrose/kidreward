@@ -22,7 +22,7 @@ export const Colors = {
 
   // Gems
   gem:     '#7A3CE1',
-  gemGlow: '#00D4FF',        // cyan in new palette
+  gemGlow: '#A076F0',        // purple-light — used by parent screens for gem cost accents
 
   // Status (shared)
   success: '#3DB78A',
@@ -30,7 +30,8 @@ export const Colors = {
   danger:  '#E55545',
   pending: '#FFB84D',
 
-  // Text (shared — parent screens + auth)
+  // Text (shared — parent screens + auth only)
+  // Child screens: use childText / childMuted instead of these
   textDark:  '#1A1530',
   textMid:   '#5C4F7A',
   textLight: '#FFFFFF',
