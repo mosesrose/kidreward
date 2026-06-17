@@ -3,10 +3,12 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   Alert, RefreshControl,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Reward } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import GemHeader from '@/components/GemHeader';
+import { FALLBACK_ICON } from '@/constants/icons';
 
 function typeLabel(t: string) {
   return t === 'screen_time' ? 'Screen time' : t === 'money' ? 'Money' : t === 'activity' ? 'Activity' : 'Gift';
@@ -23,17 +25,8 @@ export default function ChildRewards() {
   const load = useCallback(async () => {
     if (!family || !profile) return;
     const [{ data: rw }, { data: redemptions }] = await Promise.all([
-      supabase
-        .from('rewards')
-        .select('*')
-        .eq('family_id', family.id)
-        .eq('is_active', true)
-        .order('gem_cost', { ascending: true }),
-      supabase
-        .from('redemptions')
-        .select('reward_id')
-        .eq('child_id', profile.id)
-        .eq('status', 'pending'),
+      supabase.from('rewards').select('*').eq('family_id', family.id).eq('is_active', true).order('gem_cost', { ascending: true }),
+      supabase.from('redemptions').select('reward_id').eq('child_id', profile.id).eq('status', 'pending'),
     ]);
     setRewards(rw ?? []);
     setMyRedemptions(new Set<string>(redemptions?.map((r: { reward_id: string }) => r.reward_id) ?? []));
@@ -70,7 +63,7 @@ export default function ChildRewards() {
         requested_at: new Date().toISOString(),
       });
       await Promise.all([load(), refreshFamily()]);
-      Alert.alert('Redeemed!', 'Your parent will see your request and confirm it soon.');
+      Alert.alert('Redeemed! 🎉', 'Your parent will see your request and confirm it soon.');
     } catch (e: any) {
       Alert.alert('Error', e?.message ?? 'Something went wrong');
     } finally {
@@ -81,74 +74,89 @@ export default function ChildRewards() {
   const balance = membership?.gem_balance ?? 0;
   const affordable = rewards.filter(r => balance >= r.gem_cost);
   const locked = rewards.filter(r => balance < r.gem_cost);
-
-  const sections: Array<{ key: string; label: string; data: Reward[] }> = [];
-  if (affordable.length) sections.push({ key: 'a', label: 'YOU CAN GET', data: affordable });
-  if (locked.length) sections.push({ key: 'l', label: 'KEEP SAVING', data: locked });
+  const sections = [
+    ...(affordable.length ? [{ key: 'a', label: 'YOU CAN GET', data: affordable }] : []),
+    ...(locked.length    ? [{ key: 'l', label: 'KEEP SAVING',  data: locked    }] : []),
+  ];
 
   const renderItem = (item: Reward) => {
     const canAfford = balance >= item.gem_cost;
     const pending = myRedemptions.has(item.id);
     const isConfirming = confirmId === item.id;
     const isRedeeming = redeeming === item.id;
-    const progress = canAfford ? 1 : balance / item.gem_cost;
+    const need = item.gem_cost - balance;
 
     return (
-      <View key={item.id} style={styles.card}>
+      <View key={item.id} style={[styles.card, !canAfford && styles.cardLocked]}>
         <View style={styles.cardRow}>
+          <View style={styles.iconWrap}>
+            <MaterialCommunityIcons
+              name={(item.emoji || FALLBACK_ICON) as any}
+              size={28}
+              color={canAfford ? Colors.childAccent : Colors.childMuted}
+            />
+          </View>
           <View style={styles.cardLeft}>
             <Text style={[styles.cardTitle, !canAfford && styles.dimText]} numberOfLines={1}>{item.title}</Text>
             <Text style={styles.cardMeta}>{typeLabel(item.reward_type)}</Text>
           </View>
-          <Text style={[styles.cardPoints, !canAfford && styles.dimPoints]}>{item.gem_cost} 💎</Text>
+          <View style={[styles.costBadge, !canAfford && styles.costBadgeLocked]}>
+            <Text style={[styles.costText, !canAfford && styles.costTextLocked]}>
+              {item.gem_cost} 💎
+            </Text>
+          </View>
         </View>
 
         {!canAfford && (
-          <>
-            <View style={styles.progress}>
-              <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
-            </View>
-            <Text style={styles.needText}>{item.gem_cost - balance} more to go</Text>
-          </>
+          <View style={styles.lockRow}>
+            <Text style={styles.lockText}>🔒 Need {need} more gems</Text>
+          </View>
         )}
 
-        {pending ? (
-          <Text style={styles.statusText}>Waiting for parent</Text>
-        ) : isRedeeming ? (
-          <Text style={styles.statusText}>Processing…</Text>
-        ) : isConfirming ? (
-          <View style={styles.confirmRow}>
-            <TouchableOpacity style={styles.confirmBtn} onPress={() => confirmRedeem(item)}>
-              <Text style={styles.confirmBtnText}>Yes, redeem</Text>
+        {canAfford && (
+          pending ? (
+            <Text style={styles.statusText}>⏳ Waiting for parent</Text>
+          ) : isRedeeming ? (
+            <Text style={styles.statusText}>Processing…</Text>
+          ) : isConfirming ? (
+            <View style={styles.confirmRow}>
+              <TouchableOpacity style={styles.confirmBtn} onPress={() => confirmRedeem(item)}>
+                <Text style={styles.confirmBtnText}>Yes, redeem!</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setConfirmId(null)}>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.redeemBtn} onPress={() => setConfirmId(item.id)}>
+              <Text style={styles.redeemBtnText}>Redeem 🎁</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelBtn} onPress={() => setConfirmId(null)}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        ) : canAfford ? (
-          <TouchableOpacity style={styles.tapBtn} onPress={() => setConfirmId(item.id)}>
-            <Text style={styles.tapBtnText}>Tap to redeem!</Text>
-          </TouchableOpacity>
-        ) : null}
+          )
+        )}
       </View>
     );
   };
 
   return (
     <View style={styles.container}>
-      <GemHeader name={profile?.name ?? ''} gems={balance} compact />
+      <GemHeader
+        name={profile?.name ?? ''}
+        gems={balance}
+        lifetime={membership?.total_gems_earned ?? 0}
+        compact
+      />
 
       <View style={styles.body}>
-        <Text style={styles.h1}>Store</Text>
-        <Text style={styles.h2}>
-          {affordable.length} you can get
-        </Text>
+        <Text style={styles.h1}>Treasure Chest</Text>
+        <Text style={styles.h2}>{affordable.length} you can get</Text>
 
         <FlatList
           data={sections}
           keyExtractor={(s) => s.key}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.childAccent} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.childAccent} />
+          }
           ListEmptyComponent={
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>No rewards yet</Text>
@@ -169,59 +177,58 @@ export default function ChildRewards() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.childBg },
-
   body: { flex: 1, paddingHorizontal: 18, paddingTop: 20 },
-  h1: { fontSize: 13, color: Colors.textMuted, marginBottom: 2 },
-  h2: { fontSize: 22, fontWeight: '700', color: Colors.textDark, marginBottom: 18 },
-
+  h1: { fontSize: 11, color: Colors.childMuted, letterSpacing: 2, fontWeight: '700', marginBottom: 2 },
+  h2: { fontSize: 22, fontWeight: '800', color: Colors.childText, marginBottom: 18 },
   list: { paddingBottom: 30 },
   sectionLabel: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
-    letterSpacing: 2, marginTop: 6, marginBottom: 10,
+    fontSize: 11, fontWeight: '700', color: Colors.childMuted,
+    letterSpacing: 2, marginTop: 8, marginBottom: 10,
   },
-
   card: {
-    backgroundColor: Colors.childCard,
-    borderRadius: 16, padding: 16, marginBottom: 10,
-    borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.childCard, borderRadius: 16, padding: 14,
+    marginBottom: 10, borderWidth: 1, borderColor: Colors.childBorder,
   },
-  cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  cardLeft: { flex: 1, paddingRight: 12 },
-  cardTitle: { fontSize: 15, fontWeight: '600', color: Colors.textDark, marginBottom: 4 },
-  cardMeta: { fontSize: 12, color: Colors.textMuted },
-  cardPoints: { fontSize: 14, fontWeight: '700', color: Colors.childAccent },
-  dimText: { color: Colors.textMid },
-  dimPoints: { color: Colors.textMuted },
-
-  progress: {
-    height: 6, backgroundColor: Colors.border, borderRadius: 100,
-    overflow: 'hidden', marginTop: 10, marginBottom: 6,
+  cardLocked: { opacity: 0.65 },
+  cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  iconWrap: {
+    width: 44, height: 44, borderRadius: 12,
+    backgroundColor: `${Colors.childAccent}12`,
+    alignItems: 'center', justifyContent: 'center',
   },
-  progressFill: { height: '100%', backgroundColor: Colors.childAccent },
-  needText: { fontSize: 12, color: Colors.textMuted },
-
+  cardLeft: { flex: 1 },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: Colors.childText, marginBottom: 2 },
+  cardMeta: { fontSize: 11, color: Colors.childMuted },
+  dimText: { color: Colors.childMuted },
+  costBadge: {
+    backgroundColor: `${Colors.childAccent}15`, borderRadius: 10,
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderWidth: 1, borderColor: `${Colors.childAccent}30`,
+  },
+  costBadgeLocked: { backgroundColor: `${Colors.childBorder}50`, borderColor: Colors.childBorder },
+  costText: { color: Colors.childAccent, fontWeight: '800', fontSize: 13 },
+  costTextLocked: { color: Colors.childMuted },
+  lockRow: { marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: Colors.childBorder },
+  lockText: { fontSize: 12, color: Colors.childMuted, fontWeight: '600' },
   statusText: { fontSize: 12, color: Colors.warning, fontWeight: '600', marginTop: 10 },
-
-  tapBtn: {
-    marginTop: 10, backgroundColor: Colors.childAccent,
+  redeemBtn: {
+    marginTop: 10, backgroundColor: Colors.childAccent2,
     paddingVertical: 10, borderRadius: 100, alignItems: 'center',
   },
-  tapBtnText: { color: Colors.textLight, fontSize: 13, fontWeight: '600' },
-
+  redeemBtnText: { color: Colors.childText, fontSize: 13, fontWeight: '700' },
   confirmRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
   confirmBtn: {
     flex: 1, backgroundColor: Colors.success,
     paddingVertical: 10, borderRadius: 100, alignItems: 'center',
   },
-  confirmBtnText: { color: Colors.textLight, fontWeight: '600', fontSize: 13 },
+  confirmBtnText: { color: Colors.childText, fontWeight: '700', fontSize: 13 },
   cancelBtn: {
     paddingHorizontal: 16, paddingVertical: 10,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: Colors.childBorder,
     borderRadius: 100, alignItems: 'center',
   },
-  cancelBtnText: { color: Colors.textMid, fontWeight: '500', fontSize: 13 },
-
+  cancelBtnText: { color: Colors.childMuted, fontWeight: '500', fontSize: 13 },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: Colors.textDark, marginBottom: 4 },
-  emptyMeta: { fontSize: 13, color: Colors.textMuted },
+  emptyTitle: { fontSize: 16, fontWeight: '600', color: Colors.childText, marginBottom: 4 },
+  emptyMeta: { fontSize: 13, color: Colors.childMuted },
 });
