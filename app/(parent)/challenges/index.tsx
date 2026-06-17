@@ -4,10 +4,12 @@ import {
   RefreshControl,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { CATEGORY_COLORS, CHALLENGE_VALUES } from '@/constants/challenges';
+import { FALLBACK_ICON } from '@/constants/icons';
 
 function ValueChip({ value }: { value: string | null | undefined }) {
   if (!value) return null;
@@ -102,7 +104,11 @@ export default function ChallengesScreen() {
             <View style={[styles.categoryBar, { backgroundColor: CATEGORY_COLORS[item.category] ?? Colors.purple }]} />
             <View style={styles.cardBody}>
               <View style={styles.cardTop}>
-                <Text style={styles.cardEmoji}>{item.emoji}</Text>
+                <MaterialCommunityIcons
+                  name={(item.emoji || FALLBACK_ICON) as any}
+                  size={28}
+                  color={Colors.purple}
+                />
                 <View style={styles.cardInfo}>
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <Text style={styles.cardMeta}>
@@ -153,12 +159,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row', backgroundColor: Colors.parentCard,
     borderRadius: 16, overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    shadowOpacity: 0.07, shadowRadius: 10, elevation: 3,
   },
   categoryBar: { width: 5 },
   cardBody: { flex: 1, padding: 14 },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  cardEmoji: { fontSize: 28 },
   cardInfo: { flex: 1 },
   cardTitle: { fontSize: 15, fontWeight: '700', color: Colors.textDark },
   cardMeta: { fontSize: 12, color: Colors.textMuted, marginTop: 3 },
