@@ -3,9 +3,11 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { CHALLENGE_VALUES } from '@/constants/challenges';
+import { FALLBACK_ICON } from '@/constants/icons';
 
 function ValueChip({ value }: { value: string | null | undefined }) {
   if (!value) return null;
@@ -118,7 +120,11 @@ export default function ChallengeDetail() {
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Challenge info */}
         <View style={styles.challengeCard}>
-          <Text style={styles.emoji}>{challenge.emoji}</Text>
+          <MaterialCommunityIcons
+            name={(challenge.emoji || FALLBACK_ICON) as any}
+            size={56}
+            color={Colors.purple}
+          />
           <Text style={styles.challengeTitle}>{challenge.title}</Text>
           {challenge.description && (
             <Text style={styles.desc}>{challenge.description}</Text>
@@ -218,7 +224,6 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
-  emoji: { fontSize: 52, marginBottom: 12 },
   challengeTitle: { fontSize: 22, fontWeight: '800', color: Colors.textDark, textAlign: 'center', marginBottom: 8 },
   desc: { fontSize: 14, color: Colors.textMid, textAlign: 'center', marginBottom: 14 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
