@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
@@ -21,7 +21,7 @@ export default function AppHeader({ mode }: Props) {
           style={styles.settingsBtn}
           onPress={() => router.push('/(parent)/settings')}
         >
-          <MaterialCommunityIcons name="cog-outline" size={22} color={Colors.onSurfaceVariant} />
+          <MaterialIcons name="settings" size={22} color={Colors.onSurfaceVariant} />
         </TouchableOpacity>
       )}
     </View>

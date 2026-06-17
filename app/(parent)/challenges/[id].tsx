@@ -4,7 +4,7 @@ import {
   Alert, SafeAreaView,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors } from '@/constants/colors';
@@ -117,7 +117,7 @@ export default function ChallengeDetail() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <MaterialCommunityIcons name="arrow-left" size={20} color={Colors.primary} />
+          <MaterialIcons name="arrow-back" size={20} color={Colors.primary} />
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
         <TouchableOpacity testID="delete-challenge-btn" onPress={deleteChallenge}>
@@ -128,7 +128,7 @@ export default function ChallengeDetail() {
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Hero */}
         <View style={styles.heroCircle}>
-          <MaterialCommunityIcons
+          <MaterialIcons
             name={(challenge.emoji || FALLBACK_ICON) as any}
             size={40}
             color={Colors.primary}

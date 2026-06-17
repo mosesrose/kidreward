@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge } from '@/lib/supabase';
@@ -118,7 +118,7 @@ export default function ChildChallenges() {
                 onPress={() => router.push(`/(child)/challenges/${item.id}`)}
               >
                 <View style={styles.iconWrap}>
-                  <MaterialCommunityIcons
+                  <MaterialIcons
                     name={(item.emoji || FALLBACK_ICON) as any}
                     size={26}
                     color={done ? Colors.childMuted : Colors.childAccent}

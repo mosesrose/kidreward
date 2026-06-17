@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '@/constants/colors';
 import type { IconName } from '@/constants/icons';
 
@@ -38,7 +38,7 @@ export default function IconPicker({
             style={[styles.chip, active && { backgroundColor: activeColor, borderColor: activeColor }]}
             onPress={() => onSelect(ic.name)}
           >
-            <MaterialCommunityIcons
+            <MaterialIcons
               name={ic.name as any}
               size={22}
               color={active ? '#fff' : iconColor}

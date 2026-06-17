@@ -4,7 +4,7 @@ import {
   RefreshControl, Switch, SafeAreaView,
 } from 'react-native';
 import { router } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Reward } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
@@ -79,7 +79,7 @@ export default function RewardsScreen() {
 
             <View style={styles.cardBody}>
               <View style={styles.iconBox}>
-                <MaterialCommunityIcons
+                <MaterialIcons
                   name={(item.emoji || FALLBACK_ICON) as any}
                   size={28}
                   color={item.is_active ? Colors.primary : Colors.onSurfaceVariant}

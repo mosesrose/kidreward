@@ -4,7 +4,7 @@ import {
   TextInput, Switch, SafeAreaView,
 } from 'react-native';
 import { router } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
@@ -107,7 +107,7 @@ export default function CreateChallenge() {
               ]}
               onPress={() => pickTemplate(t)}
             >
-              <MaterialCommunityIcons
+              <MaterialIcons
                   name={(t.icon || FALLBACK_ICON) as any}
                   size={28}
                   color={CATEGORY_COLORS[t.category] ?? Colors.primary}

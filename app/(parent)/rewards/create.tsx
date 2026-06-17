@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, SafeAreaView,
 } from 'react-native';
 import { router } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
@@ -14,21 +14,21 @@ import IconPicker from '@/components/IconPicker';
 type RewardType = 'money' | 'gift' | 'screen_time' | 'activity';
 
 const REWARD_TYPES: { type: RewardType; label: string; icon: string; desc: string }[] = [
-  { type: 'money',       label: 'Money',       icon: 'cash',            desc: 'Real cash or pocket money' },
-  { type: 'gift',        label: 'Gift',        icon: 'gift-outline',    desc: 'A toy, book, or surprise' },
-  { type: 'screen_time', label: 'Screen Time', icon: 'television-play', desc: 'Extra gaming or TV time' },
-  { type: 'activity',    label: 'Activity',    icon: 'bike',            desc: 'A trip, outing, or experience' },
+  { type: 'money',       label: 'Money',       icon: 'payments',        desc: 'Real cash or pocket money' },
+  { type: 'gift',        label: 'Gift',        icon: 'card-giftcard',   desc: 'A toy, book, or surprise' },
+  { type: 'screen_time', label: 'Screen Time', icon: 'tv',              desc: 'Extra gaming or TV time' },
+  { type: 'activity',    label: 'Activity',    icon: 'directions-bike', desc: 'A trip, outing, or experience' },
 ];
 
 const SUGGESTED_REWARDS = [
-  { title: '£1 pocket money',          icon: 'cash',                    type: 'money'       as RewardType, cost: 50,  desc: '' },
-  { title: '£5 pocket money',          icon: 'cash',                    type: 'money'       as RewardType, cost: 200, desc: '' },
-  { title: '30 min extra screen time', icon: 'television-play',         type: 'screen_time' as RewardType, cost: 30,  desc: 'Extra gaming or TV time' },
-  { title: 'Choose dinner tonight',    icon: 'pizza',                   type: 'activity'    as RewardType, cost: 40,  desc: 'Pick what the family eats!' },
-  { title: 'Movie night pick',         icon: 'movie-open-outline',      type: 'activity'    as RewardType, cost: 60,  desc: 'Choose the movie' },
-  { title: 'Trip to the park',         icon: 'bike',                    type: 'activity'    as RewardType, cost: 80,  desc: 'A fun trip out' },
-  { title: 'Small toy or book',        icon: 'gift-outline',            type: 'gift'        as RewardType, cost: 100, desc: 'Up to £5 toy or book' },
-  { title: 'New video game',           icon: 'gamepad-variant-outline', type: 'gift'        as RewardType, cost: 500, desc: 'A new game of their choice' },
+  { title: '£1 pocket money',          icon: 'payments',       type: 'money'       as RewardType, cost: 50,  desc: '' },
+  { title: '£5 pocket money',          icon: 'payments',       type: 'money'       as RewardType, cost: 200, desc: '' },
+  { title: '30 min extra screen time', icon: 'tv',             type: 'screen_time' as RewardType, cost: 30,  desc: 'Extra gaming or TV time' },
+  { title: 'Choose dinner tonight',    icon: 'local-pizza',    type: 'activity'    as RewardType, cost: 40,  desc: 'Pick what the family eats!' },
+  { title: 'Movie night pick',         icon: 'movie',          type: 'activity'    as RewardType, cost: 60,  desc: 'Choose the movie' },
+  { title: 'Trip to the park',         icon: 'directions-bike', type: 'activity'   as RewardType, cost: 80,  desc: 'A fun trip out' },
+  { title: 'Small toy or book',        icon: 'card-giftcard',  type: 'gift'        as RewardType, cost: 100, desc: 'Up to £5 toy or book' },
+  { title: 'New video game',           icon: 'videogame-asset', type: 'gift'       as RewardType, cost: 500, desc: 'A new game of their choice' },
 ];
 
 export default function CreateReward() {
@@ -36,7 +36,7 @@ export default function CreateReward() {
   const [type, setType] = useState<RewardType>('gift');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [icon, setIcon] = useState<string>('gift-outline');
+  const [icon, setIcon] = useState<string>('card-giftcard');
   const [cost, setCost] = useState('50');
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -98,7 +98,7 @@ export default function CreateReward() {
               style={styles.suggCard}
               onPress={() => pickSuggestion(s)}
             >
-              <MaterialCommunityIcons name={(s.icon || FALLBACK_ICON) as any} size={28} color={Colors.primary} style={{ marginBottom: 6 }} />
+              <MaterialIcons name={(s.icon || FALLBACK_ICON) as any} size={28} color={Colors.primary} style={{ marginBottom: 6 }} />
               <Text style={styles.suggTitle} numberOfLines={2}>{s.title}</Text>
               <Text style={styles.suggCost}>{s.cost} 💎</Text>
             </TouchableOpacity>
@@ -113,7 +113,7 @@ export default function CreateReward() {
               style={[styles.typeCard, type === rt.type && styles.typeCardActive]}
               onPress={() => { setType(rt.type); setIcon(rt.icon); }}
             >
-              <MaterialCommunityIcons name={(rt.icon || FALLBACK_ICON) as any} size={24} color={type === rt.type ? Colors.white : Colors.onSurfaceVariant} style={{ marginBottom: 4 }} />
+              <MaterialIcons name={(rt.icon || FALLBACK_ICON) as any} size={24} color={type === rt.type ? Colors.white : Colors.onSurfaceVariant} style={{ marginBottom: 4 }} />
               <Text style={[styles.typeLabel, type === rt.type && styles.typeLabelActive]}>
                 {rt.label}
               </Text>

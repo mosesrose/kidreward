@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { FALLBACK_ICON } from '@/constants/icons';
@@ -91,7 +91,7 @@ export default function ActivityFeed({ familyId }: Props) {
       {items.map((item) => (
         <View key={item.id} style={styles.row}>
           <View style={styles.iconWrap}>
-            <MaterialCommunityIcons
+            <MaterialIcons
               name={item.icon as any}
               size={22}
               color={Colors.purple}

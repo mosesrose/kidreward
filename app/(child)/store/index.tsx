@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   Alert, RefreshControl, SafeAreaView,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Reward } from '@/lib/supabase';
@@ -106,7 +106,7 @@ export default function ChildStore() {
 
         {/* Icon circle */}
         <View style={[styles.rewardIconCircle, !canAfford && styles.rewardIconCircleLocked]}>
-          <MaterialCommunityIcons
+          <MaterialIcons
             name={(item.emoji || FALLBACK_ICON) as any}
             size={56}
             color={canAfford ? Colors.radiantAmber : Colors.onSurfaceVariant}
@@ -154,7 +154,7 @@ export default function ChildStore() {
       {/* Hero row */}
       <View style={styles.heroRow}>
         <View style={styles.heroIcon}>
-          <MaterialCommunityIcons name="star-four-points" size={80} color={Colors.radiantAmber} />
+          <MaterialIcons name="auto-awesome" size={80} color={Colors.radiantAmber} />
         </View>
         <Text style={styles.heroTitle}>Reward Shop</Text>
         <GemBadge gems={balance} />

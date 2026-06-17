@@ -4,7 +4,7 @@ import {
   Alert, ScrollView, SafeAreaView,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
@@ -88,13 +88,13 @@ export default function ChildChallengeDetail() {
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Back */}
         <TouchableOpacity onPress={() => router.back()} style={styles.back}>
-          <MaterialCommunityIcons name="arrow-left" size={20} color={Colors.primary} />
+          <MaterialIcons name="arrow-back" size={20} color={Colors.primary} />
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
 
         {/* Hero icon */}
         <View style={styles.heroCircle}>
-          <MaterialCommunityIcons
+          <MaterialIcons
             name={(challenge.emoji || FALLBACK_ICON) as any}
             size={48}
             color={Colors.primary}

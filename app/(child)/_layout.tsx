@@ -1,17 +1,16 @@
 import { Tabs } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
 
-type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+type IconName = React.ComponentProps<typeof MaterialIcons>['name'];
 
 function TabIcon({
   name, focused,
 }: { name: IconName; focused: boolean }) {
-  const icon: IconName = focused ? name : (`${name}-outline` as IconName);
   return (
-    <MaterialCommunityIcons
-      name={icon}
+    <MaterialIcons
+      name={name}
       size={24}
       color={focused ? Colors.primary : Colors.onSurfaceVariant}
     />
@@ -51,21 +50,21 @@ export default function ChildLayout() {
         name="store/index"
         options={{
           title: 'Store',
-          tabBarIcon: ({ focused }) => <TabIcon name="store" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="card-giftcard" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
           title: 'Progress',
-          tabBarIcon: ({ focused }) => <TabIcon name="trophy" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="leaderboard" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="family"
         options={{
           title: 'Family',
-          tabBarIcon: ({ focused }) => <TabIcon name="account-group" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="group" focused={focused} />,
         }}
       />
       {/* Hidden routes */}

@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, SafeAreaView,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/contexts/AuthContext';
@@ -221,7 +221,7 @@ export default function ChildHome() {
                 >
                   {/* Icon box */}
                   <View style={[styles.questIcon, done && styles.questIconDone]}>
-                    <MaterialCommunityIcons
+                    <MaterialIcons
                       name={(c.emoji || FALLBACK_ICON) as any}
                       size={28}
                       color={done ? Colors.onSurfaceVariant : Colors.primary}
@@ -244,7 +244,7 @@ export default function ChildHome() {
                   {/* Right: gem reward or done check */}
                   {done ? (
                     <View style={styles.doneCircle}>
-                      <MaterialCommunityIcons name="check" size={20} color={Colors.white} />
+                      <MaterialIcons name="check" size={20} color={Colors.white} />
                     </View>
                   ) : (
                     <View style={styles.gemPill}>
@@ -259,7 +259,7 @@ export default function ChildHome() {
 
         {/* Store CTA */}
         <TouchableOpacity style={styles.storeCta} onPress={() => router.push('/(child)/store')}>
-          <MaterialCommunityIcons name="store" size={20} color={Colors.white} style={{ marginRight: 8 }} />
+          <MaterialIcons name="card-giftcard" size={20} color={Colors.white} style={{ marginRight: 8 }} />
           <Text style={styles.storeCtaText}>Visit the Store</Text>
         </TouchableOpacity>
       </ScrollView>

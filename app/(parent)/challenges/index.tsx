@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, Switch, SafeAreaView,
 } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge } from '@/lib/supabase';
@@ -75,7 +75,7 @@ export default function ChallengesScreen() {
               onPress={() => router.push(`/(parent)/challenges/${item.id}`)}
             >
               <View style={[styles.iconBox, item.status !== 'active' && styles.iconBoxDim]}>
-                <MaterialCommunityIcons
+                <MaterialIcons
                   name={(item.emoji || FALLBACK_ICON) as any}
                   size={26}
                   color={item.status === 'active' ? Colors.primary : Colors.onSurfaceVariant}
@@ -97,7 +97,7 @@ export default function ChallengesScreen() {
                   <Text style={styles.pendingDotText}>{item.pending_count}</Text>
                 </View>
               )}
-              <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.outline} />
+              <MaterialIcons name="chevron-right" size={20} color={Colors.outline} />
             </TouchableOpacity>
             <View style={styles.toggleRow}>
               <Text style={styles.toggleLabel}>
