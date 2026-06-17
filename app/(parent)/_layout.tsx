@@ -1,10 +1,20 @@
 import { Tabs } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '@/constants/colors';
-import { Text } from 'react-native';
+import { Fonts } from '@/constants/fonts';
 
-function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
+type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+function TabIcon({
+  name, focused,
+}: { name: IconName; focused: boolean }) {
+  const icon: IconName = focused ? name : (`${name}-outline` as IconName);
   return (
-    <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>
+    <MaterialCommunityIcons
+      name={icon}
+      size={24}
+      color={focused ? Colors.primary : Colors.onSurfaceVariant}
+    />
   );
 }
 
@@ -14,50 +24,56 @@ export default function ParentLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.parentCard,
-          borderTopColor: Colors.parentBorder,
-          height: 70,
-          paddingBottom: 10,
+          backgroundColor: Colors.white,
+          borderTopColor: Colors.outlineVariant,
+          borderTopWidth: 1,
+          height: 64,
+          paddingBottom: 8,
         },
-        tabBarActiveTintColor: Colors.purple,
-        tabBarInactiveTintColor: Colors.textMuted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarActiveTintColor:   Colors.primary,
+        tabBarInactiveTintColor: Colors.onSurfaceVariant,
+        tabBarLabelStyle: {
+          fontFamily: Fonts.bodyBold,
+          fontSize: 10,
+          letterSpacing: 1,
+          textTransform: 'uppercase',
+        },
       }}
     >
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
+          title: 'Dashboard',
+          tabBarIcon: ({ focused }) => <TabIcon name="view-dashboard" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="challenges/index"
         options={{
           title: 'Challenges',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📋" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="children/index"
-        options={{
-          title: 'My Kids',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="👧" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="clipboard-check" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="rewards/index"
         options={{
           title: 'Rewards',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🎁" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="gift" focused={focused} />,
         }}
       />
-      {/* Hidden screens */}
+      <Tabs.Screen
+        name="children/index"
+        options={{
+          title: 'Family',
+          tabBarIcon: ({ focused }) => <TabIcon name="account-group" focused={focused} />,
+        }}
+      />
+      {/* Hidden routes */}
       <Tabs.Screen name="challenges/create" options={{ href: null }} />
-      <Tabs.Screen name="challenges/[id]" options={{ href: null }} />
-      <Tabs.Screen name="children/invite" options={{ href: null }} />
-      <Tabs.Screen name="rewards/create" options={{ href: null }} />
-      <Tabs.Screen name="redemptions" options={{ href: null }} />
+      <Tabs.Screen name="challenges/[id]"   options={{ href: null }} />
+      <Tabs.Screen name="children/invite"   options={{ href: null }} />
+      <Tabs.Screen name="rewards/create"    options={{ href: null }} />
+      <Tabs.Screen name="redemptions"       options={{ href: null }} />
     </Tabs>
   );
 }
