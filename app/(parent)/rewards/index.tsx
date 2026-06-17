@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  RefreshControl, Switch, SafeAreaView,
+  RefreshControl, Switch, SafeAreaView, Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -46,6 +46,22 @@ export default function RewardsScreen() {
     const next = !reward.is_active;
     setRewards(prev => prev.map(r => r.id === reward.id ? { ...r, is_active: next } : r));
     await supabase.from('rewards').update({ is_active: next }).eq('id', reward.id);
+  }
+
+  async function deleteReward(rewardId: string) {
+    await supabase.from('rewards').delete().eq('id', rewardId);
+    setRewards(prev => prev.filter(r => r.id !== rewardId));
+  }
+
+  function confirmDeleteReward(reward: Reward) {
+    Alert.alert(
+      'Delete reward?',
+      `Delete "${reward.title}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => deleteReward(reward.id) },
+      ]
+    );
   }
 
   return (
@@ -100,12 +116,17 @@ export default function RewardsScreen() {
               <Text style={styles.toggleLabel}>
                 {item.is_active ? 'Visible to kids' : 'Hidden from kids'}
               </Text>
-              <Switch
-                value={item.is_active}
-                onValueChange={() => toggleActive(item)}
-                trackColor={{ false: Colors.outlineVariant, true: Colors.primary }}
-                thumbColor={Colors.white}
-              />
+              <View style={styles.toggleActions}>
+                <TouchableOpacity onPress={() => confirmDeleteReward(item)} style={styles.trashBtn}>
+                  <MaterialIcons name="delete-outline" size={18} color={Colors.danger} />
+                </TouchableOpacity>
+                <Switch
+                  value={item.is_active}
+                  onValueChange={() => toggleActive(item)}
+                  trackColor={{ false: Colors.outlineVariant, true: Colors.primary }}
+                  thumbColor={Colors.white}
+                />
+              </View>
             </View>
           </View>
         )}
@@ -157,4 +178,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: Colors.outlineVariant,
   },
   toggleLabel: { fontFamily: Fonts.body, fontSize: 13, color: Colors.onSurfaceVariant },
+  toggleActions: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  trashBtn: { padding: 6 },
 });
