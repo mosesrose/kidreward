@@ -68,6 +68,13 @@ export default function ParentLayout() {
           tabBarIcon: ({ focused }) => <TabIcon name="account-group" focused={focused} />,
         }}
       />
+      <Tabs.Screen
+        name="goals/index"
+        options={{
+          title: 'Goals',
+          tabBarIcon: ({ focused }) => <TabIcon name="flag" focused={focused} />,
+        }}
+      />
       {/* Hidden routes */}
       <Tabs.Screen name="challenges/create" options={{ href: null }} />
       <Tabs.Screen name="challenges/[id]"   options={{ href: null }} />
