@@ -1,13 +1,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  RefreshControl, Switch,
+  RefreshControl, Switch, SafeAreaView,
 } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Reward } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import { Fonts } from '@/constants/fonts';
 import { FALLBACK_ICON } from '@/constants/icons';
 
 const TYPE_COLORS: Record<string, string> = {
@@ -48,100 +49,112 @@ export default function RewardsScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Rewards 🎁</Text>
-        <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/(parent)/rewards/create')}>
-          <Text style={styles.addBtnText}>+ New</Text>
+        <Text style={styles.title}>Rewards</Text>
+        <TouchableOpacity style={styles.newBtn} onPress={() => router.push('/(parent)/rewards/create')}>
+          <Text style={styles.newBtnText}>+ New</Text>
         </TouchableOpacity>
       </View>
-
-      <Text style={styles.hint}>Toggle off to hide a reward from your kids' store.</Text>
 
       <FlatList
         data={rewards}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={Colors.primary} />}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>🎁</Text>
             <Text style={styles.emptyTitle}>No rewards yet</Text>
-            <Text style={styles.emptyDesc}>Create rewards your kids can buy with their gems</Text>
+            <Text style={styles.emptyMeta}>Create rewards your kids can buy with their gems</Text>
           </View>
         }
         renderItem={({ item }) => (
           <View style={[styles.card, !item.is_active && styles.cardInactive]}>
+            {/* Type badge strip */}
             <View style={[styles.typeBadge, { backgroundColor: TYPE_COLORS[item.reward_type] + '20' }]}>
               <Text style={[styles.typeText, { color: TYPE_COLORS[item.reward_type] }]}>
                 {TYPE_LABELS[item.reward_type]}
               </Text>
             </View>
+
             <View style={styles.cardBody}>
-              <MaterialCommunityIcons
-                name={(item.emoji || FALLBACK_ICON) as any}
-                size={32}
-                color={item.is_active ? Colors.purple : Colors.textMuted}
-              />
+              <View style={styles.iconBox}>
+                <MaterialCommunityIcons
+                  name={(item.emoji || FALLBACK_ICON) as any}
+                  size={28}
+                  color={item.is_active ? Colors.primary : Colors.onSurfaceVariant}
+                />
+              </View>
               <View style={styles.rewardInfo}>
                 <Text style={[styles.rewardTitle, !item.is_active && styles.dim]}>{item.title}</Text>
-                {item.description && <Text style={styles.rewardDesc}>{item.description}</Text>}
+                {item.description ? (
+                  <Text style={styles.rewardDesc}>{item.description}</Text>
+                ) : null}
               </View>
               <View style={styles.costBadge}>
                 <Text style={styles.costText}>{item.gem_cost} 💎</Text>
               </View>
             </View>
+
             <View style={styles.toggleRow}>
               <Text style={styles.toggleLabel}>
-                {item.is_active ? '✅ Visible to kids' : '🚫 Hidden from kids'}
+                {item.is_active ? 'Visible to kids' : 'Hidden from kids'}
               </Text>
               <Switch
                 value={item.is_active}
                 onValueChange={() => toggleActive(item)}
-                trackColor={{ false: Colors.parentBorder, true: Colors.purple }}
-                thumbColor={item.is_active ? '#fff' : '#ccc'}
+                trackColor={{ false: Colors.outlineVariant, true: Colors.primary }}
+                thumbColor={Colors.white}
               />
             </View>
           </View>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.parentBg },
+  safe:   { flex: 1, backgroundColor: Colors.surface },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingTop: 60, paddingHorizontal: 20, paddingBottom: 8,
+    paddingTop: 20, paddingHorizontal: 20, paddingBottom: 16,
   },
-  title: { fontSize: 28, fontWeight: '900', color: Colors.textDark },
-  addBtn: { backgroundColor: Colors.purple, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
-  addBtnText: { color: Colors.textLight, fontWeight: '700', fontSize: 15 },
-  hint: { fontSize: 13, color: Colors.textMuted, paddingHorizontal: 20, marginBottom: 8 },
-  list: { padding: 16, gap: 12 },
+  title:      { fontFamily: Fonts.parentH1, fontSize: 28, color: Colors.onSurface },
+  newBtn:     { backgroundColor: Colors.primary, borderRadius: 9999, paddingHorizontal: 16, paddingVertical: 8 },
+  newBtnText: { fontFamily: Fonts.bodyBold, fontSize: 14, color: Colors.white },
+  list:  { padding: 20, gap: 12, paddingBottom: 40 },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyEmoji: { fontSize: 48, marginBottom: 12 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', color: Colors.textDark },
-  emptyDesc: { fontSize: 14, color: Colors.textMuted, marginTop: 6, textAlign: 'center', paddingHorizontal: 32 },
+  emptyTitle: { fontFamily: Fonts.parentH1, fontSize: 20, color: Colors.onSurface },
+  emptyMeta:  { fontFamily: Fonts.body,     fontSize: 14, color: Colors.onSurfaceVariant, marginTop: 6, textAlign: 'center' },
+
   card: {
-    backgroundColor: Colors.parentCard, borderRadius: 16, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+    backgroundColor: Colors.white, borderRadius: 12, overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
   },
   cardInactive: { opacity: 0.6 },
   typeBadge: { paddingHorizontal: 12, paddingVertical: 6 },
-  typeText: { fontSize: 12, fontWeight: '700' },
-  cardBody: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
-  dim: { opacity: 0.45 },
-  rewardInfo: { flex: 1 },
-  rewardTitle: { fontSize: 16, fontWeight: '700', color: Colors.textDark },
-  rewardDesc: { fontSize: 12, color: Colors.textMuted, marginTop: 3 },
-  costBadge: { backgroundColor: 'rgba(122,60,225,0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
-  costText: { color: Colors.purple, fontWeight: '800', fontSize: 14 },
+  typeText:  { fontFamily: Fonts.bodyBold, fontSize: 12 },
+  cardBody:  { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+  iconBox: {
+    width: 48, height: 48, borderRadius: 12,
+    backgroundColor: Colors.primaryFixed,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  dim:         { opacity: 0.45 },
+  rewardInfo:  { flex: 1 },
+  rewardTitle: { fontFamily: Fonts.bodySemiBold, fontSize: 15, color: Colors.onSurface },
+  rewardDesc:  { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 3 },
+  costBadge: {
+    backgroundColor: Colors.tertiaryFixed, borderRadius: 9999,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  costText: { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.onTertiaryFixed },
   toggleRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 14, paddingVertical: 10,
-    borderTopWidth: 1, borderTopColor: Colors.parentBorder,
+    borderTopWidth: 1, borderTopColor: Colors.outlineVariant,
   },
-  toggleLabel: { fontSize: 13, color: Colors.textMid, fontWeight: '600' },
+  toggleLabel: { fontFamily: Fonts.body, fontSize: 13, color: Colors.onSurfaceVariant },
 });
