@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
-  Alert, ScrollView,
+  Alert, ScrollView, SafeAreaView,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import { Fonts } from '@/constants/fonts';
 import { FALLBACK_ICON } from '@/constants/icons';
-import GemHeader from '@/components/GemHeader';
+import CelebrationOverlay from '@/components/CelebrationOverlay';
+import SquishButton from '@/components/SquishButton';
 
 function capitalize(s: string) {
   return s ? s[0].toUpperCase() + s.slice(1) : s;
@@ -22,6 +24,7 @@ export default function ChildChallengeDetail() {
   const [myCompletion, setMyCompletion] = useState<Completion | null>(null);
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   useEffect(() => { load(); }, [id]);
 
@@ -54,172 +57,205 @@ export default function ChildChallengeDetail() {
     });
     setSubmitting(false);
     if (error) { Alert.alert('Error', error.message); return; }
+    setShowCelebration(true);
     await load();
-    Alert.alert('Submitted', 'Your parent will review it soon.');
   }
+
+  const onCelebrationDismiss = () => setShowCelebration(false);
 
   if (!challenge) {
     return (
-      <View style={styles.center}>
+      <SafeAreaView style={styles.safe}>
         <Text style={styles.loading}>Loading…</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
-  const alreadySubmitted = myCompletion && (myCompletion.status === 'pending' || myCompletion.status === 'approved');
+  const status = myCompletion?.status;
+  const isPending  = status === 'pending';
+  const isApproved = status === 'approved';
+  const isRejected = status === 'rejected';
+  const canSubmit  = !isPending && !isApproved;
 
   return (
-    <View style={styles.container}>
-      <GemHeader
-        name={profile?.name ?? ''}
-        gems={membership?.gem_balance ?? 0}
-        lifetime={membership?.total_gems_earned ?? 0}
-        compact
+    <SafeAreaView style={styles.safe}>
+      <CelebrationOverlay
+        visible={showCelebration}
+        mode="submitted"
+        onDismiss={onCelebrationDismiss}
       />
 
       <ScrollView contentContainerStyle={styles.scroll}>
+        {/* Back */}
         <TouchableOpacity onPress={() => router.back()} style={styles.back}>
-          <Text style={styles.backText}>← Missions</Text>
+          <MaterialCommunityIcons name="arrow-left" size={20} color={Colors.primary} />
+          <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
 
-        <MaterialCommunityIcons
-          name={(challenge.emoji || FALLBACK_ICON) as any}
-          size={56}
-          color={Colors.childAccent}
-          style={styles.iconHero}
-        />
-
-        <Text style={styles.kicker}>
-          {challenge.repeat_type === 'daily' ? 'DAILY' : challenge.repeat_type === 'weekly' ? 'WEEKLY' : 'ONCE'} · {capitalize(challenge.category).toUpperCase()}
-        </Text>
-        <Text style={styles.title}>{challenge.title}</Text>
-        {challenge.description ? <Text style={styles.desc}>{challenge.description}</Text> : null}
-
-        {/* Reward card */}
-        <View style={styles.rewardCard}>
-          <Text style={styles.rewardLabel}>YOU'LL EARN</Text>
-          <View style={styles.rewardRow}>
-            <Text style={styles.rewardBig}>{challenge.gem_reward}</Text>
-            <Text style={styles.rewardUnit}>gems</Text>
-          </View>
-          {challenge.bonus_gems > 0 && (
-            <Text style={styles.bonus}>+ {challenge.bonus_gems} bonus 🌟</Text>
-          )}
+        {/* Hero icon */}
+        <View style={styles.heroCircle}>
+          <MaterialCommunityIcons
+            name={(challenge.emoji || FALLBACK_ICON) as any}
+            size={48}
+            color={Colors.primary}
+          />
         </View>
 
-        {alreadySubmitted ? (
-          <View style={styles.statusCard}>
-            {myCompletion.status === 'pending' && (
-              <>
-                <Text style={styles.statusTitle}>Waiting for parent</Text>
-                <Text style={styles.statusMeta}>You sent this for review. Hang tight!</Text>
-              </>
-            )}
-            {myCompletion.status === 'approved' && (
-              <>
-                <Text style={[styles.statusTitle, { color: Colors.success }]}>Approved</Text>
-                <Text style={styles.statusMeta}>You earned +{myCompletion.gems_awarded} 💎</Text>
-              </>
-            )}
-            {myCompletion.status === 'rejected' && (
-              <>
-                <Text style={[styles.statusTitle, { color: Colors.danger }]}>Not approved this time</Text>
-                <Text style={styles.statusMeta}>Ask your parent and try again.</Text>
-                <TouchableOpacity style={styles.retryBtn} onPress={() => setMyCompletion(null)}>
-                  <Text style={styles.retryBtnText}>Try again</Text>
-                </TouchableOpacity>
-              </>
-            )}
+        {/* Title */}
+        <Text style={styles.title}>{challenge.title}</Text>
+
+        {/* Chips row */}
+        <View style={styles.chipsRow}>
+          <View style={styles.chip}>
+            <Text style={styles.chipText}>{capitalize(challenge.category)}</Text>
           </View>
-        ) : (
+          <View style={styles.chip}>
+            <Text style={styles.chipText}>
+              {challenge.repeat_type === 'daily' ? 'Daily' :
+               challenge.repeat_type === 'weekly' ? 'Weekly' : 'Once'}
+            </Text>
+          </View>
+          <View style={styles.gemChip}>
+            <Text style={styles.gemChipText}>💎 {challenge.gem_reward} Gems</Text>
+          </View>
+        </View>
+
+        {/* Description */}
+        {challenge.description ? (
+          <Text style={styles.desc}>{challenge.description}</Text>
+        ) : null}
+
+        {/* Status chip or submit form */}
+        {isPending && (
+          <View style={styles.statusChip}>
+            <Text style={styles.statusChipText}>⏳ Waiting for your parent</Text>
+          </View>
+        )}
+
+        {isApproved && (
+          <View style={[styles.statusChip, styles.statusChipGreen]}>
+            <Text style={[styles.statusChipText, styles.statusChipTextGreen]}>
+              ✓ Approved — +{myCompletion?.gems_awarded} 💎
+            </Text>
+          </View>
+        )}
+
+        {isRejected && (
+          <View style={[styles.statusChip, styles.statusChipRed]}>
+            <Text style={[styles.statusChipText, styles.statusChipTextRed]}>
+              ✗ Rejected — try again
+            </Text>
+          </View>
+        )}
+
+        {canSubmit && (
           <>
-            <Text style={styles.noteLabel}>TELL YOUR PARENT WHAT YOU DID</Text>
+            <Text style={styles.noteLabel}>ADD A NOTE</Text>
             <TextInput
               style={styles.noteInput}
-              placeholder="e.g. I tidied my room and made my bed"
-              placeholderTextColor={Colors.childMuted}
+              placeholder="Tell your parent what you did…"
+              placeholderTextColor={Colors.outline}
               value={note}
               onChangeText={setNote}
               multiline
               numberOfLines={3}
             />
-            <Text style={styles.noteHint}>Optional · {note.length}/200</Text>
 
-            <TouchableOpacity
-              style={[styles.submitBtn, submitting && styles.disabled]}
+            <SquishButton
+              label={submitting ? 'Submitting…' : 'I Did It! 🎉'}
               onPress={submit}
               disabled={submitting}
-            >
-              <Text style={styles.submitBtnText}>
-                {submitting ? 'Submitting…' : 'I did it!'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
+              style={styles.submitBtn}
+            />
           </>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.childBg },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.childBg },
-  loading: { color: Colors.childMuted, fontSize: 16 },
-  scroll: { padding: 20, paddingBottom: 40 },
+  safe:    { flex: 1, backgroundColor: Colors.surface },
+  loading: { padding: 40, textAlign: 'center', color: Colors.onSurfaceVariant },
+  scroll:  { padding: 20, paddingBottom: 40 },
 
-  back: { marginBottom: 16 },
-  backText: { color: Colors.childMuted, fontSize: 14, fontWeight: '500' },
+  back: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 24 },
+  backText: { fontFamily: Fonts.bodyBold, fontSize: 14, color: Colors.primary },
 
-  iconHero: { alignSelf: 'center', marginBottom: 16 },
-
-  kicker: { fontSize: 11, color: Colors.childMuted, letterSpacing: 2, fontWeight: '700', marginBottom: 8 },
-  title: { fontSize: 28, fontWeight: '700', color: Colors.childText, lineHeight: 34, marginBottom: 10 },
-  desc: { fontSize: 14, color: Colors.childMuted, lineHeight: 20, marginBottom: 20 },
-
-  rewardCard: {
-    backgroundColor: Colors.childCard,
-    borderRadius: 18, padding: 22, alignItems: 'center', marginBottom: 24,
-    borderWidth: 1, borderColor: Colors.childBorder,
+  heroCircle: {
+    width: 96, height: 96, borderRadius: 48,
+    backgroundColor: Colors.secondaryContainer,
+    alignItems: 'center', justifyContent: 'center',
+    alignSelf: 'center', marginBottom: 20,
   },
-  rewardLabel: { fontSize: 11, color: Colors.childMuted, letterSpacing: 2, fontWeight: '700', marginBottom: 8 },
-  rewardRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
-  rewardBig: { fontSize: 56, fontWeight: '800', color: Colors.childAccent, lineHeight: 60 },
-  rewardUnit: { fontSize: 14, color: Colors.childMuted },
-  bonus: { color: Colors.childAccent2, fontWeight: '700', fontSize: 13, marginTop: 8 },
 
-  noteLabel: { fontSize: 11, color: Colors.childMuted, letterSpacing: 2, fontWeight: '700', marginBottom: 8 },
+  title: {
+    fontFamily: Fonts.kidsH1,
+    fontSize: 28,
+    color: Colors.onSurface,
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 34,
+  },
+
+  chipsRow: {
+    flexDirection: 'row', flexWrap: 'wrap',
+    gap: 8, justifyContent: 'center', marginBottom: 16,
+  },
+  chip: {
+    backgroundColor: Colors.primaryFixed,
+    borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  chipText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.primary },
+  gemChip: {
+    backgroundColor: Colors.tertiaryFixed,
+    borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  gemChipText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.onTertiaryFixed },
+
+  desc: {
+    fontFamily: Fonts.body,
+    fontSize: 15,
+    color: Colors.onSurfaceVariant,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+
+  statusChip: {
+    backgroundColor: Colors.warningContainer,
+    borderRadius: 12,
+    paddingHorizontal: 20, paddingVertical: 12,
+    alignItems: 'center', marginBottom: 20,
+  },
+  statusChipGreen:  { backgroundColor: Colors.successContainer },
+  statusChipRed:    { backgroundColor: Colors.errorContainer },
+  statusChipText:   { fontFamily: Fonts.bodyBold, fontSize: 14, color: Colors.warning },
+  statusChipTextGreen: { color: Colors.success },
+  statusChipTextRed:   { color: Colors.error },
+
+  noteLabel: {
+    fontFamily: Fonts.bodyBold,
+    fontSize: 11,
+    color: Colors.onSurfaceVariant,
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
   noteInput: {
-    backgroundColor: Colors.childCard,
-    borderRadius: 14, padding: 14,
-    color: Colors.childText, fontSize: 15,
-    textAlignVertical: 'top', minHeight: 90,
-    borderWidth: 1, borderColor: Colors.childBorder,
+    backgroundColor: Colors.white,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    padding: 14,
+    fontFamily: Fonts.body,
+    fontSize: 15,
+    color: Colors.onSurface,
+    textAlignVertical: 'top',
+    minHeight: 90,
+    marginBottom: 24,
   },
-  noteHint: { fontSize: 12, color: Colors.childMuted, marginTop: 6, marginBottom: 20 },
 
-  submitBtn: {
-    backgroundColor: Colors.childAccent2,
-    borderRadius: 100, paddingVertical: 18, alignItems: 'center',
-  },
-  disabled: { opacity: 0.5 },
-  submitBtnText: { color: Colors.childText, fontWeight: '700', fontSize: 16 },
-
-  cancelBtn: { paddingVertical: 16, alignItems: 'center' },
-  cancelBtnText: { color: Colors.childMuted, fontSize: 14 },
-
-  statusCard: {
-    backgroundColor: Colors.childCard, borderRadius: 18, padding: 24, alignItems: 'center',
-    borderWidth: 1, borderColor: Colors.childBorder,
-  },
-  statusTitle: { fontSize: 20, fontWeight: '700', color: Colors.childText, marginBottom: 6 },
-  statusMeta: { fontSize: 14, color: Colors.childMuted, textAlign: 'center' },
-  retryBtn: {
-    marginTop: 18, backgroundColor: Colors.purple,
-    paddingHorizontal: 24, paddingVertical: 12, borderRadius: 100,
-  },
-  retryBtnText: { color: Colors.childText, fontWeight: '600', fontSize: 14 },
+  submitBtn: { marginTop: 0 },
 });
