@@ -65,3 +65,32 @@ export async function sendApprovalPush({
     console.warn('Push notification failed:', e);
   }
 }
+
+/** Send a push notification to a child when a parent fulfils their reward redemption. */
+export async function sendRewardFulfilledPush({
+  pushToken,
+  parentName,
+  rewardTitle,
+}: {
+  pushToken: string;
+  parentName: string;
+  rewardTitle: string;
+}) {
+  const message = {
+    to: pushToken,
+    sound: 'default',
+    title: `🎁 Your reward is ready!`,
+    body: `${parentName} has fulfilled "${rewardTitle}" — go enjoy it! 🎉`,
+    data: { type: 'reward_fulfilled' },
+  };
+
+  try {
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(message),
+    });
+  } catch (e) {
+    console.warn('Push notification failed:', e);
+  }
+}

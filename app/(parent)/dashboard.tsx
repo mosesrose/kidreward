@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, SafeAreaView, Alert,
@@ -10,7 +10,7 @@ import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
 import AppHeader from '@/components/AppHeader';
 import ActivityFeed from '@/components/ActivityFeed';
-import { sendApprovalPush } from '@/lib/push-notifications';
+import { sendApprovalPush, sendRewardFulfilledPush } from '@/lib/push-notifications';
 
 const QUOTES = [
   'Children are not things to be moulded, but people to be unfolded.',
@@ -72,6 +72,7 @@ export default function ParentDashboard() {
   }, [family]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+  useEffect(() => { load(); }, [load]); // load when family becomes available
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
@@ -114,6 +115,15 @@ export default function ParentDashboard() {
       .from('redemptions')
       .update({ status: 'fulfilled', fulfilled_at: new Date().toISOString() })
       .eq('id', red.id);
+    // Notify child
+    const childPushToken = red.profiles?.push_token;
+    if (childPushToken) {
+      sendRewardFulfilledPush({
+        pushToken: childPushToken,
+        parentName: profile?.name ?? 'Your parent',
+        rewardTitle: red.rewards?.title ?? '',
+      });
+    }
     load();
   }
 
@@ -246,10 +256,6 @@ export default function ParentDashboard() {
         {/* Family Pulse */}
         {family && <ActivityFeed familyId={family.id} />}
 
-        {/* Switch to kid mode */}
-        <TouchableOpacity style={styles.kidModeCard} onPress={signOut}>
-          <Text style={styles.kidModeText}>Switch to Kid Mode →</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -326,13 +332,4 @@ const styles = StyleSheet.create({
   },
   approveBtnText: { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.white },
 
-  kidModeCard: {
-    margin: 20, marginTop: 4,
-    backgroundColor: Colors.primary,
-    borderRadius: 12, paddingVertical: 16, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2, shadowRadius: 0, elevation: 4,
-    marginBottom: 32,
-  },
-  kidModeText: { fontFamily: Fonts.bodyBold, fontSize: 16, color: Colors.white },
 });
