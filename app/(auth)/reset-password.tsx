@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import { Fonts } from '@/constants/fonts';
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -116,7 +117,7 @@ export default function ResetPassword() {
               <TextInput
                 style={styles.input}
                 placeholder="Min 6 characters"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={Colors.onSurfaceVariant}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -128,7 +129,7 @@ export default function ResetPassword() {
               <TextInput
                 style={styles.input}
                 placeholder="Repeat your password"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={Colors.onSurfaceVariant}
                 value={confirm}
                 onChangeText={setConfirm}
                 secureTextEntry
@@ -141,7 +142,7 @@ export default function ResetPassword() {
               disabled={loading}
             >
               <LinearGradient
-                colors={[Colors.purple, Colors.purpleLight]}
+                colors={[Colors.primary, Colors.primaryContainer]}
                 style={styles.submitGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -161,8 +162,8 @@ export default function ResetPassword() {
 const styles = StyleSheet.create({
   bg: { flex: 1 },
   container: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 80, paddingBottom: 40 },
-  title: { fontSize: 32, fontWeight: '800', color: Colors.textLight, marginBottom: 8 },
-  subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.6)', marginBottom: 40 },
+  title: { fontSize: 32, fontFamily: Fonts.parentH1, color: Colors.white, marginBottom: 8 },
+  subtitle: { fontSize: 16, fontFamily: Fonts.body, color: 'rgba(255,255,255,0.6)', marginBottom: 40 },
   form: { gap: 20 },
   errorBox: {
     backgroundColor: 'rgba(255,61,0,0.15)',
@@ -172,8 +173,8 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 8,
   },
-  errorTitle: { color: Colors.textLight, fontWeight: '700', fontSize: 16 },
-  errorText: { color: '#FF8A65', fontSize: 14 },
+  errorTitle: { color: Colors.white, fontFamily: Fonts.bodyBold, fontSize: 16 },
+  errorText: { color: '#FF8A65', fontSize: 14, fontFamily: Fonts.body },
   successBox: {
     backgroundColor: 'rgba(0,200,83,0.12)',
     borderRadius: 14,
@@ -182,29 +183,30 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 16,
   },
-  successTitle: { color: Colors.textLight, fontWeight: '800', fontSize: 20 },
-  successText: { color: 'rgba(255,255,255,0.7)', fontSize: 15, lineHeight: 22 },
+  successTitle: { color: Colors.white, fontFamily: Fonts.bodyBold, fontSize: 20 },
+  successText: { color: 'rgba(255,255,255,0.7)', fontSize: 15, fontFamily: Fonts.body, lineHeight: 22 },
   signInBtn: {
-    backgroundColor: Colors.purple,
-    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    borderRadius: 9999,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  signInBtnText: { color: Colors.textLight, fontWeight: '700', fontSize: 16 },
+  signInBtnText: { color: Colors.white, fontFamily: Fonts.bodyBold, fontSize: 16 },
   inputGroup: { gap: 8 },
-  label: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '600' },
+  label: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontFamily: Fonts.bodyBold },
   input: {
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: Colors.textLight,
+    color: Colors.white,
     fontSize: 16,
+    fontFamily: Fonts.body,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.15)',
   },
-  submitBtn: { borderRadius: 16, overflow: 'hidden' },
+  submitBtn: { borderRadius: 9999, overflow: 'hidden' },
   submitBtnDisabled: { opacity: 0.6 },
   submitGradient: { paddingVertical: 18, alignItems: 'center' },
-  submitText: { color: Colors.textLight, fontSize: 18, fontWeight: '700' },
+  submitText: { color: Colors.white, fontSize: 18, fontFamily: Fonts.bodyBold },
 });

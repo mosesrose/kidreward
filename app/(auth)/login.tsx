@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import { Fonts } from '@/constants/fonts';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -57,7 +58,7 @@ export default function Login() {
               <TextInput
                 style={styles.input}
                 placeholder="you@example.com"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={Colors.onSurfaceVariant}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -76,7 +77,7 @@ export default function Login() {
               <TextInput
                 style={styles.input}
                 placeholder="Your password"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={Colors.onSurfaceVariant}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -89,7 +90,7 @@ export default function Login() {
               disabled={loading}
             >
               <LinearGradient
-                colors={[Colors.purple, Colors.purpleLight]}
+                colors={[Colors.primary, Colors.primaryContainer]}
                 style={styles.submitGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
@@ -117,9 +118,9 @@ const styles = StyleSheet.create({
   bg: { flex: 1 },
   container: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40 },
   back: { marginBottom: 32 },
-  backText: { color: 'rgba(255,255,255,0.6)', fontSize: 16 },
-  title: { fontSize: 32, fontWeight: '800', color: Colors.textLight, marginBottom: 8 },
-  subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.6)', marginBottom: 40 },
+  backText: { color: 'rgba(255,255,255,0.6)', fontSize: 16, fontFamily: Fonts.body },
+  title: { fontSize: 32, fontFamily: Fonts.parentH1, color: Colors.white, marginBottom: 8 },
+  subtitle: { fontSize: 16, fontFamily: Fonts.body, color: 'rgba(255,255,255,0.6)', marginBottom: 40 },
   form: { gap: 20, marginBottom: 32 },
   errorBox: {
     backgroundColor: 'rgba(255,61,0,0.15)',
@@ -129,25 +130,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  errorText: { color: '#FF8A65', fontSize: 14 },
+  errorText: { color: '#FF8A65', fontSize: 14, fontFamily: Fonts.body },
   inputGroup: { gap: 8 },
   passwordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  label: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '600' },
-  forgotLink: { color: Colors.gem, fontSize: 13, fontWeight: '600' },
+  label: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontFamily: Fonts.bodyBold },
+  forgotLink: { color: Colors.primary, fontSize: 13, fontFamily: Fonts.bodyBold },
   input: {
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: Colors.textLight,
+    color: Colors.white,
     fontSize: 16,
+    fontFamily: Fonts.body,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.15)',
   },
-  submitBtn: { borderRadius: 16, overflow: 'hidden' },
+  submitBtn: { borderRadius: 9999, overflow: 'hidden' },
   submitBtnDisabled: { opacity: 0.6 },
   submitGradient: { paddingVertical: 18, alignItems: 'center' },
-  submitText: { color: Colors.textLight, fontSize: 18, fontWeight: '700' },
-  switchText: { color: 'rgba(255,255,255,0.6)', textAlign: 'center', fontSize: 15 },
-  switchLink: { color: Colors.gem, fontWeight: '700' },
+  submitText: { color: Colors.white, fontSize: 18, fontFamily: Fonts.bodyBold },
+  switchText: { color: 'rgba(255,255,255,0.6)', textAlign: 'center', fontSize: 15, fontFamily: Fonts.body },
+  switchLink: { color: Colors.primary, fontFamily: Fonts.bodyBold },
 });

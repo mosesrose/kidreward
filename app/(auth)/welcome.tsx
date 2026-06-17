@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/colors';
+import { Fonts } from '@/constants/fonts';
 
 const { width } = Dimensions.get('window');
 
@@ -46,7 +47,7 @@ export default function Welcome() {
           onPress={() => router.push('/(auth)/signup')}
         >
           <LinearGradient
-            colors={[Colors.purple, Colors.purpleLight]}
+            colors={[Colors.primary, Colors.primaryContainer]}
             style={styles.primaryBtnGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
@@ -89,19 +90,20 @@ const styles = StyleSheet.create({
   appIcon: { fontSize: 72 },
   title: {
     fontSize: 42,
-    fontWeight: '900',
-    color: Colors.textLight,
+    fontFamily: Fonts.parentH1,
+    color: Colors.white,
     marginTop: 8,
     letterSpacing: -1,
   },
   tagline: {
     fontSize: 18,
+    fontFamily: Fonts.body,
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     marginTop: 12,
     lineHeight: 26,
   },
-  taglineHighlight: { color: Colors.gem, fontWeight: '700' },
+  taglineHighlight: { color: Colors.primary, fontFamily: Fonts.bodyBold },
   features: {
     backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 20,
@@ -111,13 +113,13 @@ const styles = StyleSheet.create({
   },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   featureEmoji: { fontSize: 24 },
-  featureText: { color: 'rgba(255,255,255,0.9)', fontSize: 15, flex: 1 },
+  featureText: { color: 'rgba(255,255,255,0.9)', fontSize: 15, fontFamily: Fonts.body, flex: 1 },
   buttons: { gap: 12 },
-  primaryBtn: { borderRadius: 16, overflow: 'hidden' },
-  inviteBtn: { borderRadius: 16, overflow: 'hidden' },
+  primaryBtn: { borderRadius: 9999, overflow: 'hidden' },
+  inviteBtn: { borderRadius: 9999, overflow: 'hidden' },
   primaryBtnGradient: { paddingVertical: 18, alignItems: 'center' },
-  primaryBtnText: { color: Colors.textLight, fontSize: 18, fontWeight: '800' },
-  inviteBtnText: { color: Colors.textDark, fontSize: 18, fontWeight: '800' },
+  primaryBtnText: { color: Colors.white, fontSize: 18, fontFamily: Fonts.bodyBold },
+  inviteBtnText: { color: Colors.onSurface, fontSize: 18, fontFamily: Fonts.bodyBold },
   secondaryBtn: { paddingVertical: 16, alignItems: 'center' },
-  secondaryBtnText: { color: 'rgba(255,255,255,0.7)', fontSize: 16 },
+  secondaryBtnText: { color: 'rgba(255,255,255,0.7)', fontSize: 16, fontFamily: Fonts.body },
 });

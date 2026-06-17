@@ -8,6 +8,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors } from '@/constants/colors';
+import { Fonts } from '@/constants/fonts';
 
 type Step = 'code' | 'verifying' | 'details';
 
@@ -155,7 +156,7 @@ export default function SignupChild() {
             <View style={styles.verifyingBox} testID="verifying-invite">
               <Text style={styles.emoji}>🔎</Text>
               <Text style={styles.title}>Verifying your invite…</Text>
-              <ActivityIndicator color={Colors.gem} size="large" style={{ marginTop: 16 }} />
+              <ActivityIndicator color={Colors.primary} size="large" style={{ marginTop: 16 }} />
             </View>
           ) : step === 'code' ? (
             <>
@@ -192,7 +193,7 @@ export default function SignupChild() {
                 testID="validate-code-btn"
               >
                 <LinearGradient
-                  colors={[Colors.gem, Colors.gemGlow]}
+                  colors={[Colors.primary, Colors.primaryContainer]}
                   style={styles.submitGradient}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 >
@@ -224,7 +225,7 @@ export default function SignupChild() {
                   <TextInput
                     style={styles.input}
                     placeholder="e.g. Alex"
-                    placeholderTextColor={Colors.textMuted}
+                    placeholderTextColor={Colors.onSurfaceVariant}
                     value={name}
                     onChangeText={setName}
                     autoCapitalize="words"
@@ -235,7 +236,7 @@ export default function SignupChild() {
                   <TextInput
                     style={[styles.input, inviteEmail ? styles.inputLocked : null]}
                     placeholder="you@example.com"
-                    placeholderTextColor={Colors.textMuted}
+                    placeholderTextColor={Colors.onSurfaceVariant}
                     value={inviteEmail ?? email}
                     onChangeText={inviteEmail ? undefined : setEmail}
                     editable={!inviteEmail}
@@ -251,7 +252,7 @@ export default function SignupChild() {
                   <TextInput
                     style={styles.input}
                     placeholder="Min 6 characters"
-                    placeholderTextColor={Colors.textMuted}
+                    placeholderTextColor={Colors.onSurfaceVariant}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
@@ -265,7 +266,7 @@ export default function SignupChild() {
                   testID="create-child-account-btn"
                 >
                   <LinearGradient
-                    colors={[Colors.gem, Colors.gemGlow]}
+                    colors={[Colors.primary, Colors.primaryContainer]}
                     style={styles.submitGradient}
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                   >
@@ -294,46 +295,46 @@ const styles = StyleSheet.create({
   bg: { flex: 1 },
   container: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40, alignItems: 'center' },
   back: { alignSelf: 'flex-start', marginBottom: 24 },
-  backText: { color: 'rgba(255,255,255,0.6)', fontSize: 16 },
+  backText: { color: 'rgba(255,255,255,0.6)', fontSize: 16, fontFamily: Fonts.body },
   emoji: { fontSize: 64, marginBottom: 12 },
-  title: { fontSize: 30, fontWeight: '800', color: Colors.textLight, marginBottom: 8, textAlign: 'center' },
-  subtitle: { fontSize: 15, color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 22, marginBottom: 32 },
+  title: { fontSize: 30, fontFamily: Fonts.parentH1, color: Colors.white, marginBottom: 8, textAlign: 'center' },
+  subtitle: { fontSize: 15, fontFamily: Fonts.body, color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 22, marginBottom: 32 },
   codeContainer: { width: '100%', marginBottom: 10 },
   codeInput: {
     backgroundColor: 'rgba(255,255,255,0.12)',
     borderRadius: 20, paddingVertical: 20,
-    fontSize: 40, fontWeight: '900',
-    color: Colors.gem, letterSpacing: 12,
+    fontSize: 40, fontFamily: Fonts.bodyBold,
+    color: Colors.primary, letterSpacing: 12,
     borderWidth: 2, borderColor: 'rgba(0,212,255,0.3)',
     width: '100%',
   },
-  hint: { color: 'rgba(255,255,255,0.35)', fontSize: 13, marginBottom: 28 },
+  hint: { color: 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: Fonts.body, marginBottom: 28 },
   verifyingBox: { alignItems: 'center', paddingTop: 80 },
   linkError: {
-    color: '#FF6B35', fontSize: 14, textAlign: 'center',
+    color: '#FF6B35', fontSize: 14, fontFamily: Fonts.body, textAlign: 'center',
     marginBottom: 16, lineHeight: 20,
   },
-  submitBtn: { width: '100%', borderRadius: 16, overflow: 'hidden', marginBottom: 24 },
+  submitBtn: { width: '100%', borderRadius: 9999, overflow: 'hidden', marginBottom: 24 },
   disabled: { opacity: 0.4 },
   submitGradient: { paddingVertical: 18, alignItems: 'center' },
-  submitTextDark: { color: Colors.textDark, fontSize: 18, fontWeight: '800' },
+  submitTextDark: { color: Colors.onSurface, fontSize: 18, fontFamily: Fonts.bodyBold },
   steps: {
     gap: 10, width: '100%',
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 16, padding: 18, marginBottom: 24,
   },
-  step: { color: 'rgba(255,255,255,0.7)', fontSize: 14, lineHeight: 20 },
+  step: { color: 'rgba(255,255,255,0.7)', fontSize: 14, fontFamily: Fonts.body, lineHeight: 20 },
   form: { gap: 18, marginBottom: 28, width: '100%' },
   inputGroup: { gap: 8 },
-  label: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '600' },
+  label: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontFamily: Fonts.bodyBold },
   input: {
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14,
-    color: Colors.textLight, fontSize: 16,
+    color: Colors.white, fontSize: 16, fontFamily: Fonts.body,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
   },
   inputLocked: { opacity: 0.6 },
-  lockedHint: { color: 'rgba(255,255,255,0.45)', fontSize: 12, marginTop: 4 },
-  switchText: { color: 'rgba(255,255,255,0.6)', textAlign: 'center', fontSize: 15 },
-  switchLink: { color: Colors.gem, fontWeight: '700' },
+  lockedHint: { color: 'rgba(255,255,255,0.45)', fontSize: 12, fontFamily: Fonts.body, marginTop: 4 },
+  switchText: { color: 'rgba(255,255,255,0.6)', textAlign: 'center', fontSize: 15, fontFamily: Fonts.body },
+  switchLink: { color: Colors.primary, fontFamily: Fonts.bodyBold },
 });

@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import { Fonts } from '@/constants/fonts';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -52,7 +53,7 @@ export default function ForgotPassword() {
             <View style={styles.successBox} testID="reset-sent">
               <Text style={styles.successText}>
                 Check your inbox! A password reset link has been sent to{' '}
-                <Text style={{ fontWeight: '700' }}>{email}</Text>.
+                <Text style={{ fontFamily: Fonts.bodyBold }}>{email}</Text>.
               </Text>
               <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/(auth)/login')}>
                 <Text style={styles.backBtnText}>Back to Sign In</Text>
@@ -71,7 +72,7 @@ export default function ForgotPassword() {
                 <TextInput
                   style={styles.input}
                   placeholder="you@example.com"
-                  placeholderTextColor={Colors.textMuted}
+                  placeholderTextColor={Colors.onSurfaceVariant}
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
@@ -86,7 +87,7 @@ export default function ForgotPassword() {
                 disabled={loading}
               >
                 <LinearGradient
-                  colors={[Colors.purple, Colors.purpleLight]}
+                  colors={[Colors.primary, Colors.primaryContainer]}
                   style={styles.submitGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
@@ -108,9 +109,9 @@ const styles = StyleSheet.create({
   bg: { flex: 1 },
   container: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40 },
   back: { marginBottom: 32 },
-  backText: { color: 'rgba(255,255,255,0.6)', fontSize: 16 },
-  title: { fontSize: 32, fontWeight: '800', color: Colors.textLight, marginBottom: 8 },
-  subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.6)', marginBottom: 40 },
+  backText: { color: 'rgba(255,255,255,0.6)', fontSize: 16, fontFamily: Fonts.body },
+  title: { fontSize: 32, fontFamily: Fonts.parentH1, color: Colors.white, marginBottom: 8 },
+  subtitle: { fontSize: 16, fontFamily: Fonts.body, color: 'rgba(255,255,255,0.6)', marginBottom: 40 },
   form: { gap: 20 },
   errorBox: {
     backgroundColor: 'rgba(255,61,0,0.15)',
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  errorText: { color: '#FF8A65', fontSize: 14 },
+  errorText: { color: '#FF8A65', fontSize: 14, fontFamily: Fonts.body },
   successBox: {
     backgroundColor: 'rgba(0,200,83,0.12)',
     borderRadius: 14,
@@ -129,28 +130,29 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 20,
   },
-  successText: { color: Colors.textLight, fontSize: 16, lineHeight: 24 },
+  successText: { color: Colors.white, fontSize: 16, fontFamily: Fonts.body, lineHeight: 24 },
   backBtn: {
-    backgroundColor: Colors.purple,
-    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    borderRadius: 9999,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  backBtnText: { color: Colors.textLight, fontWeight: '700', fontSize: 16 },
+  backBtnText: { color: Colors.white, fontFamily: Fonts.bodyBold, fontSize: 16 },
   inputGroup: { gap: 8 },
-  label: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '600' },
+  label: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontFamily: Fonts.bodyBold },
   input: {
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: Colors.textLight,
+    color: Colors.white,
     fontSize: 16,
+    fontFamily: Fonts.body,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.15)',
   },
-  submitBtn: { borderRadius: 16, overflow: 'hidden' },
+  submitBtn: { borderRadius: 9999, overflow: 'hidden' },
   submitBtnDisabled: { opacity: 0.6 },
   submitGradient: { paddingVertical: 18, alignItems: 'center' },
-  submitText: { color: Colors.textLight, fontSize: 18, fontWeight: '700' },
+  submitText: { color: Colors.white, fontSize: 18, fontFamily: Fonts.bodyBold },
 });

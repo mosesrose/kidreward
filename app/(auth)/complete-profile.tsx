@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors } from '@/constants/colors';
+import { Fonts } from '@/constants/fonts';
 import { AVATAR_OPTIONS } from '@/constants/challenges';
 
 export default function CompleteProfile() {
@@ -49,7 +50,7 @@ export default function CompleteProfile() {
           disabled={saving}
         >
           <LinearGradient
-            colors={[Colors.purple, Colors.purpleLight]}
+            colors={[Colors.primary, Colors.primaryContainer]}
             style={styles.btnGradient}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
           >
@@ -68,8 +69,8 @@ export default function CompleteProfile() {
 const styles = StyleSheet.create({
   bg: { flex: 1 },
   container: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 80, paddingBottom: 40, alignItems: 'center' },
-  title: { fontSize: 28, fontWeight: '800', color: Colors.textLight, marginBottom: 8, textAlign: 'center' },
-  subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.6)', marginBottom: 32, textAlign: 'center' },
+  title: { fontSize: 28, fontFamily: Fonts.parentH1, color: Colors.white, marginBottom: 8, textAlign: 'center' },
+  subtitle: { fontSize: 16, fontFamily: Fonts.body, color: 'rgba(255,255,255,0.6)', marginBottom: 32, textAlign: 'center' },
   preview: { fontSize: 80, marginBottom: 32 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginBottom: 40 },
   avatarBtn: {
@@ -78,11 +79,11 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 2, borderColor: 'transparent',
   },
-  avatarBtnActive: { borderColor: Colors.gem, backgroundColor: 'rgba(0,212,255,0.15)' },
+  avatarBtnActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryFixed },
   avatarEmoji: { fontSize: 32 },
-  btn: { width: '100%', borderRadius: 16, overflow: 'hidden', marginBottom: 16 },
+  btn: { width: '100%', borderRadius: 9999, overflow: 'hidden', marginBottom: 16 },
   disabled: { opacity: 0.6 },
   btnGradient: { paddingVertical: 18, alignItems: 'center' },
-  btnText: { color: Colors.textLight, fontSize: 18, fontWeight: '700' },
-  signOut: { color: 'rgba(255,255,255,0.4)', fontSize: 15 },
+  btnText: { color: Colors.white, fontSize: 18, fontFamily: Fonts.bodyBold },
+  signOut: { color: 'rgba(255,255,255,0.4)', fontSize: 15, fontFamily: Fonts.body },
 });
