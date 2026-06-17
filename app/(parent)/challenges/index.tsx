@@ -1,55 +1,32 @@
 import { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  RefreshControl,
+  RefreshControl, SafeAreaView,
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Challenge, Completion } from '@/lib/supabase';
+import { supabase, Challenge } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
-import { CATEGORY_COLORS, CHALLENGE_VALUES } from '@/constants/challenges';
+import { Fonts } from '@/constants/fonts';
 import { FALLBACK_ICON } from '@/constants/icons';
-
-function ValueChip({ value }: { value: string | null | undefined }) {
-  if (!value) return null;
-  const v = CHALLENGE_VALUES.find(x => x.key === value);
-  if (!v) return null;
-  return (
-    <View style={{
-      flexDirection: 'row', alignItems: 'center', gap: 4,
-      backgroundColor: `${v.color}20`, paddingHorizontal: 8, paddingVertical: 3,
-      borderRadius: 20, marginTop: 4, alignSelf: 'flex-start',
-    }}>
-      <Text style={{ fontSize: 11 }}>{v.emoji}</Text>
-      <Text style={{ fontSize: 11, fontWeight: '700', color: v.color }}>{v.label}</Text>
-    </View>
-  );
-}
 
 type ChallengeWithPending = Challenge & { pending_count: number };
 
 export default function ChallengesScreen() {
   const { family } = useAuth();
   const [challenges, setChallenges] = useState<ChallengeWithPending[]>([]);
-  const [pendingMap, setPendingMap] = useState<Record<string, number>>({});
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!family) return;
     const { data: ch } = await supabase
-      .from('challenges')
-      .select('*')
-      .eq('family_id', family.id)
-      .neq('status', 'archived')
-      .order('created_at', { ascending: false });
-
+      .from('challenges').select('*').eq('family_id', family.id)
+      .neq('status', 'archived').order('created_at', { ascending: false });
     if (!ch) return;
 
     const { data: completions } = await supabase
-      .from('completions')
-      .select('challenge_id')
-      .eq('status', 'pending')
+      .from('completions').select('challenge_id').eq('status', 'pending')
       .in('challenge_id', ch.map((c: Challenge) => c.id));
 
     const map: Record<string, number> = {};
@@ -57,43 +34,32 @@ export default function ChallengesScreen() {
       map[c.challenge_id] = (map[c.challenge_id] ?? 0) + 1;
     });
 
-    setPendingMap(map);
     setChallenges(ch.map((c: Challenge) => ({ ...c, pending_count: map[c.id] ?? 0 })));
   }, [family]);
 
-  // This tab stays mounted when navigating to create/[id] and back, so a
-  // mount-only effect would never pick up a just-created challenge.
-  // Refetch on every focus instead.
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await load();
-    setRefreshing(false);
-  };
-
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Challenges 📋</Text>
+        <Text style={styles.title}>Challenges</Text>
         <TouchableOpacity
-          style={styles.addBtn}
+          style={styles.newBtn}
           onPress={() => router.push('/(parent)/challenges/create')}
         >
-          <Text style={styles.addBtnText}>+ New</Text>
+          <Text style={styles.newBtnText}>+ New</Text>
         </TouchableOpacity>
       </View>
 
       <FlatList
         data={challenges}
         keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>📋</Text>
             <Text style={styles.emptyTitle}>No challenges yet</Text>
-            <Text style={styles.emptyDesc}>Create your first challenge for your kids</Text>
+            <Text style={styles.emptyMeta}>Create your first challenge for your kids</Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -101,81 +67,75 @@ export default function ChallengesScreen() {
             style={styles.card}
             onPress={() => router.push(`/(parent)/challenges/${item.id}`)}
           >
-            <View style={[styles.categoryBar, { backgroundColor: CATEGORY_COLORS[item.category] ?? Colors.purple }]} />
-            <View style={styles.cardBody}>
-              <View style={styles.cardTop}>
-                <MaterialCommunityIcons
-                  name={(item.emoji || FALLBACK_ICON) as any}
-                  size={28}
-                  color={Colors.purple}
-                />
-                <View style={styles.cardInfo}>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardMeta}>
-                    {item.repeat_type === 'daily' ? '🔄 Daily' :
-                     item.repeat_type === 'weekly' ? '📆 Weekly' : '1️⃣ Once'}
-                    {item.due_date ? `  •  Due ${item.due_date}` : ''}
-                  </Text>
-                  <ValueChip value={item.value} />
-                </View>
-                <View style={styles.gemBadge}>
-                  <Text style={styles.gemText}>+{item.gem_reward}💎</Text>
-                </View>
-              </View>
-              {item.pending_count > 0 && (
-                <View style={styles.pendingBadge}>
-                  <Text style={styles.pendingBadgeText}>
-                    ⏳ {item.pending_count} waiting for review
-                  </Text>
-                </View>
-              )}
+            <View style={styles.iconBox}>
+              <MaterialCommunityIcons
+                name={(item.emoji || FALLBACK_ICON) as any}
+                size={26}
+                color={Colors.primary}
+              />
             </View>
+            <View style={styles.cardBody}>
+              <Text style={styles.cardTitle}>{item.title}</Text>
+              <Text style={styles.cardMeta}>
+                {item.repeat_type === 'daily' ? 'Daily' :
+                 item.repeat_type === 'weekly' ? 'Weekly' : 'Once'}
+              </Text>
+            </View>
+            <View style={styles.gemBadge}>
+              <Text style={styles.gemBadgeText}>💎 {item.gem_reward}</Text>
+            </View>
+            {item.pending_count > 0 && (
+              <View style={styles.pendingDot}>
+                <Text style={styles.pendingDotText}>{item.pending_count}</Text>
+              </View>
+            )}
+            <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.outline} />
           </TouchableOpacity>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.parentBg },
+  safe: { flex: 1, backgroundColor: Colors.surface },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16,
-    backgroundColor: Colors.parentBg,
+    paddingTop: 20, paddingHorizontal: 20, paddingBottom: 16,
   },
-  title: { fontSize: 28, fontWeight: '900', color: Colors.textDark },
-  addBtn: {
-    backgroundColor: Colors.purple, paddingHorizontal: 16,
-    paddingVertical: 8, borderRadius: 12,
+  title: { fontFamily: Fonts.parentH1, fontSize: 28, color: Colors.onSurface },
+  newBtn: {
+    backgroundColor: Colors.primary, borderRadius: 9999,
+    paddingHorizontal: 16, paddingVertical: 8,
   },
-  addBtnText: { color: Colors.textLight, fontWeight: '700', fontSize: 15 },
-  list: { padding: 16, gap: 12 },
+  newBtnText: { fontFamily: Fonts.bodyBold, fontSize: 14, color: Colors.white },
+  list:  { padding: 20, gap: 10 },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyEmoji: { fontSize: 48, marginBottom: 12 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', color: Colors.textDark },
-  emptyDesc: { fontSize: 14, color: Colors.textMuted, marginTop: 6, textAlign: 'center' },
+  emptyTitle: { fontFamily: Fonts.parentH1, fontSize: 20, color: Colors.onSurface },
+  emptyMeta:  { fontFamily: Fonts.body,     fontSize: 14, color: Colors.onSurfaceVariant, marginTop: 6 },
+
   card: {
-    flexDirection: 'row', backgroundColor: Colors.parentCard,
-    borderRadius: 16, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07, shadowRadius: 10, elevation: 3,
+    backgroundColor: Colors.white, borderRadius: 12,
+    padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
   },
-  categoryBar: { width: 5 },
-  cardBody: { flex: 1, padding: 14 },
-  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  cardInfo: { flex: 1 },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: Colors.textDark },
-  cardMeta: { fontSize: 12, color: Colors.textMuted, marginTop: 3 },
+  iconBox: {
+    width: 48, height: 48, borderRadius: 12,
+    backgroundColor: Colors.primaryFixed,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  cardBody: { flex: 1 },
+  cardTitle: { fontFamily: Fonts.bodySemiBold, fontSize: 15, color: Colors.onSurface },
+  cardMeta:  { fontFamily: Fonts.body,         fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2 },
   gemBadge: {
-    backgroundColor: 'rgba(122,60,225,0.1)',
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
+    backgroundColor: Colors.tertiaryFixed,
+    borderRadius: 9999, paddingHorizontal: 10, paddingVertical: 4,
   },
-  gemText: { color: Colors.purple, fontWeight: '700', fontSize: 13 },
-  pendingBadge: {
-    marginTop: 10, backgroundColor: 'rgba(255,145,0,0.1)',
-    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
-    alignSelf: 'flex-start',
+  gemBadgeText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.onTertiaryFixed },
+  pendingDot: {
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: Colors.warning, alignItems: 'center', justifyContent: 'center',
   },
-  pendingBadgeText: { color: Colors.pending, fontWeight: '600', fontSize: 12 },
+  pendingDotText: { fontFamily: Fonts.bodyBold, fontSize: 11, color: Colors.white },
 });
