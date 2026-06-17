@@ -4,10 +4,13 @@ import {
   TextInput, Switch,
 } from 'react-native';
 import { router } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { CHALLENGE_TEMPLATES, CATEGORY_COLORS, ChallengeTemplate, CHALLENGE_VALUES, ChallengeValue } from '@/constants/challenges';
+import { CHALLENGE_ICONS, FALLBACK_ICON } from '@/constants/icons';
+import IconPicker from '@/components/IconPicker';
 
 export default function CreateChallenge() {
   const { family, profile } = useAuth();
@@ -18,6 +21,7 @@ export default function CreateChallenge() {
   const [bonus, setBonus] = useState('0');
   const [repeatType, setRepeatType] = useState<'once' | 'daily' | 'weekly'>('once');
   const [value, setValue] = useState<ChallengeValue | null>(null);
+  const [icon, setIcon] = useState<string>(FALLBACK_ICON);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -28,6 +32,7 @@ export default function CreateChallenge() {
     setGems(String(t.defaultGems));
     setBonus(String(t.defaultBonus));
     setRepeatType(t.repeatType);
+    setIcon(t.icon);
   }
 
   async function save() {
@@ -41,7 +46,7 @@ export default function CreateChallenge() {
       title: title.trim(),
       description: description.trim() || null,
       category: selected?.category ?? 'homework',
-      emoji: selected?.emoji ?? '⭐',
+      emoji: icon,
       gem_reward: parseInt(gems, 10) || 10,
       bonus_gems: parseInt(bonus, 10) || 0,
       repeat_type: repeatType,
@@ -89,7 +94,12 @@ export default function CreateChallenge() {
               ]}
               onPress={() => pickTemplate(t)}
             >
-              <Text style={styles.templateEmoji}>{t.emoji}</Text>
+              <MaterialCommunityIcons
+                  name={(t.icon || FALLBACK_ICON) as any}
+                  size={28}
+                  color={CATEGORY_COLORS[t.category] ?? Colors.purple}
+                  style={{ marginBottom: 6 }}
+                />
               <Text style={styles.templateTitle} numberOfLines={2}>{t.title}</Text>
               <Text style={styles.templateGems}>+{t.defaultGems}💎</Text>
             </TouchableOpacity>
@@ -159,6 +169,14 @@ export default function CreateChallenge() {
               </TouchableOpacity>
             ))}
           </View>
+        </View>
+        <View style={styles.field}>
+          <Text style={styles.label}>Icon</Text>
+          <IconPicker
+            icons={CHALLENGE_ICONS}
+            selected={icon}
+            onSelect={setIcon}
+          />
         </View>
         <View style={styles.field}>
           <Text style={styles.label}>Value Taught</Text>
