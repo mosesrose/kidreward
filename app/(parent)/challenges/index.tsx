@@ -54,7 +54,7 @@ export default function ChallengesScreen() {
       <FlatList
         data={challenges}
         keyExtractor={(item) => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={Colors.primary} />}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.empty}>
