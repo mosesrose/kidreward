@@ -1,9 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '@/constants/colors';
+import LevelBadge from './LevelBadge';
 
-// Persistent status header used on every child screen.
-// Always shows current gem balance — never have to hunt for it.
 interface Props {
   name: string;
   gems: number;
@@ -13,65 +11,65 @@ interface Props {
 }
 
 export default function GemHeader({ name, gems, lifetime, compact, onSignOut }: Props) {
-  return (
-    <LinearGradient
-      colors={['#FF8A5B', '#FF6B5C', '#B94AAA']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[styles.header, compact && styles.headerCompact]}
-    >
-      {compact ? (
+  if (compact) {
+    return (
+      <View style={styles.headerCompact}>
         <View style={styles.row}>
-          <Text style={styles.name}>{name}</Text>
-          <View style={styles.gemPill}>
-            <Text style={styles.gemBig}>{gems}</Text>
-            <Text style={styles.gemPillLbl}>GEMS</Text>
+          <View>
+            <Text style={styles.nameSmall}>{name}</Text>
+            <Text style={styles.gemCompact}>🔮 {gems} gems</Text>
           </View>
+          {typeof lifetime === 'number' && (
+            <LevelBadge totalGemsEarned={lifetime} compact />
+          )}
         </View>
-      ) : (
-        <>
-          <View style={styles.row}>
-            <Text style={styles.greeting}>Hi {name}</Text>
-            {onSignOut ? (
-              <TouchableOpacity onPress={onSignOut}>
-                <Text style={styles.signOut}>Sign out</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
+      </View>
+    );
+  }
 
-          <View style={styles.statsRow}>
-            <View>
-              <Text style={styles.statLabel}>YOUR GEMS</Text>
-              <Text style={styles.statBig}>{gems}</Text>
-            </View>
-            {typeof lifetime === 'number' && (
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.statLabel}>LIFETIME</Text>
-                <Text style={styles.statMed}>{lifetime}</Text>
-              </View>
-            )}
-          </View>
-        </>
+  return (
+    <View style={styles.header}>
+      <View style={styles.row}>
+        <View>
+          <Text style={styles.greeting}>Hi {name} 👋</Text>
+          {onSignOut ? (
+            <TouchableOpacity onPress={onSignOut} style={{ marginTop: 4 }}>
+              <Text style={styles.signOut}>Sign out</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+        <View style={styles.gemPill}>
+          <Text style={styles.gemAmount}>🔮 {gems}</Text>
+          <Text style={styles.gemLabel}>GEMS</Text>
+        </View>
+      </View>
+
+      {typeof lifetime === 'number' && (
+        <View style={{ marginTop: 16 }}>
+          <LevelBadge totalGemsEarned={lifetime} />
+        </View>
       )}
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 22 },
-  headerCompact: { paddingTop: 50, paddingBottom: 14 },
-
+  header: {
+    backgroundColor: Colors.childBg,
+    paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20,
+    borderBottomWidth: 1, borderBottomColor: Colors.childBorder,
+  },
+  headerCompact: {
+    backgroundColor: Colors.childBg,
+    paddingTop: 50, paddingHorizontal: 20, paddingBottom: 14,
+    borderBottomWidth: 1, borderBottomColor: Colors.childBorder,
+  },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  greeting: { color: '#fff', fontSize: 22, fontWeight: '600' },
-  signOut: { color: 'rgba(255,255,255,0.85)', fontSize: 13 },
-  name: { color: '#fff', fontSize: 14, opacity: 0.9 },
-
-  statsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 14 },
-  statLabel: { color: 'rgba(255,255,255,0.85)', fontSize: 11, letterSpacing: 1.5, fontWeight: '600', marginBottom: 4 },
-  statBig: { color: '#fff', fontSize: 44, fontWeight: '700', lineHeight: 46 },
-  statMed: { color: '#fff', fontSize: 20, fontWeight: '600' },
-
+  greeting: { fontSize: 22, fontWeight: '800', color: Colors.childText },
+  signOut: { fontSize: 13, color: Colors.childMuted },
+  nameSmall: { fontSize: 13, color: Colors.childMuted, marginBottom: 2 },
+  gemCompact: { fontSize: 16, fontWeight: '800', color: Colors.childAccent },
   gemPill: { alignItems: 'flex-end' },
-  gemBig: { color: '#fff', fontSize: 24, fontWeight: '700', lineHeight: 26 },
-  gemPillLbl: { color: 'rgba(255,255,255,0.85)', fontSize: 10, letterSpacing: 1, fontWeight: '600' },
+  gemAmount: { fontSize: 22, fontWeight: '900', color: Colors.childAccent },
+  gemLabel: { fontSize: 10, color: Colors.childMuted, letterSpacing: 1, fontWeight: '600' },
 });
