@@ -3,23 +3,23 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import GemHeader from '@/components/GemHeader';
 import { CHALLENGE_VALUES } from '@/constants/challenges';
+import { FALLBACK_ICON } from '@/constants/icons';
 
 function ValueChip({ value }: { value: string | null | undefined }) {
   if (!value) return null;
   const v = CHALLENGE_VALUES.find(x => x.key === value);
   if (!v) return null;
   return (
-    <View style={{
-      flexDirection: 'row', alignItems: 'center', gap: 4,
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4,
       backgroundColor: `${v.color}30`, paddingHorizontal: 8, paddingVertical: 3,
-      borderRadius: 20, marginTop: 4, alignSelf: 'flex-start',
-    }}>
+      borderRadius: 20, marginTop: 4, alignSelf: 'flex-start' }}>
       <Text style={{ fontSize: 11 }}>{v.emoji}</Text>
       <Text style={{ fontSize: 11, fontWeight: '700', color: v.color }}>{v.label}</Text>
     </View>
@@ -35,7 +35,6 @@ export default function ChildChallenges() {
 
   const load = useCallback(async () => {
     if (!family || !profile) return;
-
     const [{ data: ch }, { data: comps }] = await Promise.all([
       supabase
         .from('challenges')
@@ -50,15 +49,11 @@ export default function ChildChallenges() {
         .eq('child_id', profile.id)
         .in('status', ['pending', 'approved']),
     ]);
-
     setChallenges(ch ?? []);
     const ids = new Set<string>(comps?.map((c: { challenge_id: string }) => c.challenge_id) ?? []);
     setCompletedIds(ids);
   }, [family, profile]);
 
-  // This tab stays mounted when navigating to a mission's detail and back,
-  // so a mount-only effect would miss newly created challenges. Refetch on
-  // every focus instead.
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const visible = challenges.filter(c =>
@@ -68,13 +63,17 @@ export default function ChildChallenges() {
 
   return (
     <View style={styles.container}>
-      <GemHeader name={profile?.name ?? ''} gems={membership?.gem_balance ?? 0} compact />
+      <GemHeader
+        name={profile?.name ?? ''}
+        gems={membership?.gem_balance ?? 0}
+        lifetime={membership?.total_gems_earned ?? 0}
+        compact
+      />
 
       <View style={styles.body}>
         <Text style={styles.h1}>Missions</Text>
         <Text style={styles.h2}>{todoCount} to do</Text>
 
-        {/* Segmented filter */}
         <View style={styles.segmented}>
           <TouchableOpacity
             style={[styles.seg, filter === 'active' && styles.segOn]}
@@ -94,7 +93,13 @@ export default function ChildChallenges() {
           data={visible}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={Colors.childAccent} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }}
+              tintColor={Colors.childAccent}
+            />
+          }
           ListEmptyComponent={
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>
@@ -112,17 +117,26 @@ export default function ChildChallenges() {
                 style={styles.card}
                 onPress={() => router.push(`/(child)/challenges/${item.id}`)}
               >
+                <View style={styles.iconWrap}>
+                  <MaterialCommunityIcons
+                    name={(item.emoji || FALLBACK_ICON) as any}
+                    size={26}
+                    color={done ? Colors.childMuted : Colors.childAccent}
+                  />
+                </View>
                 <View style={styles.cardLeft}>
                   <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
                   <Text style={styles.cardMeta}>
                     {item.repeat_type === 'daily' ? 'Daily' : item.repeat_type === 'weekly' ? 'Weekly' : 'Once'} · {capitalize(item.category)}
                   </Text>
-                  <ValueChip value={item.value} />
+                  <ValueChip value={(item as any).value} />
                 </View>
                 {done ? (
                   <Text style={styles.cardWaiting}>Waiting</Text>
                 ) : (
-                  <Text style={styles.cardPoints}>+{item.gem_reward} 💎</Text>
+                  <View style={styles.gemBadge}>
+                    <Text style={styles.gemText}>+{item.gem_reward} 💎</Text>
+                  </View>
                 )}
               </TouchableOpacity>
             );
@@ -139,36 +153,44 @@ function capitalize(s: string) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.childBg },
-
   body: { flex: 1, paddingHorizontal: 18, paddingTop: 20 },
-  h1: { fontSize: 13, color: Colors.textMuted, marginBottom: 2 },
-  h2: { fontSize: 22, fontWeight: '700', color: Colors.textDark, marginBottom: 18 },
+  h1: { fontSize: 11, color: Colors.childMuted, letterSpacing: 2, fontWeight: '700', marginBottom: 2 },
+  h2: { fontSize: 22, fontWeight: '800', color: Colors.childText, marginBottom: 18 },
 
   segmented: {
-    flexDirection: 'row',
-    backgroundColor: Colors.childCard,
-    borderWidth: 1, borderColor: Colors.border,
+    flexDirection: 'row', backgroundColor: Colors.childCard,
     borderRadius: 100, padding: 4, marginBottom: 18,
+    borderWidth: 1, borderColor: Colors.childBorder,
   },
   seg: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 100 },
-  segOn: { backgroundColor: Colors.textDark },
-  segText: { fontSize: 12, color: Colors.textMuted, fontWeight: '500' },
-  segTextOn: { color: Colors.textLight, fontWeight: '600' },
+  segOn: { backgroundColor: Colors.childBorder },
+  segText: { fontSize: 12, color: Colors.childMuted, fontWeight: '500' },
+  segTextOn: { color: Colors.childText, fontWeight: '700' },
 
   list: { paddingBottom: 30 },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: Colors.textDark, marginBottom: 4 },
-  emptyMeta: { fontSize: 13, color: Colors.textMuted },
+  emptyTitle: { fontSize: 16, fontWeight: '600', color: Colors.childText, marginBottom: 4 },
+  emptyMeta:  { fontSize: 13, color: Colors.childMuted },
 
   card: {
     backgroundColor: Colors.childCard,
-    borderRadius: 16, padding: 16, marginBottom: 10,
-    borderWidth: 1, borderColor: Colors.border,
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    borderRadius: 16, padding: 14, marginBottom: 10,
+    borderWidth: 1, borderColor: Colors.childBorder,
+    flexDirection: 'row', alignItems: 'center', gap: 12,
   },
-  cardLeft: { flex: 1, paddingRight: 12 },
-  cardTitle: { fontSize: 15, fontWeight: '600', color: Colors.textDark, marginBottom: 4 },
-  cardMeta: { fontSize: 12, color: Colors.textMuted },
-  cardPoints: { fontSize: 14, fontWeight: '700', color: Colors.childAccent },
-  cardWaiting: { fontSize: 13, fontWeight: '600', color: Colors.warning },
+  iconWrap: {
+    width: 44, height: 44, borderRadius: 12,
+    backgroundColor: `${Colors.childAccent}10`,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  cardLeft: { flex: 1 },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: Colors.childText, marginBottom: 2 },
+  cardMeta:  { fontSize: 11, color: Colors.childMuted },
+  gemBadge: {
+    backgroundColor: `${Colors.childAccent}15`,
+    borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
+    borderWidth: 1, borderColor: `${Colors.childAccent}30`,
+  },
+  gemText: { color: Colors.childAccent, fontWeight: '800', fontSize: 13 },
+  cardWaiting: { fontSize: 12, fontWeight: '600', color: Colors.warning },
 });
