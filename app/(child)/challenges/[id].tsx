@@ -4,9 +4,11 @@ import {
   Alert, ScrollView,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import { FALLBACK_ICON } from '@/constants/icons';
 import GemHeader from '@/components/GemHeader';
 
 function capitalize(s: string) {
@@ -68,12 +70,24 @@ export default function ChildChallengeDetail() {
 
   return (
     <View style={styles.container}>
-      <GemHeader name={profile?.name ?? ''} gems={membership?.gem_balance ?? 0} compact />
+      <GemHeader
+        name={profile?.name ?? ''}
+        gems={membership?.gem_balance ?? 0}
+        lifetime={membership?.total_gems_earned ?? 0}
+        compact
+      />
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <TouchableOpacity onPress={() => router.back()} style={styles.back}>
           <Text style={styles.backText}>← Missions</Text>
         </TouchableOpacity>
+
+        <MaterialCommunityIcons
+          name={(challenge.emoji || FALLBACK_ICON) as any}
+          size={56}
+          color={Colors.childAccent}
+          style={styles.iconHero}
+        />
 
         <Text style={styles.kicker}>
           {challenge.repeat_type === 'daily' ? 'DAILY' : challenge.repeat_type === 'weekly' ? 'WEEKLY' : 'ONCE'} · {capitalize(challenge.category).toUpperCase()}
@@ -123,7 +137,7 @@ export default function ChildChallengeDetail() {
             <TextInput
               style={styles.noteInput}
               placeholder="e.g. I tidied my room and made my bed"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={Colors.childMuted}
               value={note}
               onChangeText={setNote}
               multiline
@@ -154,55 +168,58 @@ export default function ChildChallengeDetail() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.childBg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.childBg },
-  loading: { color: Colors.textMuted, fontSize: 16 },
+  loading: { color: Colors.childMuted, fontSize: 16 },
   scroll: { padding: 20, paddingBottom: 40 },
 
   back: { marginBottom: 16 },
-  backText: { color: Colors.textMuted, fontSize: 14, fontWeight: '500' },
+  backText: { color: Colors.childMuted, fontSize: 14, fontWeight: '500' },
 
-  kicker: { fontSize: 11, color: Colors.textMuted, letterSpacing: 2, fontWeight: '700', marginBottom: 8 },
-  title: { fontSize: 28, fontWeight: '700', color: Colors.textDark, lineHeight: 34, marginBottom: 10 },
-  desc: { fontSize: 14, color: Colors.textMid, lineHeight: 20, marginBottom: 20 },
+  iconHero: { alignSelf: 'center', marginBottom: 16 },
+
+  kicker: { fontSize: 11, color: Colors.childMuted, letterSpacing: 2, fontWeight: '700', marginBottom: 8 },
+  title: { fontSize: 28, fontWeight: '700', color: Colors.childText, lineHeight: 34, marginBottom: 10 },
+  desc: { fontSize: 14, color: Colors.childMuted, lineHeight: 20, marginBottom: 20 },
 
   rewardCard: {
-    backgroundColor: Colors.surfaceSoft,
+    backgroundColor: Colors.childCard,
     borderRadius: 18, padding: 22, alignItems: 'center', marginBottom: 24,
+    borderWidth: 1, borderColor: Colors.childBorder,
   },
-  rewardLabel: { fontSize: 11, color: '#8A4A00', letterSpacing: 2, fontWeight: '700', marginBottom: 8 },
+  rewardLabel: { fontSize: 11, color: Colors.childMuted, letterSpacing: 2, fontWeight: '700', marginBottom: 8 },
   rewardRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
   rewardBig: { fontSize: 56, fontWeight: '800', color: Colors.childAccent, lineHeight: 60 },
-  rewardUnit: { fontSize: 14, color: '#B07728' },
+  rewardUnit: { fontSize: 14, color: Colors.childMuted },
   bonus: { color: Colors.childAccent2, fontWeight: '700', fontSize: 13, marginTop: 8 },
 
-  noteLabel: { fontSize: 11, color: Colors.textMuted, letterSpacing: 2, fontWeight: '700', marginBottom: 8 },
+  noteLabel: { fontSize: 11, color: Colors.childMuted, letterSpacing: 2, fontWeight: '700', marginBottom: 8 },
   noteInput: {
     backgroundColor: Colors.childCard,
     borderRadius: 14, padding: 14,
-    color: Colors.textDark, fontSize: 15,
+    color: Colors.childText, fontSize: 15,
     textAlignVertical: 'top', minHeight: 90,
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: Colors.childBorder,
   },
-  noteHint: { fontSize: 12, color: Colors.textMuted, marginTop: 6, marginBottom: 20 },
+  noteHint: { fontSize: 12, color: Colors.childMuted, marginTop: 6, marginBottom: 20 },
 
   submitBtn: {
-    backgroundColor: Colors.childAccent,
+    backgroundColor: Colors.childAccent2,
     borderRadius: 100, paddingVertical: 18, alignItems: 'center',
   },
   disabled: { opacity: 0.5 },
-  submitBtnText: { color: Colors.textLight, fontWeight: '700', fontSize: 16 },
+  submitBtnText: { color: Colors.childText, fontWeight: '700', fontSize: 16 },
 
   cancelBtn: { paddingVertical: 16, alignItems: 'center' },
-  cancelBtnText: { color: Colors.textMuted, fontSize: 14 },
+  cancelBtnText: { color: Colors.childMuted, fontSize: 14 },
 
   statusCard: {
     backgroundColor: Colors.childCard, borderRadius: 18, padding: 24, alignItems: 'center',
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: Colors.childBorder,
   },
-  statusTitle: { fontSize: 20, fontWeight: '700', color: Colors.textDark, marginBottom: 6 },
-  statusMeta: { fontSize: 14, color: Colors.textMuted, textAlign: 'center' },
+  statusTitle: { fontSize: 20, fontWeight: '700', color: Colors.childText, marginBottom: 6 },
+  statusMeta: { fontSize: 14, color: Colors.childMuted, textAlign: 'center' },
   retryBtn: {
     marginTop: 18, backgroundColor: Colors.purple,
     paddingHorizontal: 24, paddingVertical: 12, borderRadius: 100,
   },
-  retryBtnText: { color: Colors.textLight, fontWeight: '600', fontSize: 14 },
+  retryBtnText: { color: Colors.childText, fontWeight: '600', fontSize: 14 },
 });
