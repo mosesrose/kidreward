@@ -4,9 +4,11 @@ import {
   RefreshControl, Switch,
 } from 'react-native';
 import { router } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Reward } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import { FALLBACK_ICON } from '@/constants/icons';
 
 const TYPE_COLORS: Record<string, string> = {
   money: '#00C853',
@@ -16,10 +18,10 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  money: '💵 Money',
-  gift: '🎁 Gift',
-  screen_time: '📱 Screen Time',
-  activity: '🎡 Activity',
+  money:       'Money',
+  gift:        'Gift',
+  screen_time: 'Screen Time',
+  activity:    'Activity',
 };
 
 export default function RewardsScreen() {
@@ -76,7 +78,11 @@ export default function RewardsScreen() {
               </Text>
             </View>
             <View style={styles.cardBody}>
-              <Text style={[styles.rewardEmoji, !item.is_active && styles.dim]}>{item.emoji}</Text>
+              <MaterialCommunityIcons
+                name={(item.emoji || FALLBACK_ICON) as any}
+                size={32}
+                color={item.is_active ? Colors.purple : Colors.textMuted}
+              />
               <View style={styles.rewardInfo}>
                 <Text style={[styles.rewardTitle, !item.is_active && styles.dim]}>{item.title}</Text>
                 {item.description && <Text style={styles.rewardDesc}>{item.description}</Text>}
@@ -126,7 +132,6 @@ const styles = StyleSheet.create({
   typeBadge: { paddingHorizontal: 12, paddingVertical: 6 },
   typeText: { fontSize: 12, fontWeight: '700' },
   cardBody: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
-  rewardEmoji: { fontSize: 32 },
   dim: { opacity: 0.45 },
   rewardInfo: { flex: 1 },
   rewardTitle: { fontSize: 16, fontWeight: '700', color: Colors.textDark },
