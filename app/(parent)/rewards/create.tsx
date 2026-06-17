@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, SafeAreaView,
 } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import { Fonts } from '@/constants/fonts';
 import { REWARD_ICONS, FALLBACK_ICON } from '@/constants/icons';
 import IconPicker from '@/components/IconPicker';
 
@@ -68,7 +69,7 @@ export default function CreateReward() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>← Back</Text>
@@ -97,7 +98,7 @@ export default function CreateReward() {
               style={styles.suggCard}
               onPress={() => pickSuggestion(s)}
             >
-              <MaterialCommunityIcons name={(s.icon || FALLBACK_ICON) as any} size={28} color={Colors.purple} style={{ marginBottom: 6 }} />
+              <MaterialCommunityIcons name={(s.icon || FALLBACK_ICON) as any} size={28} color={Colors.primary} style={{ marginBottom: 6 }} />
               <Text style={styles.suggTitle} numberOfLines={2}>{s.title}</Text>
               <Text style={styles.suggCost}>{s.cost} 💎</Text>
             </TouchableOpacity>
@@ -112,7 +113,7 @@ export default function CreateReward() {
               style={[styles.typeCard, type === rt.type && styles.typeCardActive]}
               onPress={() => { setType(rt.type); setIcon(rt.icon); }}
             >
-              <MaterialCommunityIcons name={(rt.icon || FALLBACK_ICON) as any} size={24} color={type === rt.type ? Colors.purple : Colors.textMid} style={{ marginBottom: 4 }} />
+              <MaterialCommunityIcons name={(rt.icon || FALLBACK_ICON) as any} size={24} color={type === rt.type ? Colors.white : Colors.onSurfaceVariant} style={{ marginBottom: 4 }} />
               <Text style={[styles.typeLabel, type === rt.type && styles.typeLabelActive]}>
                 {rt.label}
               </Text>
@@ -127,7 +128,7 @@ export default function CreateReward() {
             value={title}
             onChangeText={setTitle}
             placeholder="e.g. Extra screen time"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={Colors.onSurfaceVariant}
           />
         </View>
 
@@ -157,27 +158,27 @@ export default function CreateReward() {
             value={description}
             onChangeText={setDescription}
             placeholder="Optional details…"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={Colors.onSurfaceVariant}
             multiline
           />
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.parentBg },
+  container: { flex: 1, backgroundColor: Colors.surface },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16,
-    borderBottomWidth: 1, borderBottomColor: Colors.parentBorder,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
   },
-  back: { color: Colors.purple, fontSize: 16, fontWeight: '600' },
-  title: { fontSize: 18, fontWeight: '800', color: Colors.textDark },
-  saveBtn: { backgroundColor: Colors.purple, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 12 },
+  back: { color: Colors.primary, fontSize: 16, fontWeight: '600', fontFamily: Fonts.bodySemiBold },
+  title: { fontSize: 18, fontWeight: '800', color: Colors.onSurface, fontFamily: Fonts.parentH1 },
+  saveBtn: { backgroundColor: Colors.primary, paddingHorizontal: 18, paddingVertical: 8, borderRadius: 9999 },
   disabled: { opacity: 0.5 },
-  saveBtnText: { color: Colors.textLight, fontWeight: '700' },
+  saveBtnText: { color: Colors.white, fontWeight: '700', fontFamily: Fonts.bodyBold },
   errorBanner: {
     backgroundColor: 'rgba(255,61,0,0.10)',
     borderBottomWidth: 1,
@@ -185,34 +186,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  errorBannerText: { color: Colors.danger, fontSize: 14, fontWeight: '600' },
+  errorBannerText: { color: Colors.danger, fontSize: 14, fontWeight: '600', fontFamily: Fonts.bodySemiBold },
   scroll: { padding: 20, paddingBottom: 40 },
-  sectionLabel: { fontSize: 13, fontWeight: '700', color: Colors.textMuted, marginBottom: 10, marginTop: 16 },
+  sectionLabel: { fontSize: 13, fontWeight: '700', color: Colors.onSurfaceVariant, marginBottom: 10, marginTop: 16, fontFamily: Fonts.bodyBold },
   suggestions: { marginBottom: 8 },
   suggCard: {
-    width: 100, backgroundColor: Colors.parentCard,
+    width: 100, backgroundColor: Colors.primaryFixed,
     borderRadius: 14, padding: 12, marginRight: 10, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
+    borderWidth: 1, borderColor: Colors.primaryFixedDim,
   },
-  suggTitle: { fontSize: 11, fontWeight: '600', color: Colors.textDark, textAlign: 'center', marginBottom: 4 },
-  suggCost: { fontSize: 11, color: Colors.gemGlow, fontWeight: '700' },
+  suggTitle: { fontSize: 11, fontWeight: '600', color: Colors.onSurface, textAlign: 'center', marginBottom: 4, fontFamily: Fonts.bodySemiBold },
+  suggCost: { fontSize: 11, color: Colors.onSurfaceVariant, fontWeight: '700', fontFamily: Fonts.bodyBold },
   typeGrid: { flexDirection: 'row', gap: 10, marginBottom: 8 },
   typeCard: {
-    flex: 1, backgroundColor: Colors.parentCard,
+    flex: 1, backgroundColor: Colors.white,
     borderRadius: 14, padding: 12, alignItems: 'center',
     borderWidth: 2, borderColor: 'transparent',
   },
-  typeCardActive: { borderColor: Colors.purple, backgroundColor: 'rgba(108,60,225,0.06)' },
-  typeLabel: { fontSize: 11, fontWeight: '700', color: Colors.textMid },
-  typeLabelActive: { color: Colors.purple },
+  typeCardActive: { borderColor: Colors.primary, backgroundColor: Colors.primary },
+  typeLabel: { fontSize: 11, fontWeight: '700', color: Colors.onSurfaceVariant, fontFamily: Fonts.bodyBold },
+  typeLabelActive: { color: Colors.white },
   field: { marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '700', color: Colors.textMid, marginBottom: 6 },
+  label: { fontSize: 13, fontWeight: '700', color: Colors.onSurfaceVariant, marginBottom: 6, fontFamily: Fonts.bodyBold },
   input: {
-    backgroundColor: Colors.parentCard, borderRadius: 12,
+    backgroundColor: Colors.white, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, color: Colors.textDark,
-    borderWidth: 1, borderColor: Colors.parentBorder,
+    fontSize: 15, color: Colors.onSurface,
+    borderWidth: 1, borderColor: Colors.outlineVariant,
+    fontFamily: Fonts.body,
   },
   textarea: { height: 80, textAlignVertical: 'top' },
 });
