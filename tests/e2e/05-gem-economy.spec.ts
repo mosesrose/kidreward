@@ -43,6 +43,7 @@ test.describe('Gem Economy', () => {
     await expect(
       page.getByText('YOUR GEMS', { exact: false })
         .or(page.getByText('gems available', { exact: false }))
+        .or(page.getByText('GEMS', { exact: true }))
         .first()
     ).toBeVisible({ timeout: 10_000 });
   });
@@ -54,9 +55,10 @@ test.describe('Gem Economy', () => {
     await clickTab(page, 'Home');
     await page.waitForLoadState('networkidle');
 
-    // Gem label is either "YOUR GEMS" (new GemHeader) or "gems available" (old UI)
+    // Gem label: "GEMS" (GemHeader full mode), "YOUR GEMS" (legacy), or "gems available" (old UI)
     const gemsLabel = page.getByText('YOUR GEMS', { exact: false })
-      .or(page.getByText('gems available', { exact: false }));
+      .or(page.getByText('gems available', { exact: false }))
+      .or(page.getByText('GEMS', { exact: true }));
     await expect(gemsLabel.first()).toBeVisible({ timeout: 10_000 });
     // Balance number is rendered as a sibling element — find any visible non-negative integer
     const numText = await page.locator('text=/^\\d+$/').first().textContent({ timeout: 3000 }).catch(() => '0');

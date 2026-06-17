@@ -38,7 +38,8 @@ test.describe('Rewards', () => {
     await expect(page.getByText('Activity', { exact: true }).first()).toBeVisible();
 
     // Click Activity type then select a suggestion (no keyboard typing — avoids page scroll)
-    await page.getByText('Activity').click();
+    // Use .first() because the IconPicker also has a chip labelled "Activity" (bike icon)
+    await page.getByText('Activity').first().click();
     await page.getByText('Movie night pick').click();
     await page.waitForTimeout(500);
 
