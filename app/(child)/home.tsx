@@ -1,10 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, SafeAreaView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
@@ -12,6 +13,8 @@ import { Fonts } from '@/constants/fonts';
 import AppHeader from '@/components/AppHeader';
 import LevelCircle from '@/components/LevelCircle';
 import GemBadge from '@/components/GemBadge';
+import CelebrationOverlay from '@/components/CelebrationOverlay';
+import { getLevel } from '@/constants/levels';
 import { FALLBACK_ICON } from '@/constants/icons';
 
 export default function ChildHome() {
@@ -20,6 +23,12 @@ export default function ChildHome() {
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'active' | 'done'>('active');
+  const [celebration, setCelebration] = useState<{
+    gems: number;
+    challengeTitle: string;
+    levelUp: boolean;
+    newLevel: number;
+  } | null>(null);
 
   const load = useCallback(async () => {
     if (!family || !profile) return;
@@ -42,10 +51,89 @@ export default function ChildHome() {
     setCompletedIds(ids);
   }, [family, profile]);
 
+  async function checkOfflineApprovals() {
+    if (!profile) return;
+    const lastSeenKey = `last_seen_at_${profile.id}`;
+    const lastSeen = await AsyncStorage.getItem(lastSeenKey) ?? '1970-01-01T00:00:00Z';
+
+    const { data } = await supabase
+      .from('completions')
+      .select('*, challenges(*)')
+      .eq('child_id', profile.id)
+      .eq('status', 'approved')
+      .gt('reviewed_at', lastSeen)
+      .order('reviewed_at', { ascending: false })
+      .limit(1);
+
+    await AsyncStorage.setItem(lastSeenKey, new Date().toISOString());
+
+    if (data && data.length > 0) {
+      const comp = data[0];
+      const prevTotal = (membership?.total_gems_earned ?? 0) - (comp.gems_awarded ?? 0);
+      const prevLevel = getLevel(prevTotal).level;
+      const newTotal  = membership?.total_gems_earned ?? 0;
+      const newLevel  = getLevel(newTotal).level;
+      setCelebration({
+        gems: comp.gems_awarded ?? 0,
+        challengeTitle: (comp as any).challenges?.title ?? '',
+        levelUp: newLevel > prevLevel,
+        newLevel,
+      });
+    }
+  }
+
   useFocusEffect(useCallback(() => {
     if (loading) return;
-    if (!family) { router.replace('/(child)/join'); } else { load(); }
-  }, [family, load, loading]));
+    if (!family) { router.replace('/(child)/join'); return; }
+    load();
+    checkOfflineApprovals();
+  }, [family, load, loading, membership]));
+
+  useEffect(() => {
+    if (!profile || !family) return;
+
+    const channel = supabase
+      .channel(`completions_child_${profile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'completions',
+          filter: `child_id=eq.${profile.id}`,
+        },
+        async (payload) => {
+          const record = payload.new as any;
+          if (record.status !== 'approved') return;
+
+          // Reload to get updated gem balance
+          await Promise.all([load(), refreshFamily()]);
+
+          // Fetch challenge title
+          const { data: ch } = await supabase
+            .from('challenges')
+            .select('title')
+            .eq('id', record.challenge_id)
+            .single();
+
+          const gems = record.gems_awarded ?? 0;
+          const newTotal = (membership?.total_gems_earned ?? 0) + gems;
+          const prevTotal = newTotal - gems;
+          const prevLevel = getLevel(prevTotal).level;
+          const newLevel  = getLevel(newTotal).level;
+
+          setCelebration({
+            gems,
+            challengeTitle: ch?.title ?? '',
+            levelUp: newLevel > prevLevel,
+            newLevel,
+          });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [profile?.id, family?.id]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -62,6 +150,16 @@ export default function ChildHome() {
   return (
     <SafeAreaView style={styles.safe}>
       <AppHeader mode="child" onSwitchMode={signOut} />
+
+      <CelebrationOverlay
+        visible={!!celebration}
+        mode="approved"
+        gems={celebration?.gems}
+        challengeTitle={celebration?.challengeTitle}
+        levelUp={celebration?.levelUp}
+        newLevel={celebration?.newLevel}
+        onDismiss={() => { setCelebration(null); load(); refreshFamily(); }}
+      />
 
       <ScrollView
         style={styles.scroll}
