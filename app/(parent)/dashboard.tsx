@@ -7,6 +7,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Completion, FamilyMember } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import ActivityFeed from '@/components/ActivityFeed';
 
 export default function ParentDashboard() {
   const { profile, family, signOut } = useAuth();
@@ -114,6 +115,11 @@ export default function ParentDashboard() {
           </View>
         )}
 
+        {/* Activity feed */}
+        {family && (
+          <ActivityFeed familyId={family.id} />
+        )}
+
         {/* Kids list */}
         <View style={styles.section}>
           <View style={styles.card}>
@@ -193,6 +199,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.parentCard,
     borderRadius: 16, padding: 20,
     borderWidth: 1, borderColor: Colors.parentBorder,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 3,
   },
   cardLabel: {
     fontSize: 11, fontWeight: '700', color: Colors.textMuted,
