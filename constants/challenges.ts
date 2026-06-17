@@ -33,7 +33,7 @@ export const CHALLENGE_TEMPLATES: ChallengeTemplate[] = [
     title: 'Hang out with friends',
     description: 'Spend quality time with a friend (in person)',
     category: 'social',
-    icon: 'account-group',
+    icon: 'account-multiple',
     defaultGems: 10,
     defaultBonus: 0,
     repeatType: 'weekly',

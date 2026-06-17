@@ -14,7 +14,7 @@ export const CHALLENGE_ICONS: { name: IconName; label: string }[] = [
   { name: 'bed',                      label: 'Room'         },
   { name: 'flower',                   label: 'Garden'       },
   { name: 'silverware-fork-knife',    label: 'Cooking'      },
-  { name: 'human-male-female-child',  label: 'Siblings'     },
+  { name: 'account-multiple',         label: 'Social'       },
   { name: 'emoticon-happy-outline',   label: 'Behaviour'    },
   { name: 'cellphone-off',            label: 'Screen time'  },
   { name: 'run',                      label: 'Exercise'     },
