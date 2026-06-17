@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://reward-hazel.vercel.app';
+const BYPASS_SECRET = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -23,6 +24,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
     headless: true,
+    ...(BYPASS_SECRET ? { extraHTTPHeaders: { 'x-vercel-protection-bypass': BYPASS_SECRET } } : {}),
   },
 
   projects: [
