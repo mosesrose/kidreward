@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  RefreshControl, SafeAreaView,
+  RefreshControl, SafeAreaView, Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,10 +10,12 @@ import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
 
 export default function MyFamilyScreen() {
-  const { family } = useAuth();
+  const { family, profile } = useAuth();
   const [children, setChildren] = useState<FamilyMember[]>([]);
   const [coParents, setCoParents] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+
+  const isAdmin = family?.parent_id === profile?.id;
 
   const load = useCallback(async () => {
     if (!family) return;
@@ -33,6 +35,46 @@ export default function MyFamilyScreen() {
   useEffect(() => { load(); }, [load]);
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
+
+  async function removeChild(childId: string) {
+    const { error } = await supabase
+      .from('family_members')
+      .delete()
+      .eq('child_id', childId)
+      .eq('family_id', family!.id);
+    if (!error) await load();
+  }
+
+  async function removeCoParent(coParentId: string) {
+    const { error } = await supabase
+      .from('family_co_parents')
+      .delete()
+      .eq('co_parent_id', coParentId)
+      .eq('family_id', family!.id);
+    if (!error) await load();
+  }
+
+  function confirmRemoveChild(childName: string, childId: string) {
+    Alert.alert(
+      'Remove child?',
+      `Remove ${childName} from your family? Their gem balance will be lost.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: () => removeChild(childId) },
+      ]
+    );
+  }
+
+  function confirmRemoveCoParent(name: string, coParentId: string) {
+    Alert.alert(
+      'Remove co-parent?',
+      `Remove ${name} from your family? They will lose access.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: () => removeCoParent(coParentId) },
+      ]
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -75,6 +117,14 @@ export default function MyFamilyScreen() {
                       </Text>
                     </View>
                   </View>
+                  {isAdmin && (
+                    <TouchableOpacity
+                      style={styles.removeBtn}
+                      onPress={() => confirmRemoveCoParent(p?.name ?? 'co-parent', cp.co_parent_id)}
+                    >
+                      <Text style={styles.removeBtnText}>Remove</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               );
             })}
@@ -94,6 +144,7 @@ export default function MyFamilyScreen() {
         }
         renderItem={({ item }) => {
           const p = (item as any).profiles;
+          const childId = (item as any).child_id;
           return (
             <View style={styles.kidCard}>
               <View style={styles.kidLeft}>
@@ -116,6 +167,12 @@ export default function MyFamilyScreen() {
                   <Text style={styles.kidStatLabel}>🏆 Total</Text>
                 </View>
               </View>
+              <TouchableOpacity
+                style={styles.removeBtn}
+                onPress={() => confirmRemoveChild(p?.name ?? 'child', childId)}
+              >
+                <Text style={styles.removeBtnText}>Remove</Text>
+              </TouchableOpacity>
             </View>
           );
         }}
@@ -168,4 +225,13 @@ const styles = StyleSheet.create({
     borderRadius: 9999, paddingVertical: 14, alignItems: 'center',
   },
   coParentBtnText: { fontFamily: Fonts.body, fontSize: 15, color: Colors.onSurfaceVariant },
+
+  removeBtn: {
+    alignSelf: 'flex-end', marginTop: 8,
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 9999, borderWidth: 1, borderColor: Colors.danger,
+  },
+  removeBtnText: {
+    fontFamily: Fonts.body, fontSize: 12, color: Colors.danger,
+  },
 });
