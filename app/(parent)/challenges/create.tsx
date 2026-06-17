@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Switch, SafeAreaView,
@@ -25,6 +25,17 @@ export default function CreateChallenge() {
   const [icon, setIcon] = useState<string>(FALLBACK_ICON);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [children, setChildren] = useState<any[]>([]);
+  const [assignedChildId, setAssignedChildId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!family) return;
+    supabase
+      .from('family_members')
+      .select('*, profiles(*)')
+      .eq('family_id', family.id)
+      .then(({ data }) => setChildren(data ?? []));
+  }, [family]);
 
   function pickTemplate(t: ChallengeTemplate) {
     setSelected(t);
@@ -44,6 +55,7 @@ export default function CreateChallenge() {
     setSaving(true);
     const { error } = await supabase.from('challenges').insert({
       family_id: family.id,
+      child_id: assignedChildId,
       title: title.trim(),
       description: description.trim() || null,
       category: selected?.category ?? 'homework',
@@ -172,6 +184,34 @@ export default function CreateChallenge() {
           </View>
         </View>
         <View style={styles.field}>
+          <Text style={styles.label}>Assign to</Text>
+          <View style={styles.assignRow}>
+            <TouchableOpacity
+              style={[styles.assignChip, assignedChildId === null && styles.assignChipActive]}
+              onPress={() => setAssignedChildId(null)}
+            >
+              <Text style={[styles.assignChipText, assignedChildId === null && styles.assignChipTextActive]}>
+                👨‍👩‍👧 All Kids
+              </Text>
+            </TouchableOpacity>
+            {children.map((m) => {
+              const p = (m as any).profiles;
+              const isSelected = assignedChildId === m.child_id;
+              return (
+                <TouchableOpacity
+                  key={m.child_id}
+                  style={[styles.assignChip, isSelected && styles.assignChipActive]}
+                  onPress={() => setAssignedChildId(isSelected ? null : m.child_id)}
+                >
+                  <Text style={[styles.assignChipText, isSelected && styles.assignChipTextActive]}>
+                    {p?.avatar_emoji ?? '🧒'} {p?.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+        <View style={styles.field}>
           <Text style={styles.label}>Icon</Text>
           <IconPicker
             icons={CHALLENGE_ICONS}
@@ -270,4 +310,13 @@ const styles = StyleSheet.create({
   valueChipEmoji: { fontSize: 14 },
   valueChipLabel: { fontSize: 13, fontWeight: '600', color: Colors.onSurfaceVariant, fontFamily: Fonts.bodySemiBold },
   valueChipLabelActive: { color: Colors.white },
+  assignRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  assignChip: {
+    paddingHorizontal: 14, paddingVertical: 9,
+    borderRadius: 9999, borderWidth: 1.5, borderColor: Colors.outlineVariant,
+    backgroundColor: Colors.white,
+  },
+  assignChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  assignChipText: { fontFamily: Fonts.bodySemiBold, fontSize: 13, color: Colors.onSurfaceVariant },
+  assignChipTextActive: { color: Colors.white },
 });
