@@ -31,6 +31,7 @@ export default function ParentDashboard() {
   const [pendingRedemptions, setPendingRedemptions] = useState<any[]>([]);
   const [weekCompleted, setWeekCompleted] = useState(0);
   const [weekGems, setWeekGems] = useState(0);
+  const [weeklyTrend, setWeeklyTrend] = useState<number[]>([0, 0, 0, 0]);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
@@ -69,6 +70,23 @@ export default function ParentDashboard() {
     setPendingRedemptions(pendingReds ?? []);
     setWeekCompleted(weekComps?.length ?? 0);
     setWeekGems((weekComps ?? []).reduce((s, c: any) => s + (c.gems_awarded ?? 0), 0));
+
+    // 4-week trend
+    const fourWeeksAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: trendData } = await supabase
+      .from('completions')
+      .select('reviewed_at')
+      .eq('status', 'approved')
+      .gte('reviewed_at', fourWeeksAgo)
+      .in('challenge_id', challengeIds.length ? challengeIds : ['00000000-0000-0000-0000-000000000000']);
+    const buckets = [0, 0, 0, 0];
+    const now = Date.now();
+    (trendData ?? []).forEach((c: any) => {
+      const daysAgo = (now - new Date(c.reviewed_at).getTime()) / (1000 * 60 * 60 * 24);
+      const weekIdx = 3 - Math.min(3, Math.floor(daysAgo / 7));
+      buckets[weekIdx]++;
+    });
+    setWeeklyTrend(buckets);
   }, [family]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -179,6 +197,31 @@ export default function ParentDashboard() {
               <Text style={styles.statNum}>{weekGems}</Text>
               <Text style={styles.statMeta}>gems out</Text>
             </View>
+          </View>
+        </View>
+
+        {/* Trend */}
+        <View style={styles.trendCard}>
+          <Text style={styles.statsLabel}>LAST 4 WEEKS</Text>
+          <View style={styles.trendBars}>
+            {weeklyTrend.map((count, i) => {
+              const maxVal = Math.max(...weeklyTrend, 1);
+              const heightPct = count / maxVal;
+              const labels = ['3w ago', '2w ago', 'Last wk', 'This wk'];
+              return (
+                <View key={i} style={styles.trendCol}>
+                  <Text style={styles.trendNum}>{count}</Text>
+                  <View style={styles.trendBarBg}>
+                    <View style={[
+                      styles.trendBar,
+                      { height: `${Math.max(8, heightPct * 100)}%` as any },
+                      i === 3 && { backgroundColor: Colors.primary },
+                    ]} />
+                  </View>
+                  <Text style={styles.trendLabel}>{labels[i]}</Text>
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -296,6 +339,19 @@ const styles = StyleSheet.create({
   stat:     {},
   statNum:  { fontFamily: Fonts.parentH1, fontSize: 28, color: Colors.onSurface },
   statMeta: { fontFamily: Fonts.body,     fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2 },
+
+  trendCard: {
+    marginHorizontal: 20, marginBottom: 16,
+    backgroundColor: Colors.white, borderRadius: 12, padding: 20,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
+  },
+  trendBars: { flexDirection: 'row', gap: 8, height: 100, alignItems: 'flex-end', marginTop: 12 },
+  trendCol:  { flex: 1, alignItems: 'center' },
+  trendNum:  { fontFamily: Fonts.bodyBold, fontSize: 11, color: Colors.onSurface, marginBottom: 4 },
+  trendBarBg: { width: '100%', flex: 1, backgroundColor: Colors.surfaceContainerHighest, borderRadius: 4, justifyContent: 'flex-end' },
+  trendBar:   { width: '100%', backgroundColor: Colors.primaryFixed, borderRadius: 4 },
+  trendLabel: { fontFamily: Fonts.body, fontSize: 10, color: Colors.onSurfaceVariant, marginTop: 4, textAlign: 'center' },
 
   section:      { paddingHorizontal: 20, marginBottom: 8 },
   sectionTitle: {
