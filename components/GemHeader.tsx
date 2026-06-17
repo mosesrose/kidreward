@@ -20,7 +20,7 @@ export default function GemHeader({ name, gems, lifetime, compact, onSignOut }: 
             <Text style={styles.gemCompact}>🔮 {gems} gems</Text>
           </View>
           {typeof lifetime === 'number' && (
-            <LevelBadge totalGemsEarned={lifetime} compact />
+            <LevelBadge totalGemsEarned={lifetime} />
           )}
         </View>
       </View>
