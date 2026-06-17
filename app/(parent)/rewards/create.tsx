@@ -3,28 +3,31 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import { REWARD_ICONS, FALLBACK_ICON } from '@/constants/icons';
+import IconPicker from '@/components/IconPicker';
 
 type RewardType = 'money' | 'gift' | 'screen_time' | 'activity';
 
-const REWARD_TYPES: { type: RewardType; label: string; emoji: string; desc: string }[] = [
-  { type: 'money', label: 'Money', emoji: '💵', desc: 'Real cash or pocket money' },
-  { type: 'gift', label: 'Gift', emoji: '🎁', desc: 'A toy, book, or surprise' },
-  { type: 'screen_time', label: 'Screen Time', emoji: '📱', desc: 'Extra gaming or TV time' },
-  { type: 'activity', label: 'Activity', emoji: '🎡', desc: 'Trip, outing, or experience' },
+const REWARD_TYPES: { type: RewardType; label: string; icon: string; desc: string }[] = [
+  { type: 'money',       label: 'Money',       icon: 'cash',            desc: 'Real cash or pocket money' },
+  { type: 'gift',        label: 'Gift',        icon: 'gift-outline',    desc: 'A toy, book, or surprise' },
+  { type: 'screen_time', label: 'Screen Time', icon: 'television-play', desc: 'Extra gaming or TV time' },
+  { type: 'activity',    label: 'Activity',    icon: 'bike',            desc: 'A trip, outing, or experience' },
 ];
 
 const SUGGESTED_REWARDS = [
-  { title: '£1 pocket money', emoji: '💰', type: 'money' as RewardType, cost: 50, desc: '' },
-  { title: '£5 pocket money', emoji: '💵', type: 'money' as RewardType, cost: 200, desc: '' },
-  { title: '30 min extra screen time', emoji: '📱', type: 'screen_time' as RewardType, cost: 30, desc: 'Extra gaming or TV time' },
-  { title: 'Choose dinner tonight', emoji: '🍕', type: 'activity' as RewardType, cost: 40, desc: 'Pick what the family eats!' },
-  { title: 'Movie night pick', emoji: '🎬', type: 'activity' as RewardType, cost: 60, desc: 'Choose the movie' },
-  { title: 'Trip to the park', emoji: '🌳', type: 'activity' as RewardType, cost: 80, desc: 'A fun trip out' },
-  { title: 'Small toy or book', emoji: '🧸', type: 'gift' as RewardType, cost: 100, desc: 'Up to £5 toy or book' },
-  { title: 'New video game', emoji: '🎮', type: 'gift' as RewardType, cost: 500, desc: 'A new game of their choice' },
+  { title: '£1 pocket money',          icon: 'cash',                    type: 'money'       as RewardType, cost: 50,  desc: '' },
+  { title: '£5 pocket money',          icon: 'cash',                    type: 'money'       as RewardType, cost: 200, desc: '' },
+  { title: '30 min extra screen time', icon: 'television-play',         type: 'screen_time' as RewardType, cost: 30,  desc: 'Extra gaming or TV time' },
+  { title: 'Choose dinner tonight',    icon: 'pizza',                   type: 'activity'    as RewardType, cost: 40,  desc: 'Pick what the family eats!' },
+  { title: 'Movie night pick',         icon: 'movie-open-outline',      type: 'activity'    as RewardType, cost: 60,  desc: 'Choose the movie' },
+  { title: 'Trip to the park',         icon: 'bike',                    type: 'activity'    as RewardType, cost: 80,  desc: 'A fun trip out' },
+  { title: 'Small toy or book',        icon: 'gift-outline',            type: 'gift'        as RewardType, cost: 100, desc: 'Up to £5 toy or book' },
+  { title: 'New video game',           icon: 'gamepad-variant-outline', type: 'gift'        as RewardType, cost: 500, desc: 'A new game of their choice' },
 ];
 
 export default function CreateReward() {
@@ -32,14 +35,14 @@ export default function CreateReward() {
   const [type, setType] = useState<RewardType>('gift');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [emoji, setEmoji] = useState('🎁');
+  const [icon, setIcon] = useState<string>('gift-outline');
   const [cost, setCost] = useState('50');
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   function pickSuggestion(s: typeof SUGGESTED_REWARDS[0]) {
     setTitle(s.title);
-    setEmoji(s.emoji);
+    setIcon(s.icon);
     setType(s.type);
     setCost(String(s.cost));
     setDescription(s.desc);
@@ -54,7 +57,7 @@ export default function CreateReward() {
       family_id: family.id,
       title: title.trim(),
       description: description.trim() || null,
-      emoji,
+      emoji: icon,
       gem_cost: parseInt(cost, 10) || 50,
       reward_type: type,
       created_by: profile.id,
@@ -94,7 +97,7 @@ export default function CreateReward() {
               style={styles.suggCard}
               onPress={() => pickSuggestion(s)}
             >
-              <Text style={styles.suggEmoji}>{s.emoji}</Text>
+              <MaterialCommunityIcons name={(s.icon || FALLBACK_ICON) as any} size={28} color={Colors.purple} style={{ marginBottom: 6 }} />
               <Text style={styles.suggTitle} numberOfLines={2}>{s.title}</Text>
               <Text style={styles.suggCost}>{s.cost} 💎</Text>
             </TouchableOpacity>
@@ -107,9 +110,9 @@ export default function CreateReward() {
             <TouchableOpacity
               key={rt.type}
               style={[styles.typeCard, type === rt.type && styles.typeCardActive]}
-              onPress={() => { setType(rt.type); setEmoji(rt.emoji); }}
+              onPress={() => { setType(rt.type); setIcon(rt.icon); }}
             >
-              <Text style={styles.typeEmoji}>{rt.emoji}</Text>
+              <MaterialCommunityIcons name={(rt.icon || FALLBACK_ICON) as any} size={24} color={type === rt.type ? Colors.purple : Colors.textMid} style={{ marginBottom: 4 }} />
               <Text style={[styles.typeLabel, type === rt.type && styles.typeLabelActive]}>
                 {rt.label}
               </Text>
@@ -128,25 +131,23 @@ export default function CreateReward() {
           />
         </View>
 
-        <View style={styles.row}>
-          <View style={[styles.field, { flex: 1 }]}>
-            <Text style={styles.label}>Emoji</Text>
-            <TextInput
-              style={[styles.input, styles.emojiInput]}
-              value={emoji}
-              onChangeText={setEmoji}
-              maxLength={2}
-            />
-          </View>
-          <View style={[styles.field, { flex: 2 }]}>
-            <Text style={styles.label}>💎 Gem Cost</Text>
-            <TextInput
-              style={styles.input}
-              value={cost}
-              onChangeText={setCost}
-              keyboardType="number-pad"
-            />
-          </View>
+        <View style={styles.field}>
+          <Text style={styles.label}>Icon</Text>
+          <IconPicker
+            icons={REWARD_ICONS}
+            selected={icon}
+            onSelect={setIcon}
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>💎 Gem Cost</Text>
+          <TextInput
+            style={styles.input}
+            value={cost}
+            onChangeText={setCost}
+            keyboardType="number-pad"
+          />
         </View>
 
         <View style={styles.field}>
@@ -194,7 +195,6 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
   },
-  suggEmoji: { fontSize: 28, marginBottom: 6 },
   suggTitle: { fontSize: 11, fontWeight: '600', color: Colors.textDark, textAlign: 'center', marginBottom: 4 },
   suggCost: { fontSize: 11, color: Colors.gemGlow, fontWeight: '700' },
   typeGrid: { flexDirection: 'row', gap: 10, marginBottom: 8 },
@@ -204,7 +204,6 @@ const styles = StyleSheet.create({
     borderWidth: 2, borderColor: 'transparent',
   },
   typeCardActive: { borderColor: Colors.purple, backgroundColor: 'rgba(108,60,225,0.06)' },
-  typeEmoji: { fontSize: 24, marginBottom: 4 },
   typeLabel: { fontSize: 11, fontWeight: '700', color: Colors.textMid },
   typeLabelActive: { color: Colors.purple },
   field: { marginBottom: 16 },
@@ -215,7 +214,5 @@ const styles = StyleSheet.create({
     fontSize: 15, color: Colors.textDark,
     borderWidth: 1, borderColor: Colors.parentBorder,
   },
-  emojiInput: { fontSize: 24, textAlign: 'center' },
   textarea: { height: 80, textAlignVertical: 'top' },
-  row: { flexDirection: 'row', gap: 12 },
 });
