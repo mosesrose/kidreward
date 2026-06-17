@@ -1,39 +1,25 @@
 import { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  Alert, SafeAreaView,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase, Challenge, Completion } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import { Colors } from '@/constants/colors';
-import { CHALLENGE_VALUES } from '@/constants/challenges';
+import { Fonts } from '@/constants/fonts';
 import { FALLBACK_ICON } from '@/constants/icons';
-
-function ValueChip({ value }: { value: string | null | undefined }) {
-  if (!value) return null;
-  const v = CHALLENGE_VALUES.find(x => x.key === value);
-  if (!v) return null;
-  return (
-    <View style={{
-      flexDirection: 'row', alignItems: 'center', gap: 4,
-      backgroundColor: `${v.color}20`, paddingHorizontal: 10, paddingVertical: 4,
-      borderRadius: 20, alignSelf: 'center', marginTop: 8,
-    }}>
-      <Text style={{ fontSize: 12 }}>{v.emoji}</Text>
-      <Text style={{ fontSize: 12, fontWeight: '700', color: v.color }}>{v.label}</Text>
-    </View>
-  );
-}
+import { sendApprovalPush } from '@/lib/push-notifications';
 
 export default function ChallengeDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { profile } = useAuth();
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [completions, setCompletions] = useState<Completion[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    load();
-  }, [id]);
+  useEffect(() => { load(); }, [id]);
 
   async function load() {
     setLoading(true);
@@ -51,19 +37,30 @@ export default function ChallengeDetail() {
   }
 
   async function approve(completion: Completion) {
-    const gems = (challenge?.gem_reward ?? 0) + (completion.status === 'approved' ? 0 : challenge?.bonus_gems ?? 0);
+    const gems = (challenge?.gem_reward ?? 0) + (challenge?.bonus_gems ?? 0);
     const { error } = await supabase
       .from('completions')
       .update({ status: 'approved', gems_awarded: gems, reviewed_at: new Date().toISOString() })
       .eq('id', completion.id);
     if (error) { Alert.alert('Error', error.message); return; }
 
-    // Award gems
     await supabase.rpc('award_gems', {
       p_child_id: completion.child_id,
       p_family_id: challenge?.family_id,
       p_gems: gems,
     });
+
+    // Send push notification to child
+    const childPushToken = (completion as any).profiles?.push_token;
+    if (childPushToken) {
+      sendApprovalPush({
+        pushToken: childPushToken,
+        parentName: profile?.name ?? 'Your parent',
+        challengeTitle: challenge?.title ?? '',
+        gems,
+      });
+    }
+
     load();
   }
 
@@ -77,13 +74,7 @@ export default function ChallengeDetail() {
   }
 
   async function deleteChallenge() {
-    const hasActiveSubmission = completions.some((c) => c.status === 'pending');
-
-    const message = hasActiveSubmission
-      ? 'A child has an active submission waiting for review on this challenge. Deleting it will permanently remove that submission too. This cannot be undone.'
-      : 'This will permanently delete the challenge. This cannot be undone.';
-
-    Alert.alert('Delete challenge?', message, [
+    Alert.alert('Delete challenge?', 'This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete', style: 'destructive',
@@ -97,170 +88,209 @@ export default function ChallengeDetail() {
 
   if (loading || !challenge) {
     return (
-      <View style={styles.center}>
+      <SafeAreaView style={styles.safe}>
         <Text style={styles.loading}>Loading…</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
-  const statusColor = (s: string) =>
-    s === 'approved' ? Colors.success : s === 'rejected' ? Colors.danger : Colors.pending;
+  const pending   = completions.filter(c => c.status === 'pending');
+  const past      = completions.filter(c => c.status !== 'pending');
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.back}>← Back</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <MaterialCommunityIcons name="arrow-left" size={20} color={Colors.primary} />
+          <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
         <TouchableOpacity testID="delete-challenge-btn" onPress={deleteChallenge}>
-          <Text style={styles.archiveText}>Delete</Text>
+          <Text style={styles.deleteText}>Delete</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Challenge info */}
-        <View style={styles.challengeCard}>
+        {/* Hero */}
+        <View style={styles.heroCircle}>
           <MaterialCommunityIcons
             name={(challenge.emoji || FALLBACK_ICON) as any}
-            size={56}
-            color={Colors.purple}
+            size={40}
+            color={Colors.primary}
           />
-          <Text style={styles.challengeTitle}>{challenge.title}</Text>
-          {challenge.description && (
-            <Text style={styles.desc}>{challenge.description}</Text>
-          )}
-          <ValueChip value={challenge.value} />
-          <View style={styles.metaRow}>
-            <View style={styles.metaBadge}>
-              <Text style={styles.metaBadgeText}>+{challenge.gem_reward} 💎</Text>
-            </View>
-            {challenge.bonus_gems > 0 && (
-              <View style={[styles.metaBadge, styles.bonusBadge]}>
-                <Text style={styles.metaBadgeText}>+{challenge.bonus_gems} 🌟 bonus</Text>
-              </View>
-            )}
-            <View style={[styles.metaBadge, styles.repeatBadge]}>
-              <Text style={styles.metaBadgeText}>
-                {challenge.repeat_type === 'daily' ? '🔄 Daily' :
-                 challenge.repeat_type === 'weekly' ? '📆 Weekly' : '1️⃣ Once'}
-              </Text>
-            </View>
+        </View>
+        <Text style={styles.title}>{challenge.title}</Text>
+
+        {/* Meta chips */}
+        <View style={styles.chipsRow}>
+          <View style={styles.chip}>
+            <Text style={styles.chipText}>
+              {challenge.repeat_type === 'daily' ? 'Daily' :
+               challenge.repeat_type === 'weekly' ? 'Weekly' : 'Once'}
+            </Text>
+          </View>
+          <View style={styles.gemChip}>
+            <Text style={styles.gemChipText}>💎 {challenge.gem_reward}</Text>
           </View>
         </View>
 
-        {/* Completions */}
-        <Text style={styles.sectionTitle}>
-          Submissions ({completions.length})
-        </Text>
+        {challenge.description ? (
+          <Text style={styles.desc}>{challenge.description}</Text>
+        ) : null}
 
-        {completions.length === 0 ? (
-          <Text style={styles.noSubmissions}>No submissions yet</Text>
-        ) : (
-          completions.map((c) => (
-            <View key={c.id} style={styles.completionCard}>
-              <View style={styles.completionTop}>
-                <Text style={styles.completionAvatar}>
-                  {(c as any).profiles?.avatar_emoji ?? '🧒'}
-                </Text>
-                <View style={styles.completionInfo}>
-                  <Text style={styles.completionName}>{(c as any).profiles?.name}</Text>
-                  <Text style={styles.completionDate}>
-                    {new Date(c.submitted_at).toLocaleDateString()}
+        {/* Pending submissions */}
+        {pending.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Pending ({pending.length})</Text>
+            {pending.map((c) => (
+              <View key={c.id} style={styles.submissionCard}>
+                <View style={styles.submissionTop}>
+                  <Text style={styles.submissionAvatar}>
+                    {(c as any).profiles?.avatar_emoji ?? '🧒'}
                   </Text>
-                  {c.note && <Text style={styles.completionNote}>"{c.note}"</Text>}
+                  <View style={styles.submissionInfo}>
+                    <Text style={styles.submissionName}>{(c as any).profiles?.name}</Text>
+                    <Text style={styles.submissionDate}>
+                      {new Date(c.submitted_at).toLocaleDateString()}
+                    </Text>
+                    {c.note && <Text style={styles.submissionNote}>"{c.note}"</Text>}
+                  </View>
                 </View>
-                <View style={[styles.statusPill, { backgroundColor: `${statusColor(c.status)}20` }]}>
-                  <Text style={[styles.statusText, { color: statusColor(c.status) }]}>
-                    {c.status}
-                  </Text>
-                </View>
-              </View>
-
-              {c.status === 'pending' && (
-                <View style={styles.actionRow}>
+                <View style={styles.submissionBtns}>
                   <TouchableOpacity
                     testID={`reject-btn-${c.id}`}
                     style={styles.rejectBtn}
                     onPress={() => reject(c)}
                   >
-                    <Text style={styles.rejectText}>✗ Reject</Text>
+                    <Text style={styles.rejectBtnText}>✗ Reject</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     testID={`approve-btn-${c.id}`}
                     style={styles.approveBtn}
                     onPress={() => approve(c)}
                   >
-                    <Text style={styles.approveText}>✓ Approve +{challenge.gem_reward}💎</Text>
+                    <Text style={styles.approveBtnText}>✓ Approve +{challenge.gem_reward}💎</Text>
                   </TouchableOpacity>
                 </View>
-              )}
+              </View>
+            ))}
+          </>
+        )}
 
-              {c.status === 'approved' && c.gems_awarded && (
-                <Text style={styles.awardedText}>+{c.gems_awarded} 💎 awarded</Text>
-              )}
-            </View>
-          ))
+        {/* Past submissions */}
+        {past.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Past ({past.length})</Text>
+            {past.map((c) => (
+              <View key={c.id} style={styles.pastCard}>
+                <Text style={styles.pastAvatar}>
+                  {(c as any).profiles?.avatar_emoji ?? '🧒'}
+                </Text>
+                <Text style={styles.pastName}>{(c as any).profiles?.name}</Text>
+                <View style={[
+                  styles.statusPill,
+                  c.status === 'approved' ? styles.pillGreen : styles.pillRed,
+                ]}>
+                  <Text style={[
+                    styles.statusText,
+                    c.status === 'approved' ? styles.statusGreen : styles.statusRed,
+                  ]}>
+                    {c.status}
+                  </Text>
+                </View>
+                {c.status === 'approved' && c.gems_awarded ? (
+                  <Text style={styles.awarded}>+{c.gems_awarded}💎</Text>
+                ) : null}
+              </View>
+            ))}
+          </>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.parentBg },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  loading: { color: Colors.textMuted, fontSize: 16 },
+  safe:    { flex: 1, backgroundColor: Colors.surface },
+  loading: { padding: 40, textAlign: 'center', color: Colors.onSurfaceVariant },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16,
-    borderBottomWidth: 1, borderBottomColor: Colors.parentBorder,
+    paddingTop: 16, paddingHorizontal: 20, paddingBottom: 12,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
   },
-  back: { color: Colors.purple, fontSize: 16, fontWeight: '600' },
-  archiveText: { color: Colors.danger, fontSize: 14, fontWeight: '600' },
-  scroll: { padding: 20, paddingBottom: 40 },
-  challengeCard: {
-    backgroundColor: Colors.parentCard, borderRadius: 20,
-    padding: 24, alignItems: 'center', marginBottom: 28,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+  backBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  backText:   { fontFamily: Fonts.bodyBold, fontSize: 15, color: Colors.primary },
+  deleteText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.error },
+  scroll:     { padding: 20, paddingBottom: 40 },
+
+  heroCircle: {
+    width: 80, height: 80, borderRadius: 40,
+    backgroundColor: Colors.primaryFixed,
+    alignItems: 'center', justifyContent: 'center',
+    alignSelf: 'center', marginBottom: 16,
   },
-  challengeTitle: { fontSize: 22, fontWeight: '800', color: Colors.textDark, textAlign: 'center', marginBottom: 8 },
-  desc: { fontSize: 14, color: Colors.textMid, textAlign: 'center', marginBottom: 14 },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
-  metaBadge: {
-    backgroundColor: 'rgba(122,60,225,0.1)',
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10,
+  title: {
+    fontFamily: Fonts.parentH1, fontSize: 24,
+    color: Colors.onSurface, textAlign: 'center', marginBottom: 12,
   },
-  bonusBadge: { backgroundColor: 'rgba(255,215,0,0.15)' },
-  repeatBadge: { backgroundColor: 'rgba(108,60,225,0.1)' },
-  metaBadgeText: { fontSize: 13, fontWeight: '700', color: Colors.textDark },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: Colors.textDark, marginBottom: 14 },
-  noSubmissions: { color: Colors.textMuted, textAlign: 'center', paddingTop: 20, fontSize: 15 },
-  completionCard: {
-    backgroundColor: Colors.parentCard, borderRadius: 16,
-    padding: 16, marginBottom: 12,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
+  chipsRow: { flexDirection: 'row', gap: 8, justifyContent: 'center', marginBottom: 16 },
+  chip: {
+    backgroundColor: Colors.primaryFixed, borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 6,
   },
-  completionTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  completionAvatar: { fontSize: 30 },
-  completionInfo: { flex: 1 },
-  completionName: { fontSize: 15, fontWeight: '700', color: Colors.textDark },
-  completionDate: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
-  completionNote: { fontSize: 13, color: Colors.textMid, fontStyle: 'italic', marginTop: 4 },
-  statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  statusText: { fontSize: 12, fontWeight: '700', textTransform: 'capitalize' },
-  actionRow: { flexDirection: 'row', gap: 10 },
+  chipText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.primary },
+  gemChip: {
+    backgroundColor: Colors.tertiaryFixed, borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  gemChipText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.onTertiaryFixed },
+  desc: {
+    fontFamily: Fonts.body, fontSize: 14,
+    color: Colors.onSurfaceVariant, textAlign: 'center',
+    lineHeight: 20, marginBottom: 20,
+  },
+
+  sectionTitle: {
+    fontFamily: Fonts.bodyBold, fontSize: 11,
+    color: Colors.onSurfaceVariant, letterSpacing: 1.5,
+    marginBottom: 10, marginTop: 8,
+  },
+
+  submissionCard: {
+    backgroundColor: Colors.white, borderRadius: 12,
+    padding: 16, marginBottom: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
+  },
+  submissionTop:    { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  submissionAvatar: { fontSize: 28 },
+  submissionInfo:   { flex: 1 },
+  submissionName:   { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.onSurface },
+  submissionDate:   { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2 },
+  submissionNote:   { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurface, fontStyle: 'italic', marginTop: 4 },
+  submissionBtns: { flexDirection: 'row', gap: 8 },
   rejectBtn: {
-    flex: 1, paddingVertical: 10, borderRadius: 10,
-    backgroundColor: 'rgba(255,61,0,0.08)',
-    alignItems: 'center', borderWidth: 1, borderColor: Colors.danger,
+    flex: 1, paddingVertical: 10, borderRadius: 9999,
+    borderWidth: 1, borderColor: Colors.error, alignItems: 'center',
   },
-  rejectText: { color: Colors.danger, fontWeight: '700' },
+  rejectBtnText: { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.error },
   approveBtn: {
-    flex: 2, paddingVertical: 10, borderRadius: 10,
+    flex: 2, paddingVertical: 10, borderRadius: 9999,
     backgroundColor: Colors.success, alignItems: 'center',
   },
-  approveText: { color: Colors.textLight, fontWeight: '700' },
-  awardedText: { fontSize: 13, color: Colors.success, fontWeight: '700', textAlign: 'center', marginTop: 4 },
+  approveBtnText: { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.white },
+
+  pastCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: Colors.white, borderRadius: 10,
+    padding: 12, marginBottom: 8,
+  },
+  pastAvatar:  { fontSize: 22 },
+  pastName:    { flex: 1, fontFamily: Fonts.body, fontSize: 13, color: Colors.onSurface },
+  statusPill:  { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  pillGreen:   { backgroundColor: Colors.successContainer },
+  pillRed:     { backgroundColor: Colors.errorContainer },
+  statusText:  { fontFamily: Fonts.bodyBold, fontSize: 11, textTransform: 'capitalize' },
+  statusGreen: { color: Colors.success },
+  statusRed:   { color: Colors.error },
+  awarded:     { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.success },
 });
