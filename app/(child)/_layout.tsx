@@ -54,6 +54,20 @@ export default function ChildLayout() {
           tabBarIcon: ({ focused }) => <TabIcon name="store" focused={focused} />,
         }}
       />
+      <Tabs.Screen
+        name="progress"
+        options={{
+          title: 'Progress',
+          tabBarIcon: ({ focused }) => <TabIcon name="trophy" focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="family"
+        options={{
+          title: 'Family',
+          tabBarIcon: ({ focused }) => <TabIcon name="account-group" focused={focused} />,
+        }}
+      />
       {/* Hidden routes */}
       <Tabs.Screen name="challenges/index" options={{ href: null }} />
       <Tabs.Screen name="challenges/[id]"  options={{ href: null }} />
