@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { router } from 'expo-router';
 import { supabase, Profile, Family, FamilyMember } from '@/lib/supabase';
+import { registerForPushNotifications } from '@/lib/push-notifications';
 
 type AuthContextType = {
   session: Session | null;
@@ -89,6 +90,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .single();
         setMembership(mem);
         if (mem) setFamily((mem as any).families);
+        registerForPushNotifications().then((token) => {
+          if (token) {
+            supabase
+              .from('profiles')
+              .update({ push_token: token })
+              .eq('id', prof.id)
+              .then(() => {});
+          }
+        });
       }
     } finally {
       setLoading(false);
