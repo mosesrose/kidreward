@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  RefreshControl, SafeAreaView,
+  RefreshControl, Switch, SafeAreaView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
@@ -22,7 +22,7 @@ export default function ChallengesScreen() {
     if (!family) return;
     const { data: ch } = await supabase
       .from('challenges').select('*').eq('family_id', family.id)
-      .neq('status', 'archived').order('created_at', { ascending: false });
+      .neq('status', 'completed').order('created_at', { ascending: false });
     if (!ch) return;
 
     const { data: completions } = await supabase
@@ -38,6 +38,12 @@ export default function ChallengesScreen() {
   }, [family]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  async function toggleChallenge(id: string, currentStatus: string) {
+    const next = currentStatus === 'active' ? 'archived' : 'active';
+    setChallenges(prev => prev.map(c => c.id === id ? { ...c, status: next as any } : c));
+    await supabase.from('challenges').update({ status: next }).eq('id', id);
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -63,34 +69,48 @@ export default function ChallengesScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => router.push(`/(parent)/challenges/${item.id}`)}
-          >
-            <View style={styles.iconBox}>
-              <MaterialCommunityIcons
-                name={(item.emoji || FALLBACK_ICON) as any}
-                size={26}
-                color={Colors.primary}
+          <View style={styles.cardWrapper}>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => router.push(`/(parent)/challenges/${item.id}`)}
+            >
+              <View style={[styles.iconBox, item.status !== 'active' && styles.iconBoxDim]}>
+                <MaterialCommunityIcons
+                  name={(item.emoji || FALLBACK_ICON) as any}
+                  size={26}
+                  color={item.status === 'active' ? Colors.primary : Colors.onSurfaceVariant}
+                />
+              </View>
+              <View style={styles.cardBody}>
+                <Text style={[styles.cardTitle, item.status !== 'active' && styles.dim]}>{item.title}</Text>
+                <Text style={styles.cardMeta}>
+                  {item.repeat_type === 'daily' ? 'Daily' :
+                   item.repeat_type === 'weekly' ? 'Weekly' : 'Once'}
+                  {item.status === 'archived' ? ' · Hidden' : ''}
+                </Text>
+              </View>
+              <View style={styles.gemBadge}>
+                <Text style={styles.gemBadgeText}>💎 {item.gem_reward}</Text>
+              </View>
+              {item.pending_count > 0 && (
+                <View style={styles.pendingDot}>
+                  <Text style={styles.pendingDotText}>{item.pending_count}</Text>
+                </View>
+              )}
+              <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.outline} />
+            </TouchableOpacity>
+            <View style={styles.toggleRow}>
+              <Text style={styles.toggleLabel}>
+                {item.status === 'active' ? 'Visible to kids' : 'Hidden from kids'}
+              </Text>
+              <Switch
+                value={item.status === 'active'}
+                onValueChange={() => toggleChallenge(item.id, item.status)}
+                trackColor={{ false: Colors.outlineVariant, true: Colors.primary }}
+                thumbColor={Colors.white}
               />
             </View>
-            <View style={styles.cardBody}>
-              <Text style={styles.cardTitle}>{item.title}</Text>
-              <Text style={styles.cardMeta}>
-                {item.repeat_type === 'daily' ? 'Daily' :
-                 item.repeat_type === 'weekly' ? 'Weekly' : 'Once'}
-              </Text>
-            </View>
-            <View style={styles.gemBadge}>
-              <Text style={styles.gemBadgeText}>💎 {item.gem_reward}</Text>
-            </View>
-            {item.pending_count > 0 && (
-              <View style={styles.pendingDot}>
-                <Text style={styles.pendingDotText}>{item.pending_count}</Text>
-              </View>
-            )}
-            <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.outline} />
-          </TouchableOpacity>
+          </View>
         )}
       />
     </SafeAreaView>
@@ -114,20 +134,24 @@ const styles = StyleSheet.create({
   emptyTitle: { fontFamily: Fonts.parentH1, fontSize: 20, color: Colors.onSurface },
   emptyMeta:  { fontFamily: Fonts.body,     fontSize: 14, color: Colors.onSurfaceVariant, marginTop: 6 },
 
-  card: {
-    backgroundColor: Colors.white, borderRadius: 12,
-    padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12,
+  cardWrapper: {
+    backgroundColor: Colors.white, borderRadius: 12, overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
+  },
+  card: {
+    padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   iconBox: {
     width: 48, height: 48, borderRadius: 12,
     backgroundColor: Colors.primaryFixed,
     alignItems: 'center', justifyContent: 'center',
   },
+  iconBoxDim: { opacity: 0.5 },
   cardBody: { flex: 1 },
   cardTitle: { fontFamily: Fonts.bodySemiBold, fontSize: 15, color: Colors.onSurface },
-  cardMeta:  { fontFamily: Fonts.body,         fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2 },
+  dim:       { opacity: 0.45 },
+  cardMeta:  { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2 },
   gemBadge: {
     backgroundColor: Colors.tertiaryFixed,
     borderRadius: 9999, paddingHorizontal: 10, paddingVertical: 4,
@@ -138,4 +162,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.warning, alignItems: 'center', justifyContent: 'center',
   },
   pendingDotText: { fontFamily: Fonts.bodyBold, fontSize: 11, color: Colors.white },
+  toggleRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 14, paddingVertical: 10,
+    borderTopWidth: 1, borderTopColor: Colors.outlineVariant,
+  },
+  toggleLabel: { fontFamily: Fonts.body, fontSize: 13, color: Colors.onSurfaceVariant },
 });
