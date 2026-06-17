@@ -80,10 +80,38 @@ export default function Signup() {
 
     } else {
       // Primary parent path: create new family
-      await supabase.from('families').insert({
+      const { data: familyData } = await supabase.from('families').insert({
         name: `${name.trim()}'s Family`,
         parent_id: data.user.id,
-      });
+      }).select().single();
+
+      const newFamilyId = familyData?.id;
+
+      if (newFamilyId) {
+        const defaultRewards = [
+          { family_id: newFamilyId, title: '€1 pocket money',          emoji: 'payments',      gem_cost: 50,  reward_type: 'money',       is_active: true, created_by: data.user.id },
+          { family_id: newFamilyId, title: '€2 pocket money',          emoji: 'payments',      gem_cost: 100, reward_type: 'money',       is_active: true, created_by: data.user.id },
+          { family_id: newFamilyId, title: '€5 pocket money',          emoji: 'payments',      gem_cost: 250, reward_type: 'money',       is_active: true, created_by: data.user.id },
+          { family_id: newFamilyId, title: '30 min extra screen time', emoji: 'tv',            gem_cost: 30,  reward_type: 'screen_time', is_active: true, created_by: data.user.id },
+          { family_id: newFamilyId, title: 'Movie night pick',         emoji: 'movie',         gem_cost: 75,  reward_type: 'activity',    is_active: true, created_by: data.user.id },
+        ];
+
+        const defaultChallenges = [
+          { family_id: newFamilyId, child_id: null, title: 'Do homework',         category: 'homework', emoji: 'menu-book',          gem_reward: 15, bonus_gems: 5,  repeat_type: 'daily',  status: 'active', created_by: data.user.id },
+          { family_id: newFamilyId, child_id: null, title: 'Tidy your room',      category: 'room',     emoji: 'bed',                gem_reward: 10, bonus_gems: 0,  repeat_type: 'daily',  status: 'active', created_by: data.user.id },
+          { family_id: newFamilyId, child_id: null, title: 'Help prepare dinner', category: 'cooking',  emoji: 'restaurant',         gem_reward: 20, bonus_gems: 5,  repeat_type: 'weekly', status: 'active', created_by: data.user.id },
+          { family_id: newFamilyId, child_id: null, title: 'Family time',         category: 'family',   emoji: 'family-restroom',    gem_reward: 10, bonus_gems: 0,  repeat_type: 'daily',  status: 'active', created_by: data.user.id },
+          { family_id: newFamilyId, child_id: null, title: 'Play outside',        category: 'outdoor',  emoji: 'park',               gem_reward: 15, bonus_gems: 5,  repeat_type: 'daily',  status: 'active', created_by: data.user.id },
+          { family_id: newFamilyId, child_id: null, title: 'Read for 20 minutes', category: 'homework', emoji: 'menu-book',          gem_reward: 10, bonus_gems: 0,  repeat_type: 'daily',  status: 'active', created_by: data.user.id },
+          { family_id: newFamilyId, child_id: null, title: 'Be kind to everyone', category: 'social',   emoji: 'volunteer-activism', gem_reward: 10, bonus_gems: 0,  repeat_type: 'daily',  status: 'active', created_by: data.user.id },
+          { family_id: newFamilyId, child_id: null, title: 'Wake up on time',     category: 'morning',  emoji: 'wb-sunny',           gem_reward: 15, bonus_gems: 5,  repeat_type: 'daily',  status: 'active', created_by: data.user.id },
+        ];
+
+        await Promise.all([
+          supabase.from('rewards').insert(defaultRewards),
+          supabase.from('challenges').insert(defaultChallenges),
+        ]);
+      }
     }
 
     setLoading(false);

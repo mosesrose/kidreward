@@ -21,13 +21,13 @@ const REWARD_TYPES: { type: RewardType; label: string; icon: string; desc: strin
 ];
 
 const SUGGESTED_REWARDS = [
-  { title: '£1 pocket money',          icon: 'payments',       type: 'money'       as RewardType, cost: 50,  desc: '' },
-  { title: '£5 pocket money',          icon: 'payments',       type: 'money'       as RewardType, cost: 200, desc: '' },
+  { title: '€1 pocket money',          icon: 'payments',       type: 'money'       as RewardType, cost: 50,  desc: '' },
+  { title: '€5 pocket money',          icon: 'payments',       type: 'money'       as RewardType, cost: 200, desc: '' },
   { title: '30 min extra screen time', icon: 'tv',             type: 'screen_time' as RewardType, cost: 30,  desc: 'Extra gaming or TV time' },
   { title: 'Choose dinner tonight',    icon: 'local-pizza',    type: 'activity'    as RewardType, cost: 40,  desc: 'Pick what the family eats!' },
   { title: 'Movie night pick',         icon: 'movie',          type: 'activity'    as RewardType, cost: 60,  desc: 'Choose the movie' },
   { title: 'Trip to the park',         icon: 'directions-bike', type: 'activity'   as RewardType, cost: 80,  desc: 'A fun trip out' },
-  { title: 'Small toy or book',        icon: 'card-giftcard',  type: 'gift'        as RewardType, cost: 100, desc: 'Up to £5 toy or book' },
+  { title: 'Small toy or book',        icon: 'card-giftcard',  type: 'gift'        as RewardType, cost: 100, desc: 'Up to €5 toy or book' },
   { title: 'New video game',           icon: 'videogame-asset', type: 'gift'       as RewardType, cost: 500, desc: 'A new game of their choice' },
 ];
 
