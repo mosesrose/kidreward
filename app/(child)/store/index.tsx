@@ -149,7 +149,7 @@ export default function ChildStore() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <AppHeader mode="child" onSwitchMode={signOut} />
+      <AppHeader mode="child" />
 
       {/* Hero row */}
       <View style={styles.heroRow}>

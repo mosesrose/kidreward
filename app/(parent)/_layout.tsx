@@ -74,6 +74,7 @@ export default function ParentLayout() {
       <Tabs.Screen name="children/invite"   options={{ href: null }} />
       <Tabs.Screen name="rewards/create"    options={{ href: null }} />
       <Tabs.Screen name="redemptions"       options={{ href: null }} />
+      <Tabs.Screen name="settings"          options={{ href: null }} />
     </Tabs>
   );
 }

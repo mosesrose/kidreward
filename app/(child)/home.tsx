@@ -149,7 +149,7 @@ export default function ChildHome() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <AppHeader mode="child" onSwitchMode={signOut} />
+      <AppHeader mode="child" />
 
       <CelebrationOverlay
         visible={!!celebration}

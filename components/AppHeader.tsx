@@ -1,41 +1,27 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
 
 interface Props {
   mode: 'child' | 'parent';
-  onSwitchMode?: () => void;  // child mode: "Parent Mode" pill press
-  onSettings?: () => void;    // parent mode: settings icon press
 }
 
-export default function AppHeader({ mode, onSwitchMode, onSettings }: Props) {
+export default function AppHeader({ mode }: Props) {
   return (
     <View style={styles.header}>
-      {/* Left: avatar + brand */}
       <View style={styles.left}>
         <View style={styles.avatar} />
         <Text style={styles.brand}>KidReward</Text>
       </View>
 
-      {/* Right: child shows switch pill, parent shows settings icon */}
-      {mode === 'child' ? (
-        <TouchableOpacity style={styles.switchPill} onPress={onSwitchMode}>
-          <MaterialCommunityIcons
-            name="cog-outline"
-            size={14}
-            color={Colors.onSurfaceVariant}
-            style={{ marginRight: 4 }}
-          />
-          <Text style={styles.switchPillText}>PARENT MODE</Text>
-        </TouchableOpacity>
-      ) : (
-        <TouchableOpacity style={styles.settingsBtn} onPress={onSettings}>
-          <MaterialCommunityIcons
-            name="cog-outline"
-            size={22}
-            color={Colors.onSurfaceVariant}
-          />
+      {mode === 'parent' && (
+        <TouchableOpacity
+          style={styles.settingsBtn}
+          onPress={() => router.push('/(parent)/settings')}
+        >
+          <MaterialCommunityIcons name="cog-outline" size={22} color={Colors.onSurfaceVariant} />
         </TouchableOpacity>
       )}
     </View>
@@ -62,22 +48,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.kidsH1,
     fontSize: 20,
     color: Colors.primary,
-  },
-  switchPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceContainerHighest,
-    borderRadius: 9999,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  switchPillText: {
-    fontFamily: Fonts.bodyBold,
-    fontSize: 10,
-    letterSpacing: 1,
-    color: Colors.onSurfaceVariant,
   },
   settingsBtn: {
     width: 40, height: 40, borderRadius: 20,
