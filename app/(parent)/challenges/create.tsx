@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Switch,
+  TextInput, Switch, SafeAreaView,
 } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import { Fonts } from '@/constants/fonts';
 import { CHALLENGE_TEMPLATES, CATEGORY_COLORS, ChallengeTemplate, CHALLENGE_VALUES, ChallengeValue } from '@/constants/challenges';
 import { CHALLENGE_ICONS, FALLBACK_ICON } from '@/constants/icons';
 import IconPicker from '@/components/IconPicker';
@@ -60,7 +61,7 @@ export default function CreateChallenge() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>← Back</Text>
@@ -97,7 +98,7 @@ export default function CreateChallenge() {
               <MaterialCommunityIcons
                   name={(t.icon || FALLBACK_ICON) as any}
                   size={28}
-                  color={CATEGORY_COLORS[t.category] ?? Colors.purple}
+                  color={CATEGORY_COLORS[t.category] ?? Colors.primary}
                   style={{ marginBottom: 6 }}
                 />
               <Text style={styles.templateTitle} numberOfLines={2}>{t.title}</Text>
@@ -116,7 +117,7 @@ export default function CreateChallenge() {
             value={title}
             onChangeText={setTitle}
             placeholder="e.g. Keep room tidy"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={Colors.onSurfaceVariant}
           />
         </View>
 
@@ -127,7 +128,7 @@ export default function CreateChallenge() {
             value={description}
             onChangeText={setDescription}
             placeholder="Optional details…"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={Colors.onSurfaceVariant}
             multiline
             numberOfLines={3}
           />
@@ -200,26 +201,26 @@ export default function CreateChallenge() {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.parentBg },
+  container: { flex: 1, backgroundColor: Colors.surface },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16,
-    backgroundColor: Colors.parentBg,
-    borderBottomWidth: 1, borderBottomColor: Colors.parentBorder,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
   },
-  back: { color: Colors.purple, fontSize: 16, fontWeight: '600' },
-  title: { fontSize: 18, fontWeight: '800', color: Colors.textDark },
+  back: { color: Colors.primary, fontSize: 16, fontWeight: '600', fontFamily: Fonts.bodySemiBold },
+  title: { fontSize: 18, fontWeight: '800', color: Colors.onSurface, fontFamily: Fonts.parentH1 },
   saveBtn: {
-    backgroundColor: Colors.purple, paddingHorizontal: 18,
-    paddingVertical: 8, borderRadius: 12,
+    backgroundColor: Colors.primary, paddingHorizontal: 18,
+    paddingVertical: 8, borderRadius: 9999,
   },
   disabled: { opacity: 0.5 },
-  saveBtnText: { color: Colors.textLight, fontWeight: '700' },
+  saveBtnText: { color: Colors.white, fontWeight: '700', fontFamily: Fonts.bodyBold },
   errorBanner: {
     backgroundColor: 'rgba(255,61,0,0.10)',
     borderBottomWidth: 1,
@@ -227,45 +228,46 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
   },
-  errorBannerText: { color: Colors.danger, fontSize: 14, fontWeight: '600' },
+  errorBannerText: { color: Colors.danger, fontSize: 14, fontWeight: '600', fontFamily: Fonts.bodySemiBold },
   scroll: { padding: 20, gap: 4, paddingBottom: 40 },
-  sectionLabel: { fontSize: 13, fontWeight: '700', color: Colors.textMuted, marginBottom: 10, marginTop: 16 },
+  sectionLabel: { fontSize: 13, fontWeight: '700', color: Colors.onSurfaceVariant, marginBottom: 10, marginTop: 16, fontFamily: Fonts.bodyBold },
   templates: { marginBottom: 8 },
   templateCard: {
-    width: 110, backgroundColor: Colors.parentCard,
+    width: 110, backgroundColor: Colors.white,
     borderRadius: 14, padding: 12, marginRight: 10,
     alignItems: 'center', borderWidth: 2, borderColor: 'transparent',
   },
-  templateCardActive: { backgroundColor: 'rgba(108,60,225,0.06)' },
+  templateCardActive: { backgroundColor: Colors.tertiaryFixed },
   templateEmoji: { fontSize: 28, marginBottom: 6 },
-  templateTitle: { fontSize: 11, fontWeight: '600', color: Colors.textDark, textAlign: 'center', marginBottom: 4 },
-  templateGems: { fontSize: 11, color: Colors.gemGlow, fontWeight: '700' },
+  templateTitle: { fontSize: 11, fontWeight: '600', color: Colors.onSurface, textAlign: 'center', marginBottom: 4, fontFamily: Fonts.bodySemiBold },
+  templateGems: { fontSize: 11, color: Colors.onTertiaryFixed, fontWeight: '700', fontFamily: Fonts.bodyBold },
   field: { marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '700', color: Colors.textMid, marginBottom: 6 },
+  label: { fontSize: 13, fontWeight: '700', color: Colors.onSurfaceVariant, marginBottom: 6, fontFamily: Fonts.bodyBold },
   input: {
-    backgroundColor: Colors.parentCard, borderRadius: 12,
+    backgroundColor: Colors.white, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, color: Colors.textDark,
-    borderWidth: 1, borderColor: Colors.parentBorder,
+    fontSize: 15, color: Colors.onSurface,
+    borderWidth: 1, borderColor: Colors.outlineVariant,
+    fontFamily: Fonts.body,
   },
   textarea: { height: 80, textAlignVertical: 'top' },
   row: { flexDirection: 'row', gap: 12 },
   segmented: {
-    flexDirection: 'row', backgroundColor: Colors.parentCard,
-    borderRadius: 12, borderWidth: 1, borderColor: Colors.parentBorder, overflow: 'hidden',
+    flexDirection: 'row', backgroundColor: Colors.white,
+    borderRadius: 12, borderWidth: 1, borderColor: Colors.outlineVariant, overflow: 'hidden',
   },
   segment: { flex: 1, paddingVertical: 12, alignItems: 'center' },
-  segmentActive: { backgroundColor: Colors.purple },
-  segmentText: { fontSize: 14, fontWeight: '600', color: Colors.textMid },
-  segmentTextActive: { color: Colors.textLight },
+  segmentActive: { backgroundColor: Colors.primary },
+  segmentText: { fontSize: 14, fontWeight: '600', color: Colors.onSurfaceVariant, fontFamily: Fonts.bodySemiBold },
+  segmentTextActive: { color: Colors.white, fontFamily: Fonts.bodySemiBold },
   valueGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   valueChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 12, paddingVertical: 8,
-    borderRadius: 20, borderWidth: 1.5, borderColor: Colors.parentBorder,
-    backgroundColor: Colors.parentCard,
+    borderRadius: 20, borderWidth: 1.5, borderColor: Colors.outlineVariant,
+    backgroundColor: Colors.white,
   },
   valueChipEmoji: { fontSize: 14 },
-  valueChipLabel: { fontSize: 13, fontWeight: '600', color: Colors.textMid },
-  valueChipLabelActive: { color: Colors.textLight },
+  valueChipLabel: { fontSize: 13, fontWeight: '600', color: Colors.onSurfaceVariant, fontFamily: Fonts.bodySemiBold },
+  valueChipLabelActive: { color: Colors.white },
 });
