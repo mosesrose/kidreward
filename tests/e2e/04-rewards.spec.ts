@@ -76,7 +76,7 @@ test.describe('Rewards', () => {
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
     test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
-    await clickTab(page, 'Rewards');
+    await clickTab(page, 'Store');
     await page.waitForLoadState('networkidle');
 
     await expect(
@@ -92,7 +92,7 @@ test.describe('Rewards', () => {
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
     test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
-    await clickTab(page, 'Rewards');
+    await clickTab(page, 'Store');
     // Wait for header balance to appear — compact GemHeader shows "GEMS", old UI "gems to spend"
     await expect(
       page.getByText('GEMS', { exact: true }).or(page.getByText('gems to spend', { exact: false })).first()
@@ -127,7 +127,7 @@ test.describe('Rewards', () => {
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
     test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
-    await clickTab(page, 'Rewards');
+    await clickTab(page, 'Store');
     await page.waitForLoadState('networkidle');
 
     // Only executes if child has enough gems for a reward (earned via challenge approval)
@@ -259,7 +259,7 @@ test.describe('Rewards', () => {
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
     test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
-    await clickTab(page, 'Rewards');
+    await clickTab(page, 'Store');
     await page.waitForLoadState('networkidle');
 
     // Click any reward to trigger confirm state

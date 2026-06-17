@@ -112,7 +112,7 @@ test.describe('Gem Economy', () => {
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
     test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
-    await clickTab(page, 'Rewards');
+    await clickTab(page, 'Store');
     await page.waitForLoadState('networkidle');
 
     // Store header uses GemHeader in compact mode — shows "GEMS" label
