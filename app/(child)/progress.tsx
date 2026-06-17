@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, SectionList, SafeAreaView,
-  RefreshControl,
+  RefreshControl, TouchableOpacity,
 } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -28,7 +28,7 @@ export default function ProgressScreen() {
         .from('redemptions')
         .select('*, rewards(*)')
         .eq('child_id', profile.id)
-        .eq('status', 'fulfilled')
+        .in('status', ['fulfilled', 'consumed'])
         .order('fulfilled_at', { ascending: false }),
     ]);
     setApprovedCompletions(comps ?? []);
@@ -39,6 +39,17 @@ export default function ProgressScreen() {
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
+  async function consumeReward(redemptionId: string) {
+    await supabase
+      .from('redemptions')
+      .update({ status: 'consumed' })
+      .eq('id', redemptionId);
+    // Optimistic update
+    setFulfilledRedemptions(prev =>
+      prev.map(r => r.id === redemptionId ? { ...r, status: 'consumed' } : r)
+    );
+  }
+
   const sections = [
     {
       title: 'CHALLENGES COMPLETED',
@@ -46,7 +57,7 @@ export default function ProgressScreen() {
       type: 'challenge',
     },
     {
-      title: 'REWARDS COLLECTED',
+      title: `REWARDS COLLECTED`,
       data: fulfilledRedemptions,
       type: 'reward',
     },
@@ -110,20 +121,29 @@ export default function ProgressScreen() {
               </View>
             );
           }
+          const reward = (item as any).rewards;
+          const isConsumed = item.status === 'consumed';
           return (
-            <View style={styles.card}>
-              <Text style={styles.cardEmoji}>{(item as any).rewards?.emoji ?? '🎁'}</Text>
-              <View style={styles.cardBody}>
-                <Text style={styles.cardTitle}>{(item as any).rewards?.title}</Text>
-                <Text style={styles.cardDate}>
-                  {item.fulfilled_at ? new Date(item.fulfilled_at).toLocaleDateString() : ''}
+            <View style={styles.rewardCard}>
+              <Text style={styles.rewardEmoji}>{reward?.emoji ?? '🎁'}</Text>
+              <View style={styles.rewardInfo}>
+                <Text style={styles.rewardTitle}>{reward?.title}</Text>
+                <Text style={styles.rewardMeta}>
+                  {item.gems_spent}💎 · {new Date(item.fulfilled_at ?? item.requested_at).toLocaleDateString()}
                 </Text>
               </View>
-              <View style={[styles.gemPill, { backgroundColor: Colors.tertiaryFixed }]}>
-                <Text style={[styles.gemPillText, { color: Colors.onTertiaryFixed }]}>
-                  -{item.gems_spent ?? 0}💎
-                </Text>
-              </View>
+              {isConsumed ? (
+                <View style={styles.consumedBadge}>
+                  <Text style={styles.consumedBadgeText}>Used ✓</Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.consumeBtn}
+                  onPress={() => consumeReward(item.id)}
+                >
+                  <Text style={styles.consumeBtnText}>Mark used</Text>
+                </TouchableOpacity>
+              )}
             </View>
           );
         }}
@@ -169,6 +189,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 4,
   },
   gemPillText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.success },
+
+  rewardCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: Colors.white, borderRadius: 12, padding: 14, marginBottom: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04, shadowRadius: 8, elevation: 1,
+  },
+  rewardEmoji:  { fontSize: 28 },
+  rewardInfo:   { flex: 1 },
+  rewardTitle:  { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.onSurface },
+  rewardMeta:   { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2 },
+  consumeBtn: {
+    backgroundColor: Colors.primaryFixed, borderRadius: 9999,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  consumeBtnText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.primary },
+  consumedBadge: {
+    backgroundColor: Colors.tertiaryFixed, borderRadius: 9999,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  consumedBadgeText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.onTertiaryFixed },
 
   empty: { alignItems: 'center', paddingTop: 40 },
   emptyText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.onSurfaceVariant, textAlign: 'center' },

@@ -266,7 +266,7 @@ create table public.redemptions (
   child_id    uuid not null references public.profiles(id) on delete cascade,
   family_id   uuid not null references public.families(id) on delete cascade,
   gems_spent  integer not null,
-  status      text not null default 'pending' check (status in ('pending', 'fulfilled', 'rejected')),
+  status      text not null default 'pending' check (status in ('pending', 'fulfilled', 'rejected', 'consumed')),
   note        text,
   requested_at timestamptz default now(),
   fulfilled_at timestamptz
