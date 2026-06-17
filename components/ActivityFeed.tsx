@@ -37,7 +37,7 @@ export default function ActivityFeed({ familyId }: Props) {
   }, [familyId]);
 
   async function load() {
-    const [{ data: comps }, { data: redemps }] = await Promise.all([
+    const [{ data: comps, error: compsErr }, { data: redemps, error: redempsErr }] = await Promise.all([
       supabase
         .from('completions')
         .select('id, status, gems_awarded, updated_at, challenges(title, emoji, family_id), profiles!completions_child_id_fkey(name)')
@@ -52,6 +52,8 @@ export default function ActivityFeed({ familyId }: Props) {
         .order('updated_at', { ascending: false })
         .limit(10),
     ]);
+    if (compsErr) console.warn('ActivityFeed completions error:', compsErr.message);
+    if (redempsErr) console.warn('ActivityFeed redemptions error:', redempsErr.message);
 
     const feed: FeedItem[] = [
       ...(comps ?? []).map((c: any) => ({
@@ -133,6 +135,13 @@ function StatusChip({ item }: { item: FeedItem }) {
     return (
       <View style={[styles.chip, { backgroundColor: 'rgba(122,60,225,0.08)', borderColor: 'rgba(122,60,225,0.2)' }]}>
         <Text style={[styles.chipText, { color: Colors.purple }]}>Pending</Text>
+      </View>
+    );
+  }
+  if (item.status === 'rejected') {
+    return (
+      <View style={[styles.chip, { backgroundColor: 'rgba(229,85,69,0.1)', borderColor: 'rgba(229,85,69,0.3)' }]}>
+        <Text style={[styles.chipText, { color: Colors.danger }]}>Rejected</Text>
       </View>
     );
   }
