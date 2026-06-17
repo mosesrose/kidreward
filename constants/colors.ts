@@ -1,47 +1,73 @@
-// Kinetic Harmony — Dual-Orbit palette
-// Child mode: dark gamified. Parent mode: light editorial (cream).
+// Stitch MD3 token set — both parent and child use the same light surface (#fdf7ff).
+// Legacy keys (childBg, purple, etc.) kept so existing screens compile during transition.
 export const Colors = {
-  // Brand
-  purple: '#7A3CE1',
-  purpleLight: '#A076F0',
-  purpleDark: '#5A2BA8',
+  // ── New semantic tokens ────────────────────────────────────────────────────
+  surface:                 '#fdf7ff',
+  surfaceContainerLow:     '#f8f2fa',
+  surfaceContainer:        '#f2ecf4',
+  surfaceContainerHigh:    '#ece6ee',
+  surfaceContainerHighest: '#e6e0e9',
+  white:                   '#ffffff',
 
-  // Child theme — Dark Gamified
-  childBg:      '#1A0A3C',
-  childCard:    '#2D1B69',
-  childBorder:  '#4C3490',
-  childAccent:  '#00D4FF',   // cyan — gems, level badge, progress bar
-  childAccent2: '#FF6B35',   // orange — CTA buttons, action highlights
-  childText:    '#FFFFFF',   // primary text on dark bg
-  childMuted:   '#8B7BAE',   // secondary text on dark bg
+  primary:          '#4f378a',
+  primaryContainer: '#6750a4',
+  primaryFixed:     '#e9ddff',
+  primaryFixedDim:  '#cfbcff',
 
-  // Parent theme — Light Editorial (unchanged values)
-  parentBg:     '#FFF7ED',
-  parentCard:   '#FFFFFF',
-  parentBorder: '#F3E7D8',
+  secondary:          '#63597c',
+  secondaryContainer: '#e1d4fd',
+  onSecondaryFixed:   '#1f1635',
 
-  // Gems
-  gem:     '#7A3CE1',
-  gemGlow: '#A076F0',        // purple-light — used by parent screens for gem cost accents
+  tertiary:               '#765b00',
+  tertiaryFixed:          '#ffdf93',
+  onTertiaryFixed:        '#241a00',
+  onTertiaryFixedVariant: '#594400',
+  radiantAmber:           '#FFB800',
 
-  // Status (shared)
-  success: '#3DB78A',
-  warning: '#FFB84D',
-  danger:  '#E55545',
-  pending: '#FFB84D',
+  onSurface:        '#1d1b20',
+  onSurfaceVariant: '#494551',
+  outline:          '#7a7582',
+  outlineVariant:   '#cbc4d2',
 
-  // Text (shared — parent screens + auth only)
-  // Child screens: use childText / childMuted instead of these
-  textDark:  '#1A1530',
-  textMid:   '#5C4F7A',
-  textLight: '#FFFFFF',
-  textMuted: '#8A7AA8',
+  error:            '#ba1a1a',
+  errorContainer:   '#ffdad6',
+  success:          '#1a7a4a',
+  successContainer: '#d4f7e1',
+  warning:          '#b45309',
+  warningContainer: '#ffdf93',
 
-  // Surfaces
-  border:      '#F3E7D8',
-  surfaceSoft: '#FDECC8',
+  // ── Legacy keys — existing screens reference these; keep until Plans B & C replace them ──
+  purple:       '#4f378a',
+  purpleLight:  '#6750a4',
+  purpleDark:   '#4f378a',
 
-  // Challenge category colours (unchanged)
+  childBg:      '#fdf7ff',
+  childCard:    '#ffffff',
+  childBorder:  '#cbc4d2',
+  childAccent:  '#4f378a',
+  childAccent2: '#FFB800',
+  childText:    '#1d1b20',
+  childMuted:   '#494551',
+
+  parentBg:     '#fdf7ff',
+  parentCard:   '#ffffff',
+  parentBorder: '#cbc4d2',
+
+  gem:     '#4f378a',
+  gemGlow: '#6750a4',
+
+  pending: '#b45309',
+  danger:  '#ba1a1a',
+
+  textDark:  '#1d1b20',
+  textMid:   '#494551',
+  textLight: '#ffffff',
+  textMuted: '#494551',
+
+  border:      '#cbc4d2',
+  surfaceSoft: '#e9ddff',
+
+  // ── Challenge category colours (unchanged) ────────────────────────────────
   cat: {
     phone:    '#FF8E8E',
     outdoor:  '#7DCC8F',
@@ -57,4 +83,4 @@ export const Colors = {
     homework: '#C99CE2',
     behavior: '#F0A0BC',
   },
-};
+} as const;
