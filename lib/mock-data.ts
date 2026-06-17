@@ -8,6 +8,9 @@ export const PARENT_PROFILE: Profile = {
   role: 'parent',
   avatar_emoji: '👩',
   created_at: '2024-01-01T00:00:00Z',
+  current_streak: 0,
+  longest_streak: 0,
+  last_streak_date: null,
 };
 
 export const CHILD1_PROFILE: Profile = {
@@ -16,6 +19,9 @@ export const CHILD1_PROFILE: Profile = {
   role: 'child',
   avatar_emoji: '🧒',
   created_at: '2024-01-01T00:00:00Z',
+  current_streak: 3,
+  longest_streak: 5,
+  last_streak_date: null,
 };
 
 export const CHILD2_PROFILE: Profile = {
@@ -24,6 +30,9 @@ export const CHILD2_PROFILE: Profile = {
   role: 'child',
   avatar_emoji: '🦊',
   created_at: '2024-01-01T00:00:00Z',
+  current_streak: 0,
+  longest_streak: 2,
+  last_streak_date: null,
 };
 
 export const MOCK_FAMILY: Family = {

@@ -13,7 +13,10 @@ create table public.profiles (
   name        text not null,
   role        text not null check (role in ('parent', 'child')),
   avatar_emoji text not null default '🧒',
-  created_at  timestamptz default now()
+  created_at  timestamptz default now(),
+  current_streak    integer not null default 0,
+  longest_streak    integer not null default 0,
+  last_streak_date  date
 );
 
 alter table public.profiles enable row level security;

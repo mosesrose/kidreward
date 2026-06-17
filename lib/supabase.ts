@@ -47,6 +47,9 @@ export type Profile = {
   avatar_emoji: string;
   created_at: string;
   push_token?: string | null;
+  current_streak: number;
+  longest_streak: number;
+  last_streak_date: string | null;
 };
 
 export type Family = {

@@ -11,6 +11,7 @@ import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
 import { FALLBACK_ICON } from '@/constants/icons';
 import { sendApprovalPush } from '@/lib/push-notifications';
+import { ParentSounds } from '@/lib/sounds';
 
 export default function ChallengeDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -47,6 +48,7 @@ export default function ChallengeDetail() {
   }
 
   async function approve(completion: Completion) {
+    ParentSounds.approval();
     const gems = (challenge?.gem_reward ?? 0) + (challenge?.bonus_gems ?? 0);
     const { error } = await supabase
       .from('completions')
@@ -59,6 +61,8 @@ export default function ChallengeDetail() {
       p_family_id: challenge?.family_id,
       p_gems: gems,
     });
+
+    await supabase.rpc('update_streak', { p_child_id: completion.child_id });
 
     // Send push notification to child
     const childPushToken = (completion as any).profiles?.push_token;
@@ -75,6 +79,7 @@ export default function ChallengeDetail() {
   }
 
   async function reject(completion: Completion) {
+    ParentSounds.reject();
     const { error } = await supabase
       .from('completions')
       .update({ status: 'rejected', reviewed_at: new Date().toISOString() })

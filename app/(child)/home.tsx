@@ -174,6 +174,11 @@ export default function ChildHome() {
           <View style={styles.gemBadgePos}>
             <GemBadge gems={gemBalance} />
           </View>
+          {(profile as any).current_streak > 0 && (
+            <View style={styles.streakBadge}>
+              <Text style={styles.streakText}>🔥 {(profile as any).current_streak} day streak!</Text>
+            </View>
+          )}
         </View>
 
         {/* Mission list */}
@@ -282,6 +287,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 24,
     right: 20,
+  },
+  streakBadge: {
+    backgroundColor: '#FF6B35',
+    borderRadius: 9999,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  streakText: {
+    color: '#FFFFFF',
+    fontFamily: Fonts.bodyBold,
+    fontSize: 13,
   },
 
   section: { paddingHorizontal: 20 },
