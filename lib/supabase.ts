@@ -46,6 +46,7 @@ export type Profile = {
   role: 'parent' | 'child';
   avatar_emoji: string;
   created_at: string;
+  push_token?: string | null;
 };
 
 export type Family = {
