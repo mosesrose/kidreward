@@ -12,6 +12,7 @@ import { Fonts } from '@/constants/fonts';
 import AppHeader from '@/components/AppHeader';
 import GemBadge from '@/components/GemBadge';
 import { FALLBACK_ICON } from '@/constants/icons';
+import { ChildSounds } from '@/lib/sounds';
 
 function typeLabel(t: string) {
   if (t === 'screen_time') return 'Screen Time';
@@ -65,6 +66,7 @@ export default function ChildStore() {
         setRedeeming(null);
         return;
       }
+      ChildSounds.success();
       await supabase.from('redemptions').insert({
         reward_id: reward.id,
         child_id: profile!.id,

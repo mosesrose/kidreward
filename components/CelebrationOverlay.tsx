@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
+import { ChildSounds } from '@/lib/sounds';
 
 export type CelebrationMode = 'submitted' | 'approved';
 
@@ -27,6 +28,8 @@ export default function CelebrationOverlay({
 
   useEffect(() => {
     if (!visible) return;
+
+    ChildSounds.gemEarned();
 
     // Fade + scale in
     Animated.parallel([

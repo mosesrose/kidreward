@@ -16,6 +16,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { MockAuthProvider } from '@/contexts/MockAuthContext';
+import { configureNotificationChannels } from '@/lib/notifications-config';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -51,6 +52,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontsLoaded) SplashScreen.hideAsync();
   }, [fontsLoaded]);
+
+  useEffect(() => {
+    configureNotificationChannels();
+  }, []);
 
   if (!fontsLoaded) return null;
 
