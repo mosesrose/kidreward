@@ -114,6 +114,48 @@ create policy "Anyone can read unused invite by code"
 create policy "Child can claim invite"
   on public.invites for update using (auth.uid() = used_by or used_by is null);
 
+-- ── Co-Parents ───────────────────────────────────────────────
+-- Links a co-parent (another parent-role user) to a family they were invited to manage
+create table if not exists public.family_co_parents (
+  family_id    uuid not null references public.families(id) on delete cascade,
+  co_parent_id uuid not null references public.profiles(id) on delete cascade,
+  invited_by   uuid not null references public.profiles(id),
+  joined_at    timestamptz default now(),
+  primary key (family_id, co_parent_id)
+);
+
+alter table public.family_co_parents enable row level security;
+
+-- Helper function: returns the family_id a co-parent belongs to (used in RLS policies)
+create or replace function public.co_parent_family_id(p_uid uuid)
+returns uuid language sql security definer set search_path = public as $$
+  select family_id from public.family_co_parents where co_parent_id = p_uid limit 1;
+$$;
+
+create policy "Co-parent can view own membership"
+  on public.family_co_parents for select
+  using (auth.uid() = co_parent_id or family_id in (select id from families where parent_id = auth.uid()));
+
+create policy "Owner can delete co-parents"
+  on public.family_co_parents for delete
+  using (family_id in (select id from families where parent_id = auth.uid()));
+
+create policy "Co-parent can join family"
+  on public.family_co_parents for insert
+  with check (auth.uid() = co_parent_id);
+
+-- Additional RLS policies on other tables to grant co-parent access:
+-- (families) "Co-parent can read family"
+--   USING (id = public.co_parent_family_id(auth.uid()));
+-- (challenges) "Co-parent can manage challenges"
+--   USING (family_id = public.co_parent_family_id(auth.uid()));
+-- (completions) "Co-parent can manage completions" (via challenge family_id)
+-- (rewards) "Co-parent can manage rewards"
+-- (redemptions) "Co-parent can manage redemptions"
+-- (profiles) "Co-parent can read child profiles" (via family_members)
+-- (family_members) "Co-parent can manage family members"
+-- (invites) "Co-parent can manage invites"
+
 -- ── Challenges ───────────────────────────────────────────────
 create table public.challenges (
   id           uuid primary key default gen_random_uuid(),

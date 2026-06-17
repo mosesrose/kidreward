@@ -12,6 +12,7 @@ import { Fonts } from '@/constants/fonts';
 export default function MyFamilyScreen() {
   const { family } = useAuth();
   const [children, setChildren] = useState<FamilyMember[]>([]);
+  const [coParents, setCoParents] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
@@ -21,6 +22,12 @@ export default function MyFamilyScreen() {
       .select('*, profiles(*)')
       .eq('family_id', family.id);
     setChildren(data ?? []);
+
+    const { data: cops } = await supabase
+      .from('family_co_parents')
+      .select('*, profiles(*)')
+      .eq('family_id', family.id);
+    setCoParents(cops ?? []);
   }, [family]);
 
   useEffect(() => { load(); }, [load]);
@@ -55,6 +62,22 @@ export default function MyFamilyScreen() {
 
             {/* Co-Parents section */}
             <Text style={[styles.sectionLabel, { marginTop: 28 }]}>CO-PARENTS</Text>
+            {coParents.map((cp) => {
+              const p = (cp as any).profiles;
+              return (
+                <View key={cp.co_parent_id} style={styles.kidCard}>
+                  <View style={styles.kidLeft}>
+                    <Text style={styles.avatar}>{p?.avatar_emoji ?? '👤'}</Text>
+                    <View>
+                      <Text style={styles.kidName}>{p?.name}</Text>
+                      <Text style={styles.kidJoined}>
+                        Co-parent since {new Date(cp.joined_at).toLocaleDateString()}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
             <TouchableOpacity
               style={styles.coParentBtn}
               onPress={() => router.push('/(parent)/children/invite')}

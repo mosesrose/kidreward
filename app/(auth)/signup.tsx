@@ -13,6 +13,7 @@ export default function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSignup() {
@@ -46,10 +47,44 @@ export default function Signup() {
       return;
     }
 
-    await supabase.from('families').insert({
-      name: `${name.trim()}'s Family`,
-      parent_id: data.user.id,
-    });
+    const trimmedCode = inviteCode.trim().toUpperCase();
+
+    if (trimmedCode.length === 6) {
+      // Co-parent path: validate code and join family
+      const { data: invite } = await supabase
+        .from('invites')
+        .select('*')
+        .eq('code', trimmedCode)
+        .eq('invite_type', 'parent')
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString())
+        .single();
+
+      if (!invite) {
+        setLoading(false);
+        Alert.alert('Invalid invite code', 'This co-parent invite code is invalid or expired.');
+        return;
+      }
+
+      await supabase.from('family_co_parents').insert({
+        family_id: invite.family_id,
+        co_parent_id: data.user.id,
+        invited_by: invite.created_by,
+      });
+
+      await supabase.from('invites').update({
+        used_by: data.user.id,
+        used_at: new Date().toISOString(),
+        status: 'used',
+      }).eq('id', invite.id);
+
+    } else {
+      // Primary parent path: create new family
+      await supabase.from('families').insert({
+        name: `${name.trim()}'s Family`,
+        parent_id: data.user.id,
+      });
+    }
 
     setLoading(false);
     router.replace('/(parent)/dashboard');
@@ -102,6 +137,20 @@ export default function Signup() {
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Co-parent invite code (optional)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. ABC123 — leave blank to create a new family"
+                placeholderTextColor={Colors.onSurfaceVariant}
+                value={inviteCode}
+                onChangeText={(t) => setInviteCode(t.toUpperCase())}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                maxLength={6}
               />
             </View>
 

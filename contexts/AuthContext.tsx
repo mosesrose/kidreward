@@ -81,7 +81,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .select('*')
           .eq('parent_id', userId)
           .single();
-        setFamily(fam);
+
+        if (fam) {
+          setFamily(fam);
+        } else {
+          // Check if co-parent of another family
+          const { data: coMem } = await supabase
+            .from('family_co_parents')
+            .select('*, families(*)')
+            .eq('co_parent_id', userId)
+            .single();
+          if (coMem) {
+            setFamily((coMem as any).families);
+          }
+        }
       } else if (prof?.role === 'child') {
         const { data: mem } = await supabase
           .from('family_members')
@@ -112,12 +125,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function refreshFamily() {
     if (!session?.user.id || !profile) return;
     if (profile.role === 'parent') {
-      const { data } = await supabase
+      const { data: fam } = await supabase
         .from('families')
         .select('*')
         .eq('parent_id', session.user.id)
         .single();
-      setFamily(data);
+
+      if (fam) {
+        setFamily(fam);
+      } else {
+        // Check co-parent membership
+        const { data: coMem } = await supabase
+          .from('family_co_parents')
+          .select('*, families(*)')
+          .eq('co_parent_id', session.user.id)
+          .single();
+        setFamily(coMem ? (coMem as any).families : null);
+      }
     } else {
       const { data } = await supabase
         .from('family_members')

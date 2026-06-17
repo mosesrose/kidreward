@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Colors } from '@/constants/colors';
 
 export default function Index() {
-  const { session, profile, loading } = useAuth();
+  const { session, profile, family, loading } = useAuth();
 
   if (loading) {
     return (
@@ -17,7 +17,10 @@ export default function Index() {
   if (!session) return <Redirect href="/(auth)/welcome" />;
   if (!profile) return <Redirect href="/(auth)/complete-profile" />;
 
-  if (profile.role === 'parent') return <Redirect href="/(parent)/dashboard" />;
+  if (profile.role === 'parent') {
+    if (!family) return <Redirect href="/(auth)/join-coparen" />;
+    return <Redirect href="/(parent)/dashboard" />;
+  }
   return <Redirect href="/(child)/home" />;
 }
 
