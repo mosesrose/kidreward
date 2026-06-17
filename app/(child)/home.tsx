@@ -3,12 +3,13 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import GemHeader from '@/components/GemHeader';
+import { FALLBACK_ICON } from '@/constants/icons';
 
 export default function ChildDashboard() {
   const { profile, family, membership, signOut, refreshFamily, loading } = useAuth();
@@ -19,7 +20,6 @@ export default function ChildDashboard() {
 
   const load = useCallback(async () => {
     if (!family || !profile) return;
-
     const [{ data: challenges }, { data: completions }, { data: rewards }] = await Promise.all([
       supabase
         .from('challenges')
@@ -43,7 +43,6 @@ export default function ChildDashboard() {
         .order('gem_cost', { ascending: true })
         .limit(1),
     ]);
-
     setActiveChallenges(challenges ?? []);
     setRecentCompletions(completions ?? []);
     setCheapestReward(rewards?.[0] ?? null);
@@ -51,11 +50,7 @@ export default function ChildDashboard() {
 
   useEffect(() => {
     if (loading) return;
-    if (!family) {
-      router.replace('/(child)/join');
-    } else {
-      load();
-    }
+    if (!family) { router.replace('/(child)/join'); } else { load(); }
   }, [family, load, loading]);
 
   const onRefresh = async () => {
@@ -71,7 +66,9 @@ export default function ChildDashboard() {
   return (
     <View style={styles.container}>
       <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.childAccent} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.childAccent} />
+        }
       >
         <GemHeader
           name={profile?.name ?? ''}
@@ -80,10 +77,25 @@ export default function ChildDashboard() {
           onSignOut={signOut}
         />
 
-        {/* Today's missions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>TODAY</Text>
+        {/* Quick stats */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={styles.statNum}>{activeChallenges.length}</Text>
+            <Text style={styles.statLabel}>Missions</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={[styles.statNum, { color: Colors.childAccent }]}>🔮 {gemBalance}</Text>
+            <Text style={styles.statLabel}>Spendable</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statNum}>{recentCompletions.length}</Text>
+            <Text style={styles.statLabel}>Recent</Text>
+          </View>
+        </View>
 
+        {/* Active challenges */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>ACTIVE MISSIONS</Text>
           {activeChallenges.length === 0 ? (
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>No missions yet</Text>
@@ -97,10 +109,18 @@ export default function ChildDashboard() {
                 onPress={() => router.push(`/(child)/challenges/${c.id}`)}
               >
                 <View style={styles.cardLeft}>
-                  <Text style={styles.cardTitle} numberOfLines={1}>{c.title}</Text>
-                  <Text style={styles.cardMeta}>
-                    {c.repeat_type === 'daily' ? 'Daily' : c.repeat_type === 'weekly' ? 'Weekly' : 'Once'} · {capitalize(c.category)}
-                  </Text>
+                  <MaterialCommunityIcons
+                    name={(c.emoji || FALLBACK_ICON) as any}
+                    size={28}
+                    color={Colors.childAccent}
+                    style={styles.cardIcon}
+                  />
+                  <View>
+                    <Text style={styles.cardTitle} numberOfLines={1}>{c.title}</Text>
+                    <Text style={styles.cardMeta}>
+                      {c.repeat_type === 'daily' ? 'Daily' : c.repeat_type === 'weekly' ? 'Weekly' : 'Once'}
+                    </Text>
+                  </View>
                 </View>
                 <Text style={styles.cardPoints}>+{c.gem_reward} 💎</Text>
               </TouchableOpacity>
@@ -108,7 +128,7 @@ export default function ChildDashboard() {
           )}
         </View>
 
-        {/* Encouragement callout — gap to next reward */}
+        {/* Next reward callout */}
         {cheapestReward && nextRewardGap !== null && nextRewardGap > 0 && (
           <View style={styles.callout}>
             <Text style={styles.calloutTitle}>{nextRewardGap} gems to your next reward</Text>
@@ -116,88 +136,66 @@ export default function ChildDashboard() {
           </View>
         )}
 
-        {/* Recent activity */}
-        {recentCompletions.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>RECENT</Text>
-            {recentCompletions.map((c) => {
-              const status = c.status;
-              const statusText = status === 'approved' ? 'Approved' : status === 'rejected' ? 'Rejected' : 'Waiting';
-              const statusColor = status === 'approved' ? Colors.success : status === 'rejected' ? Colors.danger : Colors.warning;
-              return (
-                <View key={c.id} style={styles.card}>
-                  <View style={styles.cardLeft}>
-                    <Text style={styles.cardTitle} numberOfLines={1}>
-                      {(c as any).challenges?.title}
-                    </Text>
-                    <Text style={[styles.cardMeta, { color: statusColor }]}>{statusText}</Text>
-                  </View>
-                  {status === 'approved' && c.gems_awarded ? (
-                    <Text style={styles.cardPoints}>+{c.gems_awarded} 💎</Text>
-                  ) : null}
-                </View>
-              );
-            })}
-          </View>
-        )}
-
         {/* Store CTA */}
-        <TouchableOpacity
-          style={styles.storeCta}
-          onPress={() => router.push('/(child)/store')}
-        >
-          <Text style={styles.storeCtaText}>Visit the store</Text>
+        <TouchableOpacity style={styles.storeCta} onPress={() => router.push('/(child)/store')}>
+          <Text style={styles.storeCtaText}>Visit the Treasure Chest 🎁</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
 
-function capitalize(s: string) {
-  return s ? s[0].toUpperCase() + s.slice(1) : s;
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.childBg },
 
-  section: { paddingHorizontal: 18, paddingTop: 24 },
+  statsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 18, paddingTop: 16 },
+  statCard: {
+    flex: 1, backgroundColor: Colors.childCard,
+    borderRadius: 14, padding: 12, alignItems: 'center',
+    borderWidth: 1, borderColor: Colors.childBorder,
+  },
+  statNum: { fontSize: 20, fontWeight: '900', color: Colors.childText, marginBottom: 2 },
+  statLabel: { fontSize: 10, color: Colors.childMuted, fontWeight: '600' },
+
+  section: { paddingHorizontal: 18, paddingTop: 20 },
   sectionLabel: {
-    fontSize: 11, fontWeight: '700', color: Colors.textMuted,
+    fontSize: 11, fontWeight: '700', color: Colors.childMuted,
     letterSpacing: 2, marginBottom: 12,
   },
 
   card: {
     backgroundColor: Colors.childCard,
-    borderRadius: 16, padding: 16,
-    marginBottom: 10,
-    borderWidth: 1, borderColor: Colors.border,
+    borderRadius: 16, padding: 14, marginBottom: 10,
+    borderWidth: 1, borderColor: Colors.childBorder,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  cardLeft: { flex: 1, paddingRight: 12 },
-  cardTitle: { fontSize: 15, fontWeight: '600', color: Colors.textDark, marginBottom: 4 },
-  cardMeta: { fontSize: 12, color: Colors.textMuted },
-  cardPoints: { fontSize: 14, fontWeight: '700', color: Colors.childAccent },
+  cardLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  cardIcon: { marginRight: 12 },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: Colors.childText, marginBottom: 2 },
+  cardMeta:  { fontSize: 12, color: Colors.childMuted },
+  cardPoints: { fontSize: 14, fontWeight: '800', color: Colors.childAccent },
 
   empty: {
     backgroundColor: Colors.childCard, borderRadius: 16,
     paddingVertical: 28, alignItems: 'center',
-    borderWidth: 1, borderColor: Colors.border,
+    borderWidth: 1, borderColor: Colors.childBorder,
   },
-  emptyTitle: { fontSize: 15, fontWeight: '600', color: Colors.textDark, marginBottom: 4 },
-  emptyMeta: { fontSize: 13, color: Colors.textMuted },
+  emptyTitle: { fontSize: 15, fontWeight: '600', color: Colors.childText, marginBottom: 4 },
+  emptyMeta:  { fontSize: 13, color: Colors.childMuted },
 
   callout: {
-    marginHorizontal: 18, marginTop: 18,
-    backgroundColor: Colors.surfaceSoft,
+    marginHorizontal: 18, marginTop: 16,
+    backgroundColor: Colors.childCard,
     borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: Colors.childBorder,
   },
-  calloutTitle: { fontSize: 14, fontWeight: '700', color: '#8A4A00', marginBottom: 4 },
-  calloutMeta: { fontSize: 12, color: '#B07728' },
+  calloutTitle: { fontSize: 14, fontWeight: '700', color: Colors.childAccent, marginBottom: 4 },
+  calloutMeta:  { fontSize: 12, color: Colors.childMuted },
 
   storeCta: {
-    margin: 18, marginTop: 24,
-    backgroundColor: Colors.childAccent,
+    margin: 18, marginTop: 20,
+    backgroundColor: Colors.childAccent2,
     borderRadius: 100, paddingVertical: 16, alignItems: 'center',
   },
-  storeCtaText: { color: Colors.textLight, fontWeight: '700', fontSize: 15 },
+  storeCtaText: { color: Colors.childText, fontWeight: '700', fontSize: 15 },
 });
