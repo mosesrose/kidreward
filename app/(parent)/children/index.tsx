@@ -1,14 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  RefreshControl,
+  RefreshControl, SafeAreaView,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, FamilyMember } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
+import { Fonts } from '@/constants/fonts';
 
-export default function ChildrenScreen() {
+export default function MyFamilyScreen() {
   const { family } = useAuth();
   const [children, setChildren] = useState<FamilyMember[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -24,108 +25,124 @@ export default function ChildrenScreen() {
 
   useEffect(() => { load(); }, [load]);
 
+  const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>My Kids 👧</Text>
-        <TouchableOpacity
-          style={styles.inviteBtn}
-          onPress={() => router.push('/(parent)/children/invite')}
-        >
-          <Text style={styles.inviteBtnText}>+ Invite</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>My Family</Text>
       </View>
 
       <FlatList
         data={children}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>👨‍👩‍👧‍👦</Text>
-            <Text style={styles.emptyTitle}>No kids connected yet</Text>
-            <Text style={styles.emptyDesc}>
-              Invite your children to join your family and start earning gems!
-            </Text>
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListHeaderComponent={
+          <>
+            <Text style={styles.sectionLabel}>KIDS</Text>
+          </>
+        }
+        ListFooterComponent={
+          <>
+            {/* Invite a Child */}
             <TouchableOpacity
-              style={styles.emptyBtn}
+              style={styles.inviteBtn}
               onPress={() => router.push('/(parent)/children/invite')}
             >
-              <Text style={styles.emptyBtnText}>Send Invite →</Text>
+              <Text style={styles.inviteBtnText}>+ Invite a Child</Text>
             </TouchableOpacity>
+
+            {/* Co-Parents section */}
+            <Text style={[styles.sectionLabel, { marginTop: 28 }]}>CO-PARENTS</Text>
+            <TouchableOpacity
+              style={styles.coParentBtn}
+              onPress={() => router.push('/(parent)/children/invite')}
+            >
+              <Text style={styles.coParentBtnText}>+ Invite a Co-Parent</Text>
+            </TouchableOpacity>
+          </>
+        }
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={styles.emptyTitle}>No kids connected yet</Text>
+            <Text style={styles.emptyMeta}>Tap "Invite a Child" below to get started</Text>
           </View>
         }
         renderItem={({ item }) => {
-          const profile = (item as any).profiles;
+          const p = (item as any).profiles;
           return (
-            <View style={styles.card}>
-              <View style={styles.cardLeft}>
-                <Text style={styles.avatar}>{profile?.avatar_emoji ?? '🧒'}</Text>
+            <View style={styles.kidCard}>
+              <View style={styles.kidLeft}>
+                <Text style={styles.avatar}>{p?.avatar_emoji ?? '🧒'}</Text>
                 <View>
-                  <Text style={styles.name}>{profile?.name}</Text>
-                  <Text style={styles.joined}>
+                  <Text style={styles.kidName}>{p?.name}</Text>
+                  <Text style={styles.kidJoined}>
                     Joined {new Date(item.joined_at).toLocaleDateString()}
                   </Text>
                 </View>
               </View>
-              <View style={styles.stats}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{item.gem_balance}</Text>
-                  <Text style={styles.statLabel}>💎 Balance</Text>
+              <View style={styles.kidStats}>
+                <View style={styles.kidStat}>
+                  <Text style={styles.kidStatNum}>{item.gem_balance}</Text>
+                  <Text style={styles.kidStatLabel}>💎 Balance</Text>
                 </View>
                 <View style={styles.statDivider} />
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{item.total_gems_earned}</Text>
-                  <Text style={styles.statLabel}>🏆 Total</Text>
+                <View style={styles.kidStat}>
+                  <Text style={styles.kidStatNum}>{item.total_gems_earned}</Text>
+                  <Text style={styles.kidStatLabel}>🏆 Total</Text>
                 </View>
               </View>
             </View>
           );
         }}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.parentBg },
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingTop: 60, paddingHorizontal: 20, paddingBottom: 16,
+  safe:   { flex: 1, backgroundColor: Colors.surface },
+  header: { paddingTop: 20, paddingHorizontal: 20, paddingBottom: 16 },
+  title:  { fontFamily: Fonts.parentH1, fontSize: 28, color: Colors.onSurface },
+  list:   { padding: 20, paddingBottom: 40 },
+
+  sectionLabel: {
+    fontFamily: Fonts.bodyBold, fontSize: 11,
+    color: Colors.onSurfaceVariant, letterSpacing: 1.5, marginBottom: 12,
   },
-  title: { fontSize: 28, fontWeight: '900', color: Colors.textDark },
+
+  kidCard: {
+    backgroundColor: Colors.white, borderRadius: 12, padding: 16, marginBottom: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
+  },
+  kidLeft:  { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 12 },
+  avatar:   { fontSize: 40 },
+  kidName:  { fontFamily: Fonts.bodySemiBold, fontSize: 17, color: Colors.onSurface },
+  kidJoined: { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2 },
+  kidStats:  { flexDirection: 'row', backgroundColor: Colors.surfaceContainerLow, borderRadius: 10, padding: 12 },
+  kidStat:   { flex: 1, alignItems: 'center' },
+  kidStatNum: { fontFamily: Fonts.parentH1, fontSize: 22, color: Colors.onSurface },
+  kidStatLabel: { fontFamily: Fonts.body, fontSize: 11, color: Colors.onSurfaceVariant, marginTop: 2 },
+  statDivider: { width: 1, backgroundColor: Colors.outlineVariant },
+
+  empty:      { alignItems: 'center', paddingVertical: 40 },
+  emptyTitle: { fontFamily: Fonts.parentH1, fontSize: 18, color: Colors.onSurface },
+  emptyMeta:  { fontFamily: Fonts.body, fontSize: 14, color: Colors.onSurfaceVariant, marginTop: 4, textAlign: 'center' },
+
   inviteBtn: {
-    backgroundColor: Colors.purple, paddingHorizontal: 16,
-    paddingVertical: 8, borderRadius: 12,
+    marginTop: 12,
+    backgroundColor: Colors.primary, borderRadius: 9999,
+    paddingVertical: 14, alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2, shadowRadius: 0, elevation: 4,
   },
-  inviteBtnText: { color: Colors.textLight, fontWeight: '700' },
-  list: { padding: 16, gap: 12 },
-  empty: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 32 },
-  emptyEmoji: { fontSize: 56, marginBottom: 16 },
-  emptyTitle: { fontSize: 22, fontWeight: '800', color: Colors.textDark, textAlign: 'center' },
-  emptyDesc: { fontSize: 15, color: Colors.textMuted, textAlign: 'center', marginTop: 8, lineHeight: 22 },
-  emptyBtn: {
-    marginTop: 24, backgroundColor: Colors.purple,
-    paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14,
+  inviteBtnText: { fontFamily: Fonts.bodyBold, fontSize: 15, color: Colors.white },
+
+  coParentBtn: {
+    borderWidth: 1, borderColor: Colors.outlineVariant,
+    borderRadius: 9999, paddingVertical: 14, alignItems: 'center',
   },
-  emptyBtnText: { color: Colors.textLight, fontWeight: '700', fontSize: 16 },
-  card: {
-    backgroundColor: Colors.parentCard, borderRadius: 18,
-    padding: 18, gap: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
-  },
-  cardLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  avatar: { fontSize: 44 },
-  name: { fontSize: 18, fontWeight: '800', color: Colors.textDark },
-  joined: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
-  stats: {
-    flexDirection: 'row', backgroundColor: Colors.parentBg,
-    borderRadius: 14, padding: 14,
-  },
-  statItem: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 24, fontWeight: '900', color: Colors.textDark },
-  statLabel: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
-  statDivider: { width: 1, backgroundColor: Colors.parentBorder },
+  coParentBtnText: { fontFamily: Fonts.body, fontSize: 15, color: Colors.onSurfaceVariant },
 });
