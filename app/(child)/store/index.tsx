@@ -9,20 +9,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Reward } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
-import AppHeader from '@/components/AppHeader';
-import GemBadge from '@/components/GemBadge';
 import { FALLBACK_ICON } from '@/constants/icons';
 import { ChildSounds } from '@/lib/sounds';
 
-function typeLabel(t: string) {
-  if (t === 'screen_time') return 'Screen Time';
-  if (t === 'money')       return 'Money';
-  if (t === 'activity')    return 'Activity';
-  return 'Gift';
-}
+const TYPE_LABEL: Record<string, string> = {
+  screen_time: 'SCREEN TIME',
+  money: 'MONEY',
+  activity: 'ACTIVITY',
+  gift: 'GIFT',
+};
 
 export default function ChildStore() {
-  const { family, profile, membership, refreshFamily, signOut } = useAuth();
+  const { family, profile, membership, refreshFamily } = useAuth();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [myRedemptions, setMyRedemptions] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
@@ -83,16 +81,16 @@ export default function ChildStore() {
     }
   }
 
-  const balance   = membership?.gem_balance ?? 0;
+  const balance    = membership?.gem_balance ?? 0;
   const affordable = rewards.filter(r => balance >= r.gem_cost);
   const locked     = rewards.filter(r => balance < r.gem_cost);
 
   const sections = [
-    ...(affordable.length ? [{ key: 'a', label: 'YOU CAN GET',  data: affordable }] : []),
-    ...(locked.length     ? [{ key: 'l', label: 'KEEP SAVING',  data: locked     }] : []),
+    ...(affordable.length ? [{ key: 'a', label: 'UNLOCKABLE', data: affordable }] : []),
+    ...(locked.length     ? [{ key: 'l', label: 'SAVING FOR',  data: locked }]     : []),
   ];
 
-  const renderReward = (item: Reward) => {
+  function renderReward(item: Reward) {
     const canAfford    = balance >= item.gem_cost;
     const pending      = myRedemptions.has(item.id);
     const isConfirming = confirmId === item.id;
@@ -100,79 +98,81 @@ export default function ChildStore() {
     const need         = item.gem_cost - balance;
 
     return (
-      <View key={item.id} style={[styles.rewardCard, !canAfford && styles.rewardCardLocked]}>
-        {/* Cost badge top-right */}
-        <View style={styles.costBadge}>
-          <Text style={styles.costText}>{item.gem_cost} 💎</Text>
-        </View>
-
-        {/* Icon circle */}
-        <View style={[styles.rewardIconCircle, !canAfford && styles.rewardIconCircleLocked]}>
-          <MaterialIcons
-            name={(item.emoji || FALLBACK_ICON) as any}
-            size={56}
-            color={canAfford ? Colors.radiantAmber : Colors.onSurfaceVariant}
-          />
+      <View key={item.id} style={[styles.card, !canAfford && styles.cardLocked]}>
+        {/* Icon + cost row */}
+        <View style={styles.cardTop}>
+          <View style={[styles.iconBox, !canAfford && styles.iconBoxLocked]}>
+            <MaterialIcons
+              name={(item.emoji || FALLBACK_ICON) as any}
+              size={40}
+              color={canAfford ? Colors.kidGreen : Colors.kidMuted}
+            />
+          </View>
+          <View style={styles.costBadge}>
+            <Text style={styles.costText}>{item.gem_cost} 💎</Text>
+          </View>
         </View>
 
         <Text style={[styles.rewardTitle, !canAfford && styles.rewardTitleLocked]} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={styles.rewardType}>{typeLabel(item.reward_type)}</Text>
+        <Text style={styles.rewardType}>{TYPE_LABEL[item.reward_type] ?? 'GIFT'}</Text>
 
-        {/* CTA area */}
+        {/* CTA */}
         {pending ? (
           <View style={styles.pendingChip}>
-            <Text style={styles.pendingChipText}>⏳ Waiting for parent</Text>
+            <Text style={styles.pendingChipText}>⏳ WAITING FOR PARENT</Text>
           </View>
         ) : isRedeeming ? (
-          <Text style={styles.processingText}>Processing…</Text>
+          <Text style={styles.processingText}>PROCESSING…</Text>
         ) : isConfirming ? (
           <View style={styles.confirmRow}>
             <TouchableOpacity style={styles.confirmBtn} onPress={() => confirmRedeem(item)}>
-              <Text style={styles.confirmBtnText}>Yes, redeem!</Text>
+              <Text style={styles.confirmBtnText}>YES!</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancelBtn} onPress={() => setConfirmId(null)}>
-              <Text style={styles.cancelBtnText}>Cancel</Text>
+              <Text style={styles.cancelBtnText}>CANCEL</Text>
             </TouchableOpacity>
           </View>
         ) : canAfford ? (
           <TouchableOpacity style={styles.unlockBtn} onPress={() => setConfirmId(item.id)}>
-            <Text style={styles.unlockBtnText}>Unlock Now!</Text>
+            <Text style={styles.unlockBtnText}>UNLOCK NOW!</Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.needMoreBtn}>
-            <Text style={styles.needMoreText}>Need {need} more 💎</Text>
+            <Text style={styles.needMoreText}>NEED {need} MORE 💎</Text>
           </View>
         )}
       </View>
     );
-  };
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
-      <AppHeader mode="child" />
-
-      {/* Hero row */}
-      <View style={styles.heroRow}>
-        <View style={styles.heroIcon}>
-          <MaterialIcons name="auto-awesome" size={80} color={Colors.radiantAmber} />
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerEyebrow}>LOOT VAULT</Text>
+          <Text style={styles.headerTitle}>APYX LEGEND</Text>
         </View>
-        <Text style={styles.heroTitle}>Reward Shop</Text>
-        <GemBadge gems={balance} />
+        <View style={styles.balanceBadge}>
+          <Text style={styles.balanceText}>{balance}</Text>
+          <Text style={styles.balanceGem}>💎</Text>
+        </View>
       </View>
 
       <FlatList
         data={sections}
-        keyExtractor={(s) => s.key}
+        keyExtractor={s => s.key}
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.kidGreen} />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyTitle}>No rewards yet</Text>
-            <Text style={styles.emptyMeta}>Your parent hasn't set up rewards yet</Text>
+            <MaterialIcons name="inventory" size={48} color={Colors.kidMuted} />
+            <Text style={styles.emptyTitle}>VAULT EMPTY</Text>
+            <Text style={styles.emptyMeta}>Your parent hasn't added rewards yet</Text>
           </View>
         }
         renderItem={({ item: section }) => (
@@ -186,103 +186,112 @@ export default function ChildStore() {
   );
 }
 
+const CARD_BASE = {
+  borderWidth: 2,
+  borderColor: Colors.kidBorder,
+  borderRadius: 0,
+  shadowColor: Colors.kidDark,
+  shadowOffset: { width: 4, height: 4 },
+  shadowOpacity: 1 as number,
+  shadowRadius: 0,
+  elevation: 4,
+} as const;
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.kidBg },
 
-  heroRow: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    gap: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 2, borderBottomColor: Colors.kidBorder,
+    backgroundColor: Colors.kidBg,
   },
-  heroIcon:  { marginBottom: 4 },
-  heroTitle: { fontFamily: Fonts.kidsDisplay, fontSize: 32, color: Colors.kidAccent },
+  headerEyebrow: { fontFamily: Fonts.bodyBold, fontSize: 9, color: Colors.kidMuted, letterSpacing: 2 },
+  headerTitle:   { fontFamily: Fonts.kidsDisplay, fontSize: 22, color: Colors.kidAccent, fontStyle: 'italic' },
+  balanceBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: Colors.kidCardHigh,
+    borderWidth: 2, borderColor: Colors.kidBorder,
+    paddingHorizontal: 12, paddingVertical: 8,
+  },
+  balanceText: { fontFamily: Fonts.kidsH1, fontSize: 20, color: Colors.kidGreen },
+  balanceGem:  { fontSize: 18 },
 
-  list: { padding: 20, paddingBottom: 40 },
+  list:         { padding: 16, paddingBottom: 40 },
   sectionLabel: {
-    fontFamily: Fonts.bodyBold,
-    fontSize: 11,
-    color: Colors.kidMuted,
-    letterSpacing: 1.5,
-    marginTop: 8,
-    marginBottom: 12,
+    fontFamily: Fonts.bodyBold, fontSize: 9,
+    color: Colors.kidMuted, letterSpacing: 2,
+    marginTop: 12, marginBottom: 10,
   },
 
-  rewardCard: {
+  card: {
+    ...CARD_BASE,
     backgroundColor: Colors.kidCard,
-    borderWidth: 1,
-    borderColor: Colors.kidCardBorder,
-    borderRadius: 40,
-    padding: 24,
-    marginBottom: 16,
-    alignItems: 'center',
-    position: 'relative',
-    shadowColor: 'rgba(0,0,0,0.5)',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.20,
-    shadowRadius: 16,
-    elevation: 3,
+    padding: 16, marginBottom: 12,
   },
-  rewardCardLocked: { opacity: 0.6 },
+  cardLocked: { opacity: 0.55 },
+
+  cardTop: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 12,
+  },
+  iconBox: {
+    width: 64, height: 64,
+    backgroundColor: Colors.kidBorder + '22',
+    borderWidth: 1, borderColor: Colors.kidBorder,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  iconBoxLocked: { borderColor: Colors.kidMuted, backgroundColor: 'rgba(255,255,255,0.04)' },
 
   costBadge: {
-    position: 'absolute',
-    top: 16, right: 16,
-    backgroundColor: Colors.tertiaryFixed,
-    borderRadius: 9999,
-    paddingHorizontal: 12, paddingVertical: 6,
+    backgroundColor: Colors.kidCardHigh,
+    borderWidth: 1, borderColor: Colors.kidAccent,
+    paddingHorizontal: 10, paddingVertical: 6,
   },
-  costText: { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.onTertiaryFixed },
+  costText: { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.kidAccent },
 
-  rewardIconCircle: {
-    width: 120, height: 120, borderRadius: 60,
-    backgroundColor: Colors.tertiaryFixed,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 16,
-  },
-  rewardIconCircleLocked: { backgroundColor: 'rgba(255,255,255,0.06)' },
-
-  rewardTitle: { fontFamily: Fonts.kidsH1, fontSize: 20, color: Colors.kidText, textAlign: 'center', marginBottom: 4 },
+  rewardTitle:       { fontFamily: Fonts.kidsH1, fontSize: 18, color: Colors.kidText, marginBottom: 4 },
   rewardTitleLocked: { color: Colors.kidMuted },
-  rewardType: { fontFamily: Fonts.body, fontSize: 13, color: Colors.kidMuted, marginBottom: 16 },
+  rewardType: {
+    fontFamily: Fonts.bodyBold, fontSize: 9,
+    color: Colors.kidMuted, letterSpacing: 1.5, marginBottom: 14,
+  },
 
   pendingChip: {
-    backgroundColor: Colors.warningContainer,
-    borderRadius: 9999,
-    paddingHorizontal: 16, paddingVertical: 8,
+    borderWidth: 2, borderColor: Colors.kidAccent,
+    paddingHorizontal: 12, paddingVertical: 10, alignItems: 'center',
   },
-  pendingChipText: { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.warning },
-  processingText:  { fontFamily: Fonts.body, fontSize: 13, color: Colors.kidMuted },
+  pendingChipText: { fontFamily: Fonts.bodyBold, fontSize: 11, color: Colors.kidAccent, letterSpacing: 1 },
+  processingText:  { fontFamily: Fonts.bodyBold, fontSize: 11, color: Colors.kidMuted, textAlign: 'center', letterSpacing: 1 },
 
-  confirmRow:  { flexDirection: 'row', gap: 8, width: '100%' },
+  confirmRow: { flexDirection: 'row', gap: 8 },
   confirmBtn: {
-    flex: 1, backgroundColor: Colors.radiantAmber,
-    borderRadius: 9999, paddingVertical: 12, alignItems: 'center',
+    flex: 1, backgroundColor: Colors.kidGreen,
+    borderBottomWidth: 3, borderBottomColor: '#000',
+    paddingVertical: 12, alignItems: 'center',
   },
-  confirmBtnText: { fontFamily: Fonts.bodyBold, fontSize: 14, color: Colors.onTertiaryFixed },
+  confirmBtnText: { fontFamily: Fonts.kidsH1, fontSize: 14, color: Colors.kidGreenText, fontStyle: 'italic' },
   cancelBtn: {
-    flex: 1, borderRadius: 9999, paddingVertical: 12, alignItems: 'center',
-    borderWidth: 1, borderColor: Colors.kidCardBorder,
+    flex: 1, borderWidth: 2, borderColor: Colors.kidBorder,
+    paddingVertical: 12, alignItems: 'center',
   },
-  cancelBtnText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.kidMuted },
+  cancelBtnText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.kidMuted },
 
   unlockBtn: {
-    width: '100%', backgroundColor: Colors.primary,
-    borderRadius: 9999, paddingVertical: 14, alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 0,
-    elevation: 4,
+    backgroundColor: Colors.kidGreen,
+    borderBottomWidth: 4, borderBottomColor: '#000',
+    paddingVertical: 14, alignItems: 'center',
   },
-  unlockBtnText: { fontFamily: Fonts.bodyBold, fontSize: 16, color: Colors.white },
+  unlockBtnText: { fontFamily: Fonts.kidsH1, fontSize: 15, color: Colors.kidGreenText, fontStyle: 'italic', letterSpacing: 1 },
 
   needMoreBtn: {
-    width: '100%', backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 9999, paddingVertical: 14, alignItems: 'center',
+    backgroundColor: Colors.kidCardHigh,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+    paddingVertical: 14, alignItems: 'center',
   },
-  needMoreText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.kidMuted },
+  needMoreText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.kidMuted, letterSpacing: 1 },
 
-  empty: { alignItems: 'center', paddingTop: 60 },
-  emptyTitle: { fontFamily: Fonts.kidsH1, fontSize: 18, color: Colors.kidText, marginBottom: 4 },
-  emptyMeta:  { fontFamily: Fonts.body,   fontSize: 14, color: Colors.kidMuted },
+  empty: { alignItems: 'center', paddingTop: 60, gap: 10 },
+  emptyTitle: { fontFamily: Fonts.kidsH1, fontSize: 16, color: Colors.kidText, letterSpacing: 1 },
+  emptyMeta:  { fontFamily: Fonts.body,   fontSize: 13, color: Colors.kidMuted },
 });

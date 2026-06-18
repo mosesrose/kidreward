@@ -36,7 +36,6 @@ export default function ChallengeDetail() {
     ]);
     setChallenge(ch);
     setCompletions(comps ?? []);
-    // Load family children for assignee display
     if (ch?.family_id) {
       const { data: members } = await supabase
         .from('family_members')
@@ -55,16 +54,12 @@ export default function ChallengeDetail() {
       .update({ status: 'approved', gems_awarded: gems, reviewed_at: new Date().toISOString() })
       .eq('id', completion.id);
     if (error) { Alert.alert('Error', error.message); return; }
-
     await supabase.rpc('award_gems', {
       p_child_id: completion.child_id,
       p_family_id: challenge?.family_id,
       p_gems: gems,
     });
-
     await supabase.rpc('update_streak', { p_child_id: completion.child_id });
-
-    // Send push notification to child
     const childPushToken = (completion as any).profiles?.push_token;
     if (childPushToken) {
       sendApprovalPush({
@@ -74,7 +69,6 @@ export default function ChallengeDetail() {
         gems,
       });
     }
-
     load();
   }
 
@@ -95,7 +89,7 @@ export default function ChallengeDetail() {
   }
 
   async function deleteChallenge() {
-    Alert.alert('Delete challenge?', 'This cannot be undone.', [
+    Alert.alert('Delete quest?', 'This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete', style: 'destructive',
@@ -115,60 +109,61 @@ export default function ChallengeDetail() {
     );
   }
 
-  const pending   = completions.filter(c => c.status === 'pending');
-  const past      = completions.filter(c => c.status !== 'pending');
+  const pending = completions.filter(c => c.status === 'pending');
+  const past    = completions.filter(c => c.status !== 'pending');
 
   return (
     <SafeAreaView style={styles.safe}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <MaterialIcons name="arrow-back" size={20} color={Colors.primary} />
-          <Text style={styles.backText}>Back</Text>
+          <MaterialIcons name="arrow-back" size={22} color={Colors.parentText} />
         </TouchableOpacity>
-        <TouchableOpacity testID="delete-challenge-btn" onPress={deleteChallenge}>
-          <Text style={styles.deleteText}>Delete</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>Quest Detail</Text>
+        <TouchableOpacity testID="delete-challenge-btn" onPress={deleteChallenge} style={styles.deleteBtn}>
+          <MaterialIcons name="delete-outline" size={20} color={Colors.error} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Hero */}
-        <View style={styles.heroCircle}>
-          <MaterialIcons
-            name={(challenge.emoji || FALLBACK_ICON) as any}
-            size={40}
-            color={Colors.primary}
-          />
-        </View>
-        <Text style={styles.title}>{challenge.title}</Text>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* Meta chips */}
-        <View style={styles.chipsRow}>
-          <View style={styles.chip}>
-            <Text style={styles.chipText}>
-              {challenge.repeat_type === 'daily' ? 'Daily' :
-               challenge.repeat_type === 'weekly' ? 'Weekly' : 'Once'}
-            </Text>
+        {/* Quest card */}
+        <View style={styles.questCard}>
+          <View style={styles.questIconRow}>
+            <View style={styles.questIconBox}>
+              <MaterialIcons name={(challenge.emoji || FALLBACK_ICON) as any} size={36} color={Colors.parentAccent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.questTitle}>{challenge.title}</Text>
+              <View style={styles.chipsRow}>
+                <View style={styles.chip}>
+                  <Text style={styles.chipText}>
+                    {challenge.repeat_type === 'daily' ? 'DAILY' :
+                     challenge.repeat_type === 'weekly' ? 'WEEKLY' : 'ONCE'}
+                  </Text>
+                </View>
+                <View style={styles.gemChip}>
+                  <Text style={styles.gemChipText}>💎 {challenge.gem_reward}</Text>
+                </View>
+              </View>
+            </View>
           </View>
-          <View style={styles.gemChip}>
-            <Text style={styles.gemChipText}>💎 {challenge.gem_reward}</Text>
-          </View>
+          {challenge.description ? (
+            <Text style={styles.desc}>{challenge.description}</Text>
+          ) : null}
         </View>
-
-        {challenge.description ? (
-          <Text style={styles.desc}>{challenge.description}</Text>
-        ) : null}
 
         {/* Assigned to */}
-        <View style={styles.assignSection}>
-          <View style={styles.assignHeader}>
-            <Text style={styles.sectionTitle}>ASSIGNED TO</Text>
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            <Text style={styles.cardLabel}>ASSIGNED TO</Text>
             <TouchableOpacity onPress={() => setEditingAssignee(v => !v)}>
               <Text style={styles.editLink}>{editingAssignee ? 'Done' : 'Change'}</Text>
             </TouchableOpacity>
           </View>
           {!editingAssignee ? (
-            <View style={styles.assignChipSingle}>
-              <Text style={styles.assignChipText}>
+            <View style={styles.assignPill}>
+              <Text style={styles.assignPillText}>
                 {(challenge as any).child_id
                   ? (familyChildren.find(m => m.child_id === (challenge as any).child_id) as any)?.profiles?.name ?? 'Specific child'
                   : '👨‍👩‍👧 All Kids'}
@@ -216,63 +211,63 @@ export default function ChallengeDetail() {
           });
           const entries = Object.values(byChild);
           return (
-            <>
-              <Text style={styles.sectionTitle}>ENGAGEMENT</Text>
-              <View style={styles.engagementCard}>
-                <View style={styles.engagementRow}>
-                  <Text style={styles.engagementBig}>{approved.length}</Text>
-                  <Text style={styles.engagementLabel}>times completed</Text>
-                  <Text style={styles.engagementBig} />
-                  <Text style={styles.engagementBig}>
+            <View style={styles.card}>
+              <Text style={styles.cardLabel}>ENGAGEMENT</Text>
+              <View style={styles.engRow}>
+                <View style={styles.engStat}>
+                  <Text style={styles.engNum}>{approved.length}</Text>
+                  <Text style={styles.engMeta}>completions</Text>
+                </View>
+                <View style={styles.engDivider} />
+                <View style={styles.engStat}>
+                  <Text style={[styles.engNum, { color: Colors.parentAccent }]}>
                     {approved.reduce((s, c) => s + (c.gems_awarded ?? 0), 0)}💎
                   </Text>
-                  <Text style={styles.engagementLabel}>gems awarded</Text>
+                  <Text style={styles.engMeta}>gems awarded</Text>
                 </View>
-                {entries.map((e) => (
-                  <View key={e.name} style={styles.engagementChild}>
-                    <Text style={styles.engagementAvatar}>{e.avatar}</Text>
-                    <Text style={styles.engagementName}>{e.name}</Text>
-                    <Text style={styles.engagementCount}>{e.count}×</Text>
-                    <Text style={styles.engagementGems}>+{e.gems}💎</Text>
-                  </View>
-                ))}
               </View>
-            </>
+              {entries.map((e) => (
+                <View key={e.name} style={styles.engChild}>
+                  <Text style={styles.engAvatar}>{e.avatar}</Text>
+                  <Text style={styles.engName}>{e.name}</Text>
+                  <Text style={styles.engCount}>{e.count}×</Text>
+                  <Text style={styles.engGems}>+{e.gems}💎</Text>
+                </View>
+              ))}
+            </View>
           );
         })()}
 
         {/* Pending submissions */}
         {pending.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Pending ({pending.length})</Text>
+            <Text style={styles.sectionLabel}>PENDING REVIEW ({pending.length})</Text>
             {pending.map((c) => (
-              <View key={c.id} style={styles.submissionCard}>
-                <View style={styles.submissionTop}>
-                  <Text style={styles.submissionAvatar}>
-                    {(c as any).profiles?.avatar_emoji ?? '🧒'}
-                  </Text>
-                  <View style={styles.submissionInfo}>
-                    <Text style={styles.submissionName}>{(c as any).profiles?.name}</Text>
-                    <Text style={styles.submissionDate}>
-                      {new Date(c.submitted_at).toLocaleDateString()}
-                    </Text>
-                    {c.note && <Text style={styles.submissionNote}>"{c.note}"</Text>}
+              <View key={c.id} style={[styles.card, styles.pendingCard]}>
+                <View style={styles.subTop}>
+                  <Text style={styles.subAvatar}>{(c as any).profiles?.avatar_emoji ?? '🧒'}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.subName}>{(c as any).profiles?.name}</Text>
+                    <Text style={styles.subDate}>{new Date(c.submitted_at).toLocaleDateString()}</Text>
+                    {c.note ? <Text style={styles.subNote}>"{c.note}"</Text> : null}
                   </View>
                 </View>
-                <View style={styles.submissionBtns}>
+                <View style={styles.subBtns}>
                   <TouchableOpacity
                     testID={`reject-btn-${c.id}`}
                     style={styles.rejectBtn}
                     onPress={() => reject(c)}
                   >
-                    <Text style={styles.rejectBtnText}>✗ Reject</Text>
+                    <MaterialIcons name="cancel" size={16} color={Colors.error} />
+                    <Text style={styles.rejectBtnText}>Reject</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     testID={`approve-btn-${c.id}`}
                     style={styles.approveBtn}
                     onPress={() => approve(c)}
                   >
-                    <Text style={styles.approveBtnText}>✓ Approve +{challenge.gem_reward}💎</Text>
+                    <MaterialIcons name="check-circle" size={16} color={Colors.white} />
+                    <Text style={styles.approveBtnText}>Approve +{challenge.gem_reward}💎</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -283,21 +278,17 @@ export default function ChallengeDetail() {
         {/* Past submissions */}
         {past.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Past ({past.length})</Text>
+            <Text style={[styles.sectionLabel, { marginTop: 8 }]}>HISTORY ({past.length})</Text>
             {past.map((c) => (
               <View key={c.id} style={styles.pastCard}>
-                <Text style={styles.pastAvatar}>
-                  {(c as any).profiles?.avatar_emoji ?? '🧒'}
-                </Text>
+                <Text style={styles.pastAvatar}>{(c as any).profiles?.avatar_emoji ?? '🧒'}</Text>
                 <Text style={styles.pastName}>{(c as any).profiles?.name}</Text>
+                <Text style={styles.pastDate}>{new Date(c.submitted_at).toLocaleDateString()}</Text>
                 <View style={[
                   styles.statusPill,
                   c.status === 'approved' ? styles.pillGreen : styles.pillRed,
                 ]}>
-                  <Text style={[
-                    styles.statusText,
-                    c.status === 'approved' ? styles.statusGreen : styles.statusRed,
-                  ]}>
+                  <Text style={[styles.statusText, c.status === 'approved' ? styles.statusGreen : styles.statusRed]}>
                     {c.status}
                   </Text>
                 </View>
@@ -308,128 +299,134 @@ export default function ChallengeDetail() {
             ))}
           </>
         )}
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe:    { flex: 1, backgroundColor: Colors.surface },
-  loading: { padding: 40, textAlign: 'center', color: Colors.onSurfaceVariant },
+  safe:    { flex: 1, backgroundColor: Colors.parentBg },
+  loading: { padding: 40, textAlign: 'center', color: Colors.parentMuted },
+
   header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingTop: 16, paddingHorizontal: 20, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: Colors.parentBorder,
+    backgroundColor: Colors.parentCard,
   },
-  backBtn:    { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  backText:   { fontFamily: Fonts.bodyBold, fontSize: 15, color: Colors.primary },
-  deleteText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.error },
-  scroll:     { padding: 20, paddingBottom: 40 },
+  backBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { flex: 1, fontFamily: Fonts.parentH1, fontSize: 18, color: Colors.parentText, textAlign: 'center' },
+  deleteBtn:   { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
 
-  heroCircle: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: Colors.primaryFixed,
+  scroll: { padding: 16, gap: 12 },
+
+  questCard: {
+    backgroundColor: Colors.parentCard, borderRadius: 16, padding: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
+  },
+  questIconRow: { flexDirection: 'row', gap: 14, marginBottom: 10 },
+  questIconBox: {
+    width: 64, height: 64, borderRadius: 16,
+    backgroundColor: Colors.parentSecondary,
     alignItems: 'center', justifyContent: 'center',
-    alignSelf: 'center', marginBottom: 16,
   },
-  title: {
-    fontFamily: Fonts.parentH1, fontSize: 24,
-    color: Colors.onSurface, textAlign: 'center', marginBottom: 12,
-  },
-  chipsRow: { flexDirection: 'row', gap: 8, justifyContent: 'center', marginBottom: 16 },
+  questTitle: { fontFamily: Fonts.parentH1, fontSize: 20, color: Colors.parentText, marginBottom: 8 },
+  chipsRow:   { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   chip: {
-    backgroundColor: Colors.primaryFixed, borderRadius: 8,
-    paddingHorizontal: 12, paddingVertical: 6,
+    backgroundColor: Colors.parentSurface, borderRadius: 9999,
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderWidth: 1, borderColor: Colors.parentBorder,
   },
-  chipText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.primary },
+  chipText: { fontFamily: Fonts.bodyBold, fontSize: 10, color: Colors.parentMuted, letterSpacing: 1 },
   gemChip: {
-    backgroundColor: Colors.tertiaryFixed, borderRadius: 8,
-    paddingHorizontal: 12, paddingVertical: 6,
+    backgroundColor: Colors.parentSecondary, borderRadius: 9999,
+    paddingHorizontal: 10, paddingVertical: 5,
   },
-  gemChipText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.onTertiaryFixed },
-  desc: {
-    fontFamily: Fonts.body, fontSize: 14,
-    color: Colors.onSurfaceVariant, textAlign: 'center',
-    lineHeight: 20, marginBottom: 20,
+  gemChipText: { fontFamily: Fonts.bodyBold, fontSize: 10, color: Colors.parentSecText },
+  desc: { fontFamily: Fonts.body, fontSize: 14, color: Colors.parentMuted, lineHeight: 20, marginTop: 4 },
+
+  card: {
+    backgroundColor: Colors.parentCard, borderRadius: 16, padding: 16,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
+  },
+  pendingCard: { borderLeftWidth: 3, borderLeftColor: Colors.parentAccent },
+
+  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  cardLabel: { fontFamily: Fonts.bodyBold, fontSize: 10, color: Colors.parentMuted, letterSpacing: 1.5 },
+  editLink:  { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.parentAccent },
+
+  assignPill: {
+    alignSelf: 'flex-start', backgroundColor: Colors.parentSecondary,
+    borderRadius: 9999, paddingHorizontal: 14, paddingVertical: 8,
+  },
+  assignPillText: { fontFamily: Fonts.bodySemiBold, fontSize: 13, color: Colors.parentSecText },
+  assignRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  assignChip: {
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 9999,
+    borderWidth: 1.5, borderColor: Colors.parentBorder,
+    backgroundColor: Colors.parentSurface,
+  },
+  assignChipActive:     { backgroundColor: Colors.parentAccent, borderColor: Colors.parentAccent },
+  assignChipText:       { fontFamily: Fonts.bodySemiBold, fontSize: 13, color: Colors.parentMuted },
+  assignChipTextActive: { color: Colors.white },
+
+  engRow:     { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  engStat:    { flex: 1, alignItems: 'center' },
+  engNum:     { fontFamily: Fonts.parentH1, fontSize: 26, color: Colors.parentText },
+  engMeta:    { fontFamily: Fonts.body, fontSize: 11, color: Colors.parentMuted, marginTop: 2 },
+  engDivider: { width: 1, backgroundColor: Colors.parentBorder },
+  engChild: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingTop: 10, borderTopWidth: 1, borderTopColor: Colors.parentBorder,
+  },
+  engAvatar: { fontSize: 20 },
+  engName:   { flex: 1, fontFamily: Fonts.body, fontSize: 13, color: Colors.parentText },
+  engCount:  { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.parentText },
+  engGems:   { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.parentAccent },
+
+  sectionLabel: {
+    fontFamily: Fonts.bodyBold, fontSize: 10,
+    color: Colors.parentMuted, letterSpacing: 1.5,
   },
 
-  sectionTitle: {
-    fontFamily: Fonts.bodyBold, fontSize: 11,
-    color: Colors.onSurfaceVariant, letterSpacing: 1.5,
-    marginBottom: 10, marginTop: 8,
-  },
+  subTop:    { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  subAvatar: { fontSize: 28 },
+  subName:   { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.parentText },
+  subDate:   { fontFamily: Fonts.body, fontSize: 11, color: Colors.parentMuted, marginTop: 2 },
+  subNote:   { fontFamily: Fonts.body, fontSize: 12, color: Colors.parentText, fontStyle: 'italic', marginTop: 4 },
+  subBtns:   { flexDirection: 'row', gap: 8 },
 
-  submissionCard: {
-    backgroundColor: Colors.white, borderRadius: 12,
-    padding: 16, marginBottom: 10,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
-  },
-  submissionTop:    { flexDirection: 'row', gap: 12, marginBottom: 12 },
-  submissionAvatar: { fontSize: 28 },
-  submissionInfo:   { flex: 1 },
-  submissionName:   { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.onSurface },
-  submissionDate:   { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2 },
-  submissionNote:   { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurface, fontStyle: 'italic', marginTop: 4 },
-  submissionBtns: { flexDirection: 'row', gap: 8 },
   rejectBtn: {
-    flex: 1, paddingVertical: 10, borderRadius: 9999,
-    borderWidth: 1, borderColor: Colors.error, alignItems: 'center',
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 10, borderRadius: 9999,
+    borderWidth: 1.5, borderColor: Colors.error,
   },
   rejectBtnText: { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.error },
   approveBtn: {
-    flex: 2, paddingVertical: 10, borderRadius: 9999,
-    backgroundColor: Colors.success, alignItems: 'center',
+    flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 10, borderRadius: 9999,
+    backgroundColor: Colors.parentAccent,
   },
   approveBtnText: { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.white },
 
   pastCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: Colors.white, borderRadius: 10,
-    padding: 12, marginBottom: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: Colors.parentCard, borderRadius: 12,
+    borderWidth: 1, borderColor: Colors.parentBorder,
+    padding: 12,
   },
-  pastAvatar:  { fontSize: 22 },
-  pastName:    { flex: 1, fontFamily: Fonts.body, fontSize: 13, color: Colors.onSurface },
-  statusPill:  { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  pillGreen:   { backgroundColor: Colors.successContainer },
-  pillRed:     { backgroundColor: Colors.errorContainer },
-  statusText:  { fontFamily: Fonts.bodyBold, fontSize: 11, textTransform: 'capitalize' },
+  pastAvatar: { fontSize: 20 },
+  pastName:   { flex: 1, fontFamily: Fonts.body, fontSize: 13, color: Colors.parentText },
+  pastDate:   { fontFamily: Fonts.body, fontSize: 11, color: Colors.parentMuted },
+  statusPill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 9999 },
+  pillGreen:  { backgroundColor: '#d4f7e1' },
+  pillRed:    { backgroundColor: '#ffdad6' },
+  statusText: { fontFamily: Fonts.bodyBold, fontSize: 10, textTransform: 'capitalize' },
   statusGreen: { color: Colors.success },
   statusRed:   { color: Colors.error },
-  awarded:     { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.success },
-
-  assignSection: { marginBottom: 16 },
-  assignHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  editLink: { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.primary },
-  assignChipSingle: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.primaryFixed, borderRadius: 9999,
-    paddingHorizontal: 14, paddingVertical: 8,
-  },
-  assignRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  assignChip: {
-    paddingHorizontal: 14, paddingVertical: 9,
-    borderRadius: 9999, borderWidth: 1.5, borderColor: Colors.outlineVariant,
-    backgroundColor: Colors.white,
-  },
-  assignChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  assignChipText: { fontFamily: Fonts.bodySemiBold, fontSize: 13, color: Colors.onSurfaceVariant },
-  assignChipTextActive: { color: Colors.white },
-
-  engagementCard: {
-    backgroundColor: Colors.white, borderRadius: 12, padding: 16, marginBottom: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
-  },
-  engagementRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginBottom: 12 },
-  engagementBig: { fontFamily: Fonts.parentH1, fontSize: 22, color: Colors.primary },
-  engagementLabel: { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurfaceVariant, marginRight: 8 },
-  engagementChild: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingTop: 10, borderTopWidth: 1, borderTopColor: Colors.outlineVariant,
-  },
-  engagementAvatar: { fontSize: 20 },
-  engagementName:   { flex: 1, fontFamily: Fonts.body, fontSize: 13, color: Colors.onSurface },
-  engagementCount:  { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.onSurface },
-  engagementGems:   { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.primary },
+  awarded:     { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.parentAccent },
 });

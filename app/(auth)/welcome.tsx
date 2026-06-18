@@ -1,125 +1,158 @@
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
 
-const { width } = Dimensions.get('window');
-
 export default function Welcome() {
   return (
-    <LinearGradient
-      colors={['#FF8A5B', '#FF6B5C', '#7A3CE1']}
-      style={styles.container}
-      start={{ x: 0.2, y: 0 }}
-      end={{ x: 0.8, y: 1 }}
-    >
-      {/* Stars decoration */}
-      <Text style={styles.star1}>⭐</Text>
-      <Text style={styles.star2}>💎</Text>
-      <Text style={styles.star3}>🌟</Text>
+    <SafeAreaView style={styles.safe}>
+      {/* Top hero: dark gaming */}
+      <View style={styles.heroSection}>
+        <View style={styles.heroBadge}>
+          <Text style={styles.heroBadgeText}>APYX LEGEND</Text>
+        </View>
+        <Text style={styles.heroTagline}>TURN GOOD HABITS INTO</Text>
+        <Text style={styles.heroHighlight}>LEGENDARY REWARDS</Text>
 
-      <View style={styles.hero}>
-        <Text style={styles.appIcon}>🏆</Text>
-        <Text style={styles.title}>KidReward</Text>
-        <Text style={styles.tagline}>
-          Turn good habits into{'\n'}
-          <Text style={styles.taglineHighlight}>amazing rewards! 💎</Text>
-        </Text>
+        <View style={styles.featuresBlock}>
+          {[
+            { icon: 'extension',        label: 'COMPLETE QUESTS' },
+            { icon: 'account-balance-wallet', label: 'EARN GEMS 💎' },
+            { icon: 'card-giftcard',    label: 'UNLOCK REAL REWARDS' },
+          ].map(({ icon, label }) => (
+            <View key={label} style={styles.featureRow}>
+              <MaterialIcons name={icon as any} size={18} color={Colors.kidGreen} />
+              <Text style={styles.featureText}>{label}</Text>
+            </View>
+          ))}
+        </View>
       </View>
 
-      <View style={styles.features}>
-        {[
-          { emoji: '📋', text: 'Complete challenges set by your parents' },
-          { emoji: '💎', text: 'Earn Gems for every task you finish' },
-          { emoji: '🎁', text: 'Redeem Gems for gifts, money & more' },
-        ].map((item, i) => (
-          <View key={i} style={styles.featureRow}>
-            <Text style={styles.featureEmoji}>{item.emoji}</Text>
-            <Text style={styles.featureText}>{item.text}</Text>
-          </View>
-        ))}
-      </View>
+      {/* Bottom: parent portal */}
+      <View style={styles.portalSection}>
+        <Text style={styles.portalLabel}>CHOOSE YOUR MODE</Text>
 
-      <View style={styles.buttons}>
         <TouchableOpacity
-          style={styles.primaryBtn}
+          style={styles.parentBtn}
           onPress={() => router.push('/(auth)/signup')}
+          activeOpacity={0.8}
         >
-          <LinearGradient
-            colors={[Colors.primary, Colors.primaryContainer]}
-            style={styles.primaryBtnGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-          >
-            <Text style={styles.primaryBtnText}>I'm a Parent 👨‍👩‍👧</Text>
-          </LinearGradient>
+          <MaterialCommunityIcons name="shield-account" size={22} color={Colors.parentAccent} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.parentBtnTitle}>I'M A PARENT</Text>
+            <Text style={styles.parentBtnSub}>Create & manage your family</Text>
+          </View>
+          <MaterialIcons name="arrow-forward" size={18} color={Colors.parentAccent} />
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.inviteBtn}
+          style={styles.childBtn}
           onPress={() => router.push('/(auth)/signup-child' as any)}
+          activeOpacity={0.8}
         >
-          <LinearGradient
-            colors={['#FFB84D', '#FF8A5B']}
-            style={styles.primaryBtnGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-          >
-            <Text style={styles.inviteBtnText}>Join with invite code 🎉</Text>
-          </LinearGradient>
+          <MaterialIcons name="sports-esports" size={22} color={Colors.kidGreen} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.childBtnTitle}>I'M A KID</Text>
+            <Text style={styles.childBtnSub}>Join with an invite code</Text>
+          </View>
+          <MaterialIcons name="arrow-forward" size={18} color={Colors.kidGreen} />
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.secondaryBtn}
+          style={styles.loginLink}
           onPress={() => router.push('/(auth)/login')}
         >
-          <Text style={styles.secondaryBtnText}>I already have an account</Text>
+          <Text style={styles.loginLinkText}>Already have an account? SIGN IN →</Text>
         </TouchableOpacity>
       </View>
-    </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 24, paddingTop: 60 },
-  star1: { position: 'absolute', top: 80, right: 30, fontSize: 32, opacity: 0.5 },
-  star2: { position: 'absolute', top: 140, left: 20, fontSize: 24, opacity: 0.4 },
-  star3: { position: 'absolute', top: 200, right: 60, fontSize: 20, opacity: 0.3 },
-  hero: { alignItems: 'center', marginTop: 40, marginBottom: 40 },
-  appIcon: { fontSize: 72 },
-  title: {
-    fontSize: 42,
-    fontFamily: Fonts.parentH1,
-    color: Colors.white,
-    marginTop: 8,
-    letterSpacing: -1,
+  safe: { flex: 1, backgroundColor: Colors.kidBg },
+
+  heroSection: {
+    flex: 1,
+    paddingHorizontal: 24, paddingTop: 40, paddingBottom: 32,
+    borderBottomWidth: 2, borderBottomColor: Colors.kidBorder,
+    justifyContent: 'center',
   },
-  tagline: {
-    fontSize: 18,
-    fontFamily: Fonts.body,
-    color: 'rgba(255,255,255,0.8)',
-    textAlign: 'center',
-    marginTop: 12,
-    lineHeight: 26,
+  heroBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.kidBorder + '33',
+    borderWidth: 2, borderColor: Colors.kidBorder,
+    paddingHorizontal: 12, paddingVertical: 6,
+    marginBottom: 20,
   },
-  taglineHighlight: { color: Colors.primary, fontFamily: Fonts.bodyBold },
-  features: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 20,
-    padding: 20,
-    gap: 16,
-    marginBottom: 40,
+  heroBadgeText: {
+    fontFamily: Fonts.bodyBold, fontSize: 10,
+    color: Colors.kidAccent, letterSpacing: 3,
   },
+  heroTagline: {
+    fontFamily: Fonts.bodyBold, fontSize: 13,
+    color: Colors.kidMuted, letterSpacing: 2, marginBottom: 6,
+  },
+  heroHighlight: {
+    fontFamily: Fonts.kidsDisplay,
+    fontSize: 38, color: Colors.kidText,
+    fontStyle: 'italic', lineHeight: 44, marginBottom: 28,
+  },
+
+  featuresBlock: { gap: 12 },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  featureEmoji: { fontSize: 24 },
-  featureText: { color: 'rgba(255,255,255,0.9)', fontSize: 15, fontFamily: Fonts.body, flex: 1 },
-  buttons: { gap: 12 },
-  primaryBtn: { borderRadius: 9999, overflow: 'hidden' },
-  inviteBtn: { borderRadius: 9999, overflow: 'hidden' },
-  primaryBtnGradient: { paddingVertical: 18, alignItems: 'center' },
-  primaryBtnText: { color: Colors.white, fontSize: 18, fontFamily: Fonts.bodyBold },
-  inviteBtnText: { color: Colors.onSurface, fontSize: 18, fontFamily: Fonts.bodyBold },
-  secondaryBtn: { paddingVertical: 16, alignItems: 'center' },
-  secondaryBtnText: { color: 'rgba(255,255,255,0.7)', fontSize: 16, fontFamily: Fonts.body },
+  featureText: {
+    fontFamily: Fonts.bodyBold, fontSize: 12,
+    color: Colors.kidText, letterSpacing: 1.5,
+  },
+
+  portalSection: {
+    backgroundColor: Colors.parentBg,
+    paddingHorizontal: 24, paddingVertical: 28,
+    gap: 12,
+  },
+  portalLabel: {
+    fontFamily: Fonts.bodyBold, fontSize: 9,
+    color: Colors.parentMuted, letterSpacing: 2, marginBottom: 4,
+  },
+
+  parentBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: Colors.parentCard,
+    borderWidth: 1, borderColor: Colors.parentAccent + '66',
+    borderRadius: 0,
+    paddingHorizontal: 16, paddingVertical: 18,
+    shadowColor: Colors.parentAccent,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08, shadowRadius: 8, elevation: 2,
+  },
+  parentBtnTitle: {
+    fontFamily: Fonts.bodyBold, fontSize: 13,
+    color: Colors.parentText, letterSpacing: 1.5,
+  },
+  parentBtnSub: { fontFamily: Fonts.body, fontSize: 12, color: Colors.parentMuted, marginTop: 2 },
+
+  childBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: Colors.kidCard,
+    borderWidth: 2, borderColor: Colors.kidGreen,
+    borderRadius: 0,
+    paddingHorizontal: 16, paddingVertical: 18,
+    shadowColor: Colors.kidDark,
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1, shadowRadius: 0, elevation: 4,
+  },
+  childBtnTitle: {
+    fontFamily: Fonts.kidsH1, fontSize: 15,
+    color: Colors.kidGreen, letterSpacing: 1,
+  },
+  childBtnSub: { fontFamily: Fonts.body, fontSize: 12, color: Colors.kidMuted, marginTop: 2 },
+
+  loginLink: { alignItems: 'center', paddingVertical: 8, marginTop: 4 },
+  loginLinkText: {
+    fontFamily: Fonts.bodyBold, fontSize: 11,
+    color: Colors.parentMuted, letterSpacing: 1,
+  },
 });

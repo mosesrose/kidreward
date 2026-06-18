@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator,
+  KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator, SafeAreaView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,9 +29,6 @@ export default function SignupChild() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Invite emails deep-link here with ?code=XXXXXX — auto-validate so the
-  // recipient lands straight on account creation without typing anything.
-  // Manual entry (the 'code' step) is only shown as a fallback.
   useEffect(() => {
     const incoming = typeof params.code === 'string' ? params.code.trim().toUpperCase() : '';
     if (incoming.length === 6) {
@@ -62,7 +59,6 @@ export default function SignupChild() {
     setValidating(false);
     if (error || !invite) {
       if (codeOverride) {
-        // Came from a deep link — fall back to manual entry instead of an alert.
         setLinkError("That invite link didn't work — it may be expired. Enter your code below.");
         setStep('code');
       } else {
@@ -74,7 +70,7 @@ export default function SignupChild() {
     setFamilyId(invite.family_id);
     const emailFromInvite: string | null = (invite as any).email ?? null;
     setInviteEmail(emailFromInvite);
-    if (emailFromInvite) setEmail(emailFromInvite); // sync so handleSignup sends correct email
+    if (emailFromInvite) setEmail(emailFromInvite);
     const fn = (invite as any).families?.name ?? 'your family';
     setFamilyName(fn);
     setLinkError('');
@@ -91,10 +87,7 @@ export default function SignupChild() {
       return;
     }
     if (inviteEmail && email.trim().toLowerCase() !== inviteEmail) {
-      Alert.alert(
-        'Wrong email',
-        `This invite was sent to ${inviteEmail}. Please use that email address to sign up.`
-      );
+      Alert.alert('Wrong email', `This invite was sent to ${inviteEmail}. Please use that email address to sign up.`);
       return;
     }
     setLoading(true);
@@ -133,110 +126,116 @@ export default function SignupChild() {
       .update({ used_by: data.user.id, used_at: new Date().toISOString() })
       .eq('id', inviteId);
 
-    // Refresh auth context so family_members row is visible before navigating
     await refreshFamily();
     setLoading(false);
     router.replace('/(child)/home');
   }
 
   return (
-    <LinearGradient colors={['#FF8A5B', '#FF6B5C', '#7A3CE1']} style={styles.bg}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+
           {step !== 'verifying' && (
-            <TouchableOpacity style={styles.back} onPress={() => step === 'details' ? setStep('code') : router.back()}>
-              <Text style={styles.backText}>← Back</Text>
+            <TouchableOpacity
+              style={styles.backBtn}
+              onPress={() => step === 'details' ? setStep('code') : router.back()}
+            >
+              <MaterialIcons name="arrow-back" size={22} color={Colors.kidText} />
             </TouchableOpacity>
           )}
 
-          {step === 'verifying' ? (
+          {/* --- VERIFYING --- */}
+          {step === 'verifying' && (
             <View style={styles.verifyingBox} testID="verifying-invite">
-              <Text style={styles.emoji}>🔎</Text>
-              <Text style={styles.title}>Verifying your invite…</Text>
-              <ActivityIndicator color={Colors.primary} size="large" style={{ marginTop: 16 }} />
+              <Text style={styles.verifyingEmoji}>🔎</Text>
+              <Text style={styles.verifyingTitle}>VERIFYING INVITE…</Text>
+              <ActivityIndicator color={Colors.kidGreen} size="large" style={{ marginTop: 20 }} />
             </View>
-          ) : step === 'code' ? (
+          )}
+
+          {/* --- CODE ENTRY --- */}
+          {step === 'code' && (
             <>
-              <Text style={styles.emoji}>🎉</Text>
-              <Text style={styles.title}>Enter invite code</Text>
-              <Text style={styles.subtitle}>
-                Ask your parent for their 6-character invite code
-              </Text>
+              <View style={styles.stepHeader}>
+                <Text style={styles.stepEyebrow}>STEP 1 OF 2</Text>
+                <Text style={styles.stepTitle}>ENTER YOUR CODE</Text>
+                <Text style={styles.stepSub}>Ask your parent for the 6-character invite code</Text>
+              </View>
 
               {linkError ? (
-                <Text style={styles.linkError} testID="link-error-text">{linkError}</Text>
+                <View style={styles.errorBox}>
+                  <MaterialIcons name="error-outline" size={16} color="#ff6b6b" />
+                  <Text style={styles.errorText} testID="link-error-text">{linkError}</Text>
+                </View>
               ) : null}
 
-              <View style={styles.codeContainer}>
+              <View style={styles.codeCard}>
                 <TextInput
                   style={styles.codeInput}
                   value={code}
-                  onChangeText={(t) => setCode(t.toUpperCase())}
+                  onChangeText={t => setCode(t.toUpperCase())}
                   placeholder="ABC123"
-                  placeholderTextColor="rgba(255,255,255,0.3)"
+                  placeholderTextColor={Colors.kidMuted}
                   maxLength={6}
                   autoCapitalize="characters"
                   autoCorrect={false}
                   textAlign="center"
                   testID="invite-code-input"
                 />
+                <Text style={styles.codeHint}>{code.length}/6</Text>
               </View>
-              <Text style={styles.hint}>{code.length}/6 characters</Text>
 
-              <TouchableOpacity
-                style={[styles.submitBtn, (validating || code.length < 6) && styles.disabled]}
-                onPress={() => validateCode()}
-                disabled={validating || code.length < 6}
-                testID="validate-code-btn"
-              >
-                <LinearGradient
-                  colors={[Colors.primary, Colors.primaryContainer]}
-                  style={styles.submitGradient}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                >
-                  <Text style={styles.submitTextDark}>
-                    {validating ? 'Checking…' : 'Next →'}
-                  </Text>
-                </LinearGradient>
-              </TouchableOpacity>
-
-              <View style={styles.steps}>
+              <View style={styles.stepsCard}>
                 {[
-                  '🤔 Ask your parent for the invite code',
-                  '✏️ Type the 6-letter code above',
-                  '🎉 Create your account and start earning gems!',
+                  '💬  Ask your parent for the invite code',
+                  '✏️  Type the 6-letter code above',
+                  '🏆  Create your account and start earning gems!',
                 ].map((s, i) => (
                   <Text key={i} style={styles.step}>{s}</Text>
                 ))}
               </View>
-            </>
-          ) : (
-            <>
-              <Text style={styles.emoji}>🏆</Text>
-              <Text style={styles.title}>Join {familyName}!</Text>
-              <Text style={styles.subtitle}>Create your account to start earning gems</Text>
 
-              <View style={styles.form}>
+              <TouchableOpacity
+                style={[styles.primaryBtn, (validating || code.length < 6) && styles.btnDisabled]}
+                onPress={() => validateCode()}
+                disabled={validating || code.length < 6}
+                testID="validate-code-btn"
+              >
+                <Text style={styles.primaryBtnText}>
+                  {validating ? 'CHECKING…' : 'NEXT →'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {/* --- DETAILS --- */}
+          {step === 'details' && (
+            <>
+              <View style={styles.stepHeader}>
+                <Text style={styles.stepEyebrow}>STEP 2 OF 2</Text>
+                <Text style={styles.stepTitle}>JOIN {familyName.toUpperCase()}!</Text>
+                <Text style={styles.stepSub}>Create your account to start earning gems</Text>
+              </View>
+
+              <View style={styles.formCard}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Your name</Text>
+                  <Text style={styles.label}>YOUR NAME</Text>
                   <TextInput
                     style={styles.input}
                     placeholder="e.g. Alex"
-                    placeholderTextColor={Colors.onSurfaceVariant}
+                    placeholderTextColor={Colors.kidMuted}
                     value={name}
                     onChangeText={setName}
                     autoCapitalize="words"
                   />
                 </View>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Email</Text>
+                  <Text style={styles.label}>EMAIL</Text>
                   <TextInput
-                    style={[styles.input, inviteEmail ? styles.inputLocked : null]}
+                    style={[styles.input, inviteEmail && styles.inputLocked]}
                     placeholder="you@example.com"
-                    placeholderTextColor={Colors.onSurfaceVariant}
+                    placeholderTextColor={Colors.kidMuted}
                     value={inviteEmail ?? email}
                     onChangeText={inviteEmail ? undefined : setEmail}
                     editable={!inviteEmail}
@@ -248,93 +247,127 @@ export default function SignupChild() {
                   ) : null}
                 </View>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Password</Text>
+                  <Text style={styles.label}>PASSWORD</Text>
                   <TextInput
                     style={styles.input}
                     placeholder="Min 6 characters"
-                    placeholderTextColor={Colors.onSurfaceVariant}
+                    placeholderTextColor={Colors.kidMuted}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
                   />
                 </View>
-
-                <TouchableOpacity
-                  style={[styles.submitBtn, loading && styles.disabled]}
-                  onPress={handleSignup}
-                  disabled={loading}
-                  testID="create-child-account-btn"
-                >
-                  <LinearGradient
-                    colors={[Colors.primary, Colors.primaryContainer]}
-                    style={styles.submitGradient}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                  >
-                    <Text style={styles.submitTextDark}>
-                      {loading ? 'Creating account…' : 'Create Account 🚀'}
-                    </Text>
-                  </LinearGradient>
-                </TouchableOpacity>
               </View>
+
+              <TouchableOpacity
+                style={[styles.primaryBtn, loading && styles.btnDisabled]}
+                onPress={handleSignup}
+                disabled={loading}
+                testID="create-child-account-btn"
+              >
+                <Text style={styles.primaryBtnText}>
+                  {loading ? 'CREATING ACCOUNT…' : 'ENTER THE ARENA →'}
+                </Text>
+              </TouchableOpacity>
             </>
           )}
 
-          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-            <Text style={styles.switchText}>
-              Already have an account?{' '}
-              <Text style={styles.switchLink}>Sign in</Text>
-            </Text>
+          <TouchableOpacity style={styles.loginLink} onPress={() => router.push('/(auth)/login')}>
+            <Text style={styles.loginLinkText}>Already have an account? SIGN IN →</Text>
           </TouchableOpacity>
+
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </SafeAreaView>
   );
 }
 
+const CARD_BASE = {
+  borderWidth: 2,
+  borderColor: Colors.kidBorder,
+  borderRadius: 0,
+  shadowColor: Colors.kidDark,
+  shadowOffset: { width: 4, height: 4 },
+  shadowOpacity: 1 as number,
+  shadowRadius: 0,
+  elevation: 4,
+} as const;
+
 const styles = StyleSheet.create({
-  bg: { flex: 1 },
-  container: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40, alignItems: 'center' },
-  back: { alignSelf: 'flex-start', marginBottom: 24 },
-  backText: { color: 'rgba(255,255,255,0.6)', fontSize: 16, fontFamily: Fonts.body },
-  emoji: { fontSize: 64, marginBottom: 12 },
-  title: { fontSize: 30, fontFamily: Fonts.parentH1, color: Colors.white, marginBottom: 8, textAlign: 'center' },
-  subtitle: { fontSize: 15, fontFamily: Fonts.body, color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 22, marginBottom: 32 },
-  codeContainer: { width: '100%', marginBottom: 10 },
+  safe:   { flex: 1, backgroundColor: Colors.kidBg },
+  scroll: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
+
+  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+
+  verifyingBox:   { alignItems: 'center', paddingTop: 80 },
+  verifyingEmoji: { fontSize: 48, marginBottom: 16 },
+  verifyingTitle: { fontFamily: Fonts.kidsH1, fontSize: 20, color: Colors.kidText, letterSpacing: 2 },
+
+  stepHeader: { marginBottom: 20 },
+  stepEyebrow: { fontFamily: Fonts.bodyBold, fontSize: 9, color: Colors.kidMuted, letterSpacing: 2, marginBottom: 4 },
+  stepTitle:   { fontFamily: Fonts.kidsDisplay, fontSize: 30, color: Colors.kidText, fontStyle: 'italic', lineHeight: 36, marginBottom: 6 },
+  stepSub:     { fontFamily: Fonts.body, fontSize: 13, color: Colors.kidMuted },
+
+  errorBox: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+    backgroundColor: Colors.kidErrorBg + '33',
+    borderWidth: 1, borderColor: '#ff6b6b',
+    padding: 12, marginBottom: 16,
+  },
+  errorText: { fontFamily: Fonts.body, fontSize: 13, color: '#ff6b6b', flex: 1, lineHeight: 18 },
+
+  codeCard: {
+    ...CARD_BASE,
+    backgroundColor: Colors.kidCard,
+    padding: 20, alignItems: 'center', marginBottom: 16,
+  },
   codeInput: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 20, paddingVertical: 20,
-    fontSize: 40, fontFamily: Fonts.bodyBold,
-    color: Colors.primary, letterSpacing: 12,
-    borderWidth: 2, borderColor: 'rgba(0,212,255,0.3)',
     width: '100%',
+    backgroundColor: Colors.kidDark,
+    borderWidth: 2, borderColor: Colors.kidBorder,
+    paddingVertical: 18,
+    fontSize: 36, fontFamily: Fonts.kidsDisplay,
+    color: Colors.kidAccent, letterSpacing: 12,
+    textAlign: 'center',
   },
-  hint: { color: 'rgba(255,255,255,0.35)', fontSize: 13, fontFamily: Fonts.body, marginBottom: 28 },
-  verifyingBox: { alignItems: 'center', paddingTop: 80 },
-  linkError: {
-    color: '#FF6B35', fontSize: 14, fontFamily: Fonts.body, textAlign: 'center',
-    marginBottom: 16, lineHeight: 20,
+  codeHint: { fontFamily: Fonts.bodyBold, fontSize: 11, color: Colors.kidMuted, letterSpacing: 1, marginTop: 10 },
+
+  stepsCard: {
+    ...CARD_BASE,
+    backgroundColor: Colors.kidCard,
+    padding: 16, gap: 10, marginBottom: 20,
   },
-  submitBtn: { width: '100%', borderRadius: 9999, overflow: 'hidden', marginBottom: 24 },
-  disabled: { opacity: 0.4 },
-  submitGradient: { paddingVertical: 18, alignItems: 'center' },
-  submitTextDark: { color: Colors.onSurface, fontSize: 18, fontFamily: Fonts.bodyBold },
-  steps: {
-    gap: 10, width: '100%',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 16, padding: 18, marginBottom: 24,
+  step: { fontFamily: Fonts.body, fontSize: 13, color: Colors.kidText, lineHeight: 20 },
+
+  formCard: {
+    ...CARD_BASE,
+    backgroundColor: Colors.kidCard,
+    padding: 16, gap: 16, marginBottom: 20,
   },
-  step: { color: 'rgba(255,255,255,0.7)', fontSize: 14, fontFamily: Fonts.body, lineHeight: 20 },
-  form: { gap: 18, marginBottom: 28, width: '100%' },
-  inputGroup: { gap: 8 },
-  label: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontFamily: Fonts.bodyBold },
+  inputGroup: { gap: 6 },
+  label: { fontFamily: Fonts.bodyBold, fontSize: 9, color: Colors.kidMuted, letterSpacing: 2 },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14,
-    color: Colors.white, fontSize: 16, fontFamily: Fonts.body,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: Colors.kidDark,
+    borderWidth: 1, borderColor: Colors.kidBorder,
+    padding: 12,
+    fontFamily: Fonts.body, fontSize: 14,
+    color: Colors.kidText,
   },
-  inputLocked: { opacity: 0.6 },
-  lockedHint: { color: 'rgba(255,255,255,0.45)', fontSize: 12, fontFamily: Fonts.body, marginTop: 4 },
-  switchText: { color: 'rgba(255,255,255,0.6)', textAlign: 'center', fontSize: 15, fontFamily: Fonts.body },
-  switchLink: { color: Colors.primary, fontFamily: Fonts.bodyBold },
+  inputLocked: { opacity: 0.5 },
+  lockedHint: { fontFamily: Fonts.body, fontSize: 11, color: Colors.kidMuted, marginTop: 4 },
+
+  primaryBtn: {
+    backgroundColor: Colors.kidGreen,
+    borderBottomWidth: 4, borderBottomColor: '#000',
+    paddingVertical: 18, alignItems: 'center',
+    marginBottom: 16,
+  },
+  btnDisabled: { opacity: 0.4 },
+  primaryBtnText: {
+    fontFamily: Fonts.kidsH1, fontSize: 15,
+    color: Colors.kidGreenText, fontStyle: 'italic', letterSpacing: 1,
+  },
+
+  loginLink: { alignItems: 'center', paddingVertical: 8 },
+  loginLinkText: { fontFamily: Fonts.bodyBold, fontSize: 11, color: Colors.kidMuted, letterSpacing: 1 },
 });

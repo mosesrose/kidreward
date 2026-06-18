@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, SafeAreaView, RefreshControl, TouchableOpacity,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -16,18 +17,12 @@ const CATEGORY_EMOJI: Record<string, string> = {
 };
 
 const CATEGORY_VALUES: Record<string, string> = {
-  homework: 'Learning & Education',
-  math: 'Learning & Education',
-  chores: 'Responsibility',
-  cooking: 'Life Skills',
-  room: 'Responsibility',
-  garden: 'Nature & Care',
-  morning: 'Discipline',
-  behavior: 'Character',
-  outdoor: 'Health & Fitness',
-  social: 'Social Skills',
-  family: 'Family Bonds',
-  sibling: 'Family Bonds',
+  homework: 'Learning & Education', math: 'Learning & Education',
+  chores: 'Responsibility',         cooking: 'Life Skills',
+  room: 'Responsibility',           garden: 'Nature & Care',
+  morning: 'Discipline',            behavior: 'Character',
+  outdoor: 'Health & Fitness',      social: 'Social Skills',
+  family: 'Family Bonds',           sibling: 'Family Bonds',
   phone: 'Balance',
 };
 
@@ -71,11 +66,9 @@ export default function GoalsScreen() {
       }
     });
 
-    const sorted = Object.entries(cats)
+    setCategoryData(Object.entries(cats)
       .map(([cat, data]) => ({ category: cat, ...data }))
-      .sort((a, b) => b.weekCount - a.weekCount);
-
-    setCategoryData(sorted);
+      .sort((a, b) => b.weekCount - a.weekCount));
   }, [family]);
 
   useEffect(() => { load(); }, [load]);
@@ -84,25 +77,30 @@ export default function GoalsScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.title}>Goals</Text>
+        <Text style={styles.headerEyebrow}>APYX LEGEND</Text>
+        <Text style={styles.headerTitle}>Value Goals</Text>
       </View>
+
       <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.parentAccent} />}
         contentContainerStyle={styles.scroll}
       >
         <Text style={styles.intro}>
-          Your challenges grouped by the values they build. Tap a category to manage its challenges.
+          Challenges grouped by the values they build. Tap a category to manage.
         </Text>
 
         {categoryData.length === 0 ? (
           <View style={styles.empty}>
+            <MaterialIcons name="auto-awesome" size={48} color={Colors.parentMuted} style={{ marginBottom: 16 }} />
             <Text style={styles.emptyTitle}>No active challenges</Text>
             <Text style={styles.emptyMeta}>Create challenges to see them grouped by value here</Text>
             <TouchableOpacity
               style={styles.createBtn}
               onPress={() => router.push('/(parent)/challenges/create')}
+              activeOpacity={0.8}
             >
-              <Text style={styles.createBtnText}>+ Create a Challenge</Text>
+              <MaterialIcons name="add" size={16} color={Colors.white} />
+              <Text style={styles.createBtnText}>Create a Challenge</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -111,28 +109,27 @@ export default function GoalsScreen() {
               key={item.category}
               style={styles.card}
               onPress={() => router.push('/(parent)/challenges')}
+              activeOpacity={0.7}
             >
               <View style={styles.cardTop}>
-                <Text style={styles.catEmoji}>
-                  {CATEGORY_EMOJI[item.category] ?? '🎯'}
-                </Text>
-                <View style={styles.catInfo}>
+                <Text style={styles.catEmoji}>{CATEGORY_EMOJI[item.category] ?? '🎯'}</Text>
+                <View style={{ flex: 1 }}>
                   <Text style={styles.catName}>
                     {item.category.charAt(0).toUpperCase() + item.category.slice(1).replace(/_/g, ' ')}
                   </Text>
-                  <Text style={styles.catValue}>
-                    {CATEGORY_VALUES[item.category] ?? 'Family Values'}
-                  </Text>
+                  <Text style={styles.catValue}>{CATEGORY_VALUES[item.category] ?? 'Family Values'}</Text>
                 </View>
                 <View style={styles.countBadge}>
-                  <Text style={styles.countText}>{item.challenges.length}</Text>
-                  <Text style={styles.countLabel}>challenges</Text>
+                  <Text style={styles.countNum}>{item.challenges.length}</Text>
+                  <Text style={styles.countLabel}>quests</Text>
                 </View>
+                <MaterialIcons name="chevron-right" size={20} color={Colors.parentMuted} />
               </View>
               {item.weekCount > 0 && (
                 <View style={styles.weekRow}>
+                  <MaterialIcons name="check-circle" size={14} color={Colors.parentAccent} />
                   <Text style={styles.weekText}>
-                    ✓ {item.weekCount} completed this week · +{item.weekGems}💎
+                    {item.weekCount} completed this week · +{item.weekGems}💎
                   </Text>
                 </View>
               )}
@@ -145,40 +142,50 @@ export default function GoalsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: Colors.surface },
-  header: { paddingTop: 20, paddingHorizontal: 20, paddingBottom: 8 },
-  title:  { fontFamily: Fonts.parentH1, fontSize: 28, color: Colors.onSurface },
-  scroll: { padding: 20, paddingBottom: 40 },
+  safe:   { flex: 1, backgroundColor: Colors.parentBg },
 
+  header: {
+    paddingHorizontal: 20, paddingVertical: 16,
+    borderBottomWidth: 1, borderBottomColor: Colors.parentBorder,
+    backgroundColor: Colors.parentCard,
+  },
+  headerEyebrow: { fontFamily: Fonts.bodyBold, fontSize: 9, color: Colors.parentMuted, letterSpacing: 2 },
+  headerTitle:   { fontFamily: Fonts.parentH1, fontSize: 28, color: Colors.parentText },
+
+  scroll: { padding: 16, paddingBottom: 40 },
   intro: {
-    fontFamily: Fonts.body, fontSize: 13, color: Colors.onSurfaceVariant,
-    lineHeight: 20, marginBottom: 20,
+    fontFamily: Fonts.body, fontSize: 13, color: Colors.parentMuted,
+    lineHeight: 20, marginBottom: 16,
   },
 
   card: {
-    backgroundColor: Colors.white, borderRadius: 12, marginBottom: 10,
+    backgroundColor: Colors.parentCard, borderRadius: 16, marginBottom: 10,
     overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
   },
-  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },
   catEmoji: { fontSize: 32 },
-  catInfo:  { flex: 1 },
-  catName:  { fontFamily: Fonts.bodySemiBold, fontSize: 15, color: Colors.onSurface },
-  catValue: { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2 },
-  countBadge: { alignItems: 'center' },
-  countText:  { fontFamily: Fonts.parentH1, fontSize: 22, color: Colors.primary },
-  countLabel: { fontFamily: Fonts.body, fontSize: 10, color: Colors.onSurfaceVariant },
+  catName:  { fontFamily: Fonts.bodySemiBold, fontSize: 15, color: Colors.parentText },
+  catValue: { fontFamily: Fonts.body, fontSize: 12, color: Colors.parentMuted, marginTop: 2 },
+  countBadge: { alignItems: 'center', marginRight: 4 },
+  countNum:   { fontFamily: Fonts.parentH1, fontSize: 22, color: Colors.parentAccent },
+  countLabel: { fontFamily: Fonts.body, fontSize: 9, color: Colors.parentMuted, letterSpacing: 0.5 },
 
   weekRow: {
-    backgroundColor: Colors.successContainer,
-    paddingHorizontal: 14, paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: Colors.parentSecondary,
+    paddingHorizontal: 16, paddingVertical: 8,
   },
-  weekText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.success },
+  weekText: { fontFamily: Fonts.bodyBold, fontSize: 11, color: Colors.parentSecText },
 
-  empty:      { alignItems: 'center', paddingTop: 60 },
-  emptyTitle: { fontFamily: Fonts.parentH1, fontSize: 20, color: Colors.onSurface },
-  emptyMeta:  { fontFamily: Fonts.body, fontSize: 14, color: Colors.onSurfaceVariant, marginTop: 6, textAlign: 'center' },
-  createBtn:  { marginTop: 20, backgroundColor: Colors.primary, borderRadius: 9999, paddingHorizontal: 24, paddingVertical: 12 },
-  createBtnText: { fontFamily: Fonts.bodyBold, fontSize: 15, color: Colors.white },
+  empty: { alignItems: 'center', paddingTop: 60 },
+  emptyTitle: { fontFamily: Fonts.parentH1, fontSize: 20, color: Colors.parentText, marginBottom: 8 },
+  emptyMeta:  { fontFamily: Fonts.body, fontSize: 14, color: Colors.parentMuted, textAlign: 'center', marginBottom: 24 },
+  createBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: Colors.parentAccent, borderRadius: 9999,
+    paddingHorizontal: 20, paddingVertical: 12,
+  },
+  createBtnText: { fontFamily: Fonts.bodyBold, fontSize: 14, color: Colors.white },
 });

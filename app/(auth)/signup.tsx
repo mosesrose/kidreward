@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  KeyboardAvoidingView, Platform, ScrollView, Alert, // eslint-disable-line
+  KeyboardAvoidingView, Platform, ScrollView, Alert, SafeAreaView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
@@ -50,7 +51,6 @@ export default function Signup() {
     const trimmedCode = inviteCode.trim().toUpperCase();
 
     if (trimmedCode.length === 6) {
-      // Co-parent path: validate code and join family
       const { data: invite } = await supabase
         .from('invites')
         .select('*')
@@ -79,7 +79,6 @@ export default function Signup() {
       }).eq('id', invite.id);
 
     } else {
-      // Primary parent path: create new family
       const { data: familyData } = await supabase.from('families').insert({
         name: `${name.trim()}'s Family`,
         parent_id: data.user.id,
@@ -119,37 +118,43 @@ export default function Signup() {
   }
 
   return (
-    <LinearGradient colors={['#FF8A5B', '#FF6B5C', '#7A3CE1']} style={styles.bg}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <TouchableOpacity style={styles.back} onPress={() => router.back()}>
-            <Text style={styles.backText}>← Back</Text>
-          </TouchableOpacity>
+    <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
-          <Text style={styles.title}>Parent sign up 👨‍👩‍👧</Text>
-          <Text style={styles.subtitle}>Create your account to get started</Text>
+          {/* Header */}
+          <View style={styles.headerRow}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+              <MaterialIcons name="arrow-back" size={22} color={Colors.parentText} />
+            </TouchableOpacity>
+            <View style={styles.headerBadge}>
+              <MaterialCommunityIcons name="shield-account" size={16} color={Colors.parentAccent} />
+              <Text style={styles.headerBadgeText}>PARENT SETUP</Text>
+            </View>
+          </View>
 
-          <View style={styles.form}>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Set up your family command centre</Text>
+
+          {/* Form card */}
+          <View style={styles.card}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Your name</Text>
+              <Text style={styles.label}>YOUR NAME</Text>
               <TextInput
                 style={styles.input}
                 placeholder="e.g. Mum or Dad"
-                placeholderTextColor={Colors.onSurfaceVariant}
+                placeholderTextColor={Colors.parentMuted}
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
               />
             </View>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>EMAIL</Text>
               <TextInput
                 style={styles.input}
                 placeholder="you@example.com"
-                placeholderTextColor={Colors.onSurfaceVariant}
+                placeholderTextColor={Colors.parentMuted}
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -157,86 +162,109 @@ export default function Signup() {
               />
             </View>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={styles.label}>PASSWORD</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Min 6 characters"
-                placeholderTextColor={Colors.onSurfaceVariant}
+                placeholderTextColor={Colors.parentMuted}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
               />
             </View>
 
+            <View style={styles.divider} />
+
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Co-parent invite code (optional)</Text>
+              <Text style={styles.label}>CO-PARENT CODE <Text style={styles.optional}>(optional)</Text></Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. ABC123 — leave blank to create a new family"
-                placeholderTextColor={Colors.onSurfaceVariant}
+                placeholder="e.g. ABC123 — leave blank for new family"
+                placeholderTextColor={Colors.parentMuted}
                 value={inviteCode}
-                onChangeText={(t) => setInviteCode(t.toUpperCase())}
+                onChangeText={t => setInviteCode(t.toUpperCase())}
                 autoCapitalize="characters"
                 autoCorrect={false}
                 maxLength={6}
               />
             </View>
-
-            <TouchableOpacity
-              style={[styles.submitBtn, loading && styles.disabled]}
-              onPress={handleSignup}
-              disabled={loading}
-            >
-              <LinearGradient
-                colors={[Colors.primary, Colors.primaryContainer]}
-                style={styles.submitGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                <Text style={styles.submitText}>
-                  {loading ? 'Creating account…' : 'Create Account 🚀'}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-            <Text style={styles.switchText}>
-              Already have an account?{' '}
-              <Text style={styles.switchLink}>Sign in</Text>
+          <TouchableOpacity
+            style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
+            onPress={handleSignup}
+            disabled={loading}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.submitBtnText}>
+              {loading ? 'CREATING ACCOUNT…' : 'ACCESS GRANTED →'}
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity style={styles.loginLink} onPress={() => router.push('/(auth)/login')}>
+            <Text style={styles.loginLinkText}>Already have an account? SIGN IN →</Text>
+          </TouchableOpacity>
+
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  bg: { flex: 1 },
-  container: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40 },
-  back: { marginBottom: 24 },
-  backText: { color: 'rgba(255,255,255,0.6)', fontSize: 16, fontFamily: Fonts.body },
-  title: { fontSize: 32, fontFamily: Fonts.parentH1, color: Colors.white, marginBottom: 8 },
-  subtitle: { fontSize: 16, fontFamily: Fonts.body, color: 'rgba(255,255,255,0.6)', marginBottom: 20 },
-  form: { gap: 18, marginBottom: 28 },
-  inputGroup: { gap: 8 },
-  label: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontFamily: Fonts.bodyBold },
-  input: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: Colors.white,
-    fontSize: 16,
-    fontFamily: Fonts.body,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+  safe:   { flex: 1, backgroundColor: Colors.parentBg },
+  scroll: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
+
+  headerRow: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 24,
   },
-  submitBtn: { borderRadius: 9999, overflow: 'hidden' },
-  disabled: { opacity: 0.6 },
-  submitGradient: { paddingVertical: 18, alignItems: 'center' },
-  submitText: { color: Colors.white, fontSize: 18, fontFamily: Fonts.bodyBold },
-  switchText: { color: 'rgba(255,255,255,0.6)', textAlign: 'center', fontSize: 15, fontFamily: Fonts.body },
-  switchLink: { color: Colors.primary, fontFamily: Fonts.bodyBold },
+  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: Colors.parentSecondary,
+    borderRadius: 9999, paddingHorizontal: 12, paddingVertical: 6,
+  },
+  headerBadgeText: { fontFamily: Fonts.bodyBold, fontSize: 10, color: Colors.parentAccent, letterSpacing: 1 },
+
+  title:    { fontFamily: Fonts.parentH1, fontSize: 30, color: Colors.parentText, marginBottom: 6 },
+  subtitle: { fontFamily: Fonts.body,     fontSize: 15, color: Colors.parentMuted, marginBottom: 24 },
+
+  card: {
+    backgroundColor: Colors.parentCard,
+    borderRadius: 16, padding: 20, marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
+    gap: 16,
+  },
+  divider: { height: 1, backgroundColor: Colors.parentBorder, marginVertical: 4 },
+
+  inputGroup: { gap: 6 },
+  label: {
+    fontFamily: Fonts.bodyBold, fontSize: 10,
+    color: Colors.parentMuted, letterSpacing: 1.5,
+  },
+  optional: { fontFamily: Fonts.body, fontSize: 10, color: Colors.parentMuted, letterSpacing: 0 },
+  input: {
+    backgroundColor: Colors.parentSurface,
+    borderRadius: 8, borderWidth: 1, borderColor: Colors.parentBorder,
+    paddingHorizontal: 14, paddingVertical: 12,
+    fontFamily: Fonts.body, fontSize: 15,
+    color: Colors.parentText,
+  },
+
+  submitBtn: {
+    backgroundColor: Colors.parentAccent,
+    borderRadius: 9999, paddingVertical: 18,
+    alignItems: 'center', marginBottom: 16,
+  },
+  submitBtnDisabled: { opacity: 0.6 },
+  submitBtnText: {
+    fontFamily: Fonts.bodyBold, fontSize: 14,
+    color: Colors.white, letterSpacing: 1.5,
+  },
+
+  loginLink: { alignItems: 'center', paddingVertical: 8 },
+  loginLinkText: { fontFamily: Fonts.bodyBold, fontSize: 11, color: Colors.parentMuted, letterSpacing: 1 },
 });

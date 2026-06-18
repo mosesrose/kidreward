@@ -2,11 +2,11 @@ import { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, SafeAreaView, RefreshControl,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
-import AppHeader from '@/components/AppHeader';
 
 const CATEGORY_EMOJI: Record<string, string> = {
   homework: '📚', math: '➕', chores: '🧹', cooking: '🍳',
@@ -15,8 +15,17 @@ const CATEGORY_EMOJI: Record<string, string> = {
   phone: '📱', other: '🎯',
 };
 
+const LEVEL_LABELS = ['ROOKIE', 'EXPLORER', 'CHAMPION', 'LEGEND', 'MYTHIC'];
+function getLevel(totalGems: number) {
+  if (totalGems >= 500) return 4;
+  if (totalGems >= 200) return 3;
+  if (totalGems >= 100) return 2;
+  if (totalGems >= 50)  return 1;
+  return 0;
+}
+
 export default function FamilyScreen() {
-  const { profile, family } = useAuth();
+  const { profile, family, membership } = useAuth();
   const [weekStats, setWeekStats] = useState<any[]>([]);
   const [familyMembers, setFamilyMembers] = useState<any[]>([]);
   const [weekTotal, setWeekTotal] = useState(0);
@@ -57,11 +66,9 @@ export default function FamilyScreen() {
       catMap[cat].gems += comp.gems_awarded ?? 0;
     });
 
-    const stats = Object.entries(catMap)
+    setWeekStats(Object.entries(catMap)
       .map(([cat, v]) => ({ category: cat, ...v }))
-      .sort((a, b) => b.count - a.count);
-
-    setWeekStats(stats);
+      .sort((a, b) => b.count - a.count));
     setFamilyMembers(members ?? []);
     setWeekTotal((completions ?? []).length);
   }, [profile, family]);
@@ -69,41 +76,98 @@ export default function FamilyScreen() {
   useEffect(() => { load(); }, [load]);
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
+  const totalGems = membership?.total_gems_earned ?? 0;
+  const level     = getLevel(totalGems);
+  const levelLabel = LEVEL_LABELS[level];
+  // Progress to next level
+  const thresholds = [0, 50, 100, 200, 500];
+  const nextThreshold = thresholds[Math.min(level + 1, thresholds.length - 1)];
+  const levelPct = level >= 4 ? 1 : Math.min(1, totalGems / nextThreshold);
+
   return (
     <SafeAreaView style={styles.safe}>
-      <AppHeader mode="child" />
-      <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
-        contentContainerStyle={styles.scroll}
-      >
-        <Text style={styles.pageTitle}>This Week 🗓️</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerEyebrow}>YOUR STATUS</Text>
+        <Text style={styles.headerTitle}>HERO STATS</Text>
+      </View>
 
-        <Text style={styles.sectionLabel}>FAMILY GEMS</Text>
-        {familyMembers.map((m) => {
-          const p = (m as any).profiles;
-          return (
-            <View key={m.id} style={styles.memberRow}>
-              <Text style={styles.memberAvatar}>{p?.avatar_emoji ?? '🧒'}</Text>
-              <Text style={styles.memberName}>{p?.name}</Text>
-              <View style={styles.gemPill}>
-                <Text style={styles.gemPillText}>{m.gem_balance} 💎</Text>
+      <ScrollView
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.kidGreen} />}
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero card */}
+        <View style={styles.heroCard}>
+          <View style={styles.heroTop}>
+            <View style={styles.avatarBox}>
+              <Text style={styles.avatarEmoji}>{profile?.avatar_emoji ?? '🧒'}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.heroName}>{profile?.name ?? 'Hero'}</Text>
+              <View style={styles.levelRow}>
+                <View style={styles.levelBadge}>
+                  <Text style={styles.levelBadgeText}>{levelLabel}</Text>
+                </View>
+                <Text style={styles.levelGems}>{totalGems} 💎 TOTAL</Text>
               </View>
             </View>
-          );
-        })}
+          </View>
 
-        <Text style={[styles.sectionLabel, { marginTop: 24 }]}>WHAT WE WORKED ON</Text>
-        {weekStats.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>No completed challenges yet this week. Keep going! 💪</Text>
+          {/* XP bar */}
+          <View style={styles.xpBarBg}>
+            <View style={[styles.xpBarFill, { width: `${Math.round(levelPct * 100)}%` as any }]} />
+          </View>
+          <Text style={styles.xpLabel}>
+            {level < 4 ? `${totalGems} / ${nextThreshold} XP to ${LEVEL_LABELS[level + 1]}` : 'MAX LEVEL'}
+          </Text>
+        </View>
+
+        {/* Gem balance card */}
+        <View style={styles.balanceCard}>
+          <MaterialIcons name="account-balance-wallet" size={28} color={Colors.kidGreen} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.balanceLabel}>CURRENT BALANCE</Text>
+            <Text style={styles.balanceNum}>{membership?.gem_balance ?? 0} 💎</Text>
+          </View>
+        </View>
+
+        {/* Family leaderboard */}
+        <Text style={styles.sectionLabel}>FAMILY GEMS</Text>
+        {familyMembers.length === 0 ? (
+          <View style={styles.emptyRow}>
+            <Text style={styles.emptyText}>No family members yet</Text>
           </View>
         ) : (
-          weekStats.map((stat) => (
+          familyMembers.map((m, i) => {
+            const p = (m as any).profiles;
+            const isMe = p?.id === profile?.id;
+            return (
+              <View key={m.id} style={[styles.memberCard, isMe && styles.memberCardMe]}>
+                <Text style={styles.rankNum}>#{i + 1}</Text>
+                <Text style={styles.memberAvatar}>{p?.avatar_emoji ?? '🧒'}</Text>
+                <Text style={[styles.memberName, isMe && styles.memberNameMe]}>{p?.name}</Text>
+                {isMe && <View style={styles.youChip}><Text style={styles.youChipText}>YOU</Text></View>}
+                <View style={styles.memberGems}>
+                  <Text style={styles.memberGemsText}>{m.gem_balance} 💎</Text>
+                </View>
+              </View>
+            );
+          })
+        )}
+
+        {/* Weekly breakdown */}
+        <Text style={[styles.sectionLabel, { marginTop: 20 }]}>THIS WEEK'S QUESTS</Text>
+        {weekTotal === 0 ? (
+          <View style={styles.emptyRow}>
+            <MaterialIcons name="hourglass-empty" size={20} color={Colors.kidMuted} />
+            <Text style={styles.emptyText}>No completed quests yet</Text>
+          </View>
+        ) : (
+          weekStats.map(stat => (
             <View key={stat.category} style={styles.catCard}>
-              <Text style={styles.catEmoji}>
-                {CATEGORY_EMOJI[stat.category] ?? '🎯'}
-              </Text>
-              <View style={styles.catBody}>
+              <Text style={styles.catEmoji}>{CATEGORY_EMOJI[stat.category] ?? '🎯'}</Text>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.catName}>
                   {stat.category.charAt(0).toUpperCase() + stat.category.slice(1).replace('_', ' ')}
                 </Text>
@@ -114,62 +178,115 @@ export default function FamilyScreen() {
           ))
         )}
 
-        <View style={styles.totalCard}>
-          <Text style={styles.totalLabel}>Total this week</Text>
-          <Text style={styles.totalNum}>{weekTotal} challenges completed! 🎉</Text>
-        </View>
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+const CARD_BASE = {
+  borderWidth: 2,
+  borderColor: Colors.kidBorder,
+  borderRadius: 0,
+  shadowColor: Colors.kidDark,
+  shadowOffset: { width: 4, height: 4 },
+  shadowOpacity: 1 as number,
+  shadowRadius: 0,
+  elevation: 4,
+} as const;
+
 const styles = StyleSheet.create({
   safe:   { flex: 1, backgroundColor: Colors.kidBg },
-  scroll: { padding: 20, paddingBottom: 40 },
+  scroll: { padding: 16, paddingBottom: 40 },
 
-  pageTitle: { fontFamily: Fonts.kidsH1, fontSize: 28, color: Colors.kidText, marginBottom: 20 },
+  header: {
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 2, borderBottomColor: Colors.kidBorder,
+  },
+  headerEyebrow: { fontFamily: Fonts.bodyBold, fontSize: 9, color: Colors.kidMuted, letterSpacing: 2 },
+  headerTitle:   { fontFamily: Fonts.kidsDisplay, fontSize: 24, color: Colors.kidAccent, fontStyle: 'italic' },
+
+  heroCard: {
+    ...CARD_BASE,
+    backgroundColor: Colors.kidCard,
+    padding: 16, marginBottom: 12,
+  },
+  heroTop: { flexDirection: 'row', gap: 14, marginBottom: 16 },
+  avatarBox: {
+    width: 64, height: 64,
+    backgroundColor: Colors.kidBorder + '33',
+    borderWidth: 2, borderColor: Colors.kidBorder,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarEmoji: { fontSize: 36 },
+  heroName: { fontFamily: Fonts.kidsH1, fontSize: 22, color: Colors.kidText, marginBottom: 8 },
+  levelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  levelBadge: {
+    backgroundColor: Colors.kidGreen,
+    paddingHorizontal: 8, paddingVertical: 4,
+  },
+  levelBadgeText: { fontFamily: Fonts.bodyBold, fontSize: 9, color: Colors.kidGreenText, letterSpacing: 1.5 },
+  levelGems:      { fontFamily: Fonts.bodyBold, fontSize: 11, color: Colors.kidMuted, letterSpacing: 1 },
+
+  xpBarBg: {
+    height: 6, backgroundColor: Colors.kidCardHigh,
+    borderWidth: 1, borderColor: Colors.kidBorder,
+    marginBottom: 6,
+  },
+  xpBarFill: { height: '100%', backgroundColor: Colors.kidGreen },
+  xpLabel: { fontFamily: Fonts.bodyBold, fontSize: 9, color: Colors.kidMuted, letterSpacing: 1 },
+
+  balanceCard: {
+    ...CARD_BASE,
+    backgroundColor: Colors.kidCard,
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    padding: 16, marginBottom: 20,
+    borderColor: Colors.kidGreen,
+  },
+  balanceLabel: { fontFamily: Fonts.bodyBold, fontSize: 9, color: Colors.kidMuted, letterSpacing: 1.5 },
+  balanceNum:   { fontFamily: Fonts.kidsH1,   fontSize: 26, color: Colors.kidGreen },
 
   sectionLabel: {
-    fontFamily: Fonts.bodyBold, fontSize: 11,
-    color: Colors.kidMuted, letterSpacing: 1.5, marginBottom: 12,
+    fontFamily: Fonts.bodyBold, fontSize: 9,
+    color: Colors.kidMuted, letterSpacing: 2, marginBottom: 10,
   },
 
-  memberRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: Colors.kidCard, borderRadius: 12, padding: 14, marginBottom: 8,
-    borderWidth: 1, borderColor: Colors.kidCardBorder,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.20, shadowRadius: 15, elevation: 1,
+  memberCard: {
+    ...CARD_BASE,
+    backgroundColor: Colors.kidCard,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    padding: 12, marginBottom: 8,
   },
-  memberAvatar: { fontSize: 28 },
-  memberName:   { flex: 1, fontFamily: Fonts.bodySemiBold, fontSize: 15, color: Colors.kidText },
-  gemPill: {
-    backgroundColor: Colors.tertiaryFixed, borderRadius: 9999,
-    paddingHorizontal: 10, paddingVertical: 4,
+  memberCardMe: { borderColor: Colors.kidGreen, backgroundColor: Colors.kidGreen + '11' },
+  rankNum:      { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.kidMuted, width: 24 },
+  memberAvatar: { fontSize: 24 },
+  memberName:   { flex: 1, fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.kidText },
+  memberNameMe: { color: Colors.kidGreen },
+  youChip: {
+    backgroundColor: Colors.kidGreen,
+    paddingHorizontal: 6, paddingVertical: 3,
   },
-  gemPillText: { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.onTertiaryFixed },
+  youChipText: { fontFamily: Fonts.bodyBold, fontSize: 8, color: Colors.kidGreenText, letterSpacing: 1 },
+  memberGems: {
+    borderWidth: 1, borderColor: Colors.kidAccent,
+    paddingHorizontal: 8, paddingVertical: 4,
+  },
+  memberGemsText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.kidAccent },
 
   catCard: {
+    ...CARD_BASE,
+    backgroundColor: Colors.kidCard,
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: Colors.kidCard, borderRadius: 12, padding: 14, marginBottom: 8,
-    borderWidth: 1, borderColor: Colors.kidCardBorder,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.20, shadowRadius: 15, elevation: 1,
+    padding: 12, marginBottom: 8,
   },
-  catEmoji: { fontSize: 28 },
-  catBody:  { flex: 1 },
+  catEmoji: { fontSize: 24 },
   catName:  { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.kidText },
-  catMeta:  { fontFamily: Fonts.body,         fontSize: 12, color: Colors.kidMuted, marginTop: 2 },
-  catGems:  { fontFamily: Fonts.bodyBold,     fontSize: 14, color: Colors.kidAccent },
+  catMeta:  { fontFamily: Fonts.body,         fontSize: 11, color: Colors.kidMuted, marginTop: 2 },
+  catGems:  { fontFamily: Fonts.bodyBold,     fontSize: 13, color: Colors.kidGreenDim },
 
-  totalCard: {
-    backgroundColor: Colors.kidCard, borderRadius: 12, padding: 18,
-    borderWidth: 1, borderColor: Colors.kidCardBorder,
-    alignItems: 'center', marginTop: 16,
+  emptyRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingVertical: 20, justifyContent: 'center',
   },
-  totalLabel: { fontFamily: Fonts.body, fontSize: 13, color: Colors.kidMuted },
-  totalNum:   { fontFamily: Fonts.kidsH1, fontSize: 20, color: Colors.kidText, marginTop: 4 },
-
-  empty: { alignItems: 'center', paddingVertical: 40 },
-  emptyText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.kidMuted, textAlign: 'center' },
+  emptyText: { fontFamily: Fonts.body, fontSize: 13, color: Colors.kidMuted },
 });
