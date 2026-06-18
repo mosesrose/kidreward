@@ -9,7 +9,7 @@ import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
-import ItemIcon from '@/components/ItemIcon';
+import ItemGraphic from '@/components/ItemGraphic';
 import { sendApprovalPush } from '@/lib/push-notifications';
 import { ParentSounds } from '@/lib/sounds';
 
@@ -130,9 +130,11 @@ export default function ChallengeDetail() {
         {/* Quest card */}
         <View style={styles.questCard}>
           <View style={styles.questIconRow}>
-            <View style={styles.questIconBox}>
-              <ItemIcon emoji={challenge.emoji} size={36} color={Colors.parentAccent} />
-            </View>
+            <ItemGraphic
+              emoji={challenge.emoji}
+              size={36}
+              mode="parent"
+            />
             <View style={{ flex: 1 }}>
               <Text style={styles.questTitle}>{challenge.title}</Text>
               <View style={styles.chipsRow}>

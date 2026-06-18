@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Redemption } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
+import ItemGraphic from '@/components/ItemGraphic';
 
 const STATUS_CONFIG = {
   pending:   { label: 'PENDING',   bg: Colors.parentSecondary, text: Colors.parentSecText },
@@ -120,9 +121,12 @@ export default function RedemptionsScreen() {
             <View style={styles.card}>
               {/* Top row */}
               <View style={styles.cardTop}>
-                <View style={styles.rewardIconBox}>
-                  <MaterialIcons name={(item as any).rewards?.emoji ?? 'card-giftcard'} size={28} color={Colors.parentAccent} />
-                </View>
+                <ItemGraphic
+                  emoji={(item as any).rewards?.emoji}
+                  size={28}
+                  mode="parent"
+                  style={{ marginRight: 12 }}
+                />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.rewardTitle}>{(item as any).rewards?.title}</Text>
                   <Text style={styles.childName}>

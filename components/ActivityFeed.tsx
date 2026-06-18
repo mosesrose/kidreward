@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { FALLBACK_ICON } from '@/constants/icons';
+import ItemGraphic from '@/components/ItemGraphic';
 
 type FeedItem = {
   id: string;
@@ -90,13 +91,12 @@ export default function ActivityFeed({ familyId }: Props) {
       <Text style={styles.heading}>Recent Activity</Text>
       {items.map((item) => (
         <View key={item.id} style={styles.row}>
-          <View style={styles.iconWrap}>
-            <MaterialIcons
-              name={item.icon as any}
-              size={22}
-              color={Colors.purple}
-            />
-          </View>
+          <ItemGraphic
+            emoji={item.icon}
+            size={22}
+            mode="parent"
+            style={styles.feedGraphic}
+          />
           <View style={styles.body}>
             <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
             <Text style={styles.meta}>{item.childName} · {timeAgo(item.updatedAt)}</Text>
@@ -134,7 +134,7 @@ function StatusChip({ item }: { item: FeedItem }) {
   if (item.status === 'pending') {
     return (
       <View style={[styles.chip, { backgroundColor: 'rgba(122,60,225,0.08)', borderColor: 'rgba(122,60,225,0.2)' }]}>
-        <Text style={[styles.chipText, { color: Colors.purple }]}>Pending</Text>
+        <Text style={[styles.chipText, { color: Colors.parentAccent }]}>Pending</Text>
       </View>
     );
   }
@@ -147,7 +147,7 @@ function StatusChip({ item }: { item: FeedItem }) {
   }
   return (
     <View style={[styles.chip, { backgroundColor: 'rgba(122,60,225,0.08)', borderColor: 'rgba(122,60,225,0.2)' }]}>
-      <Text style={[styles.chipText, { color: Colors.purple }]}>{item.gemsChange}💎</Text>
+      <Text style={[styles.chipText, { color: Colors.parentAccent }]}>{item.gemsChange}💎</Text>
     </View>
   );
 }
@@ -162,10 +162,8 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
   },
-  iconWrap: {
+  feedGraphic: {
     width: 40, height: 40, borderRadius: 12,
-    backgroundColor: 'rgba(122,60,225,0.08)',
-    alignItems: 'center', justifyContent: 'center',
   },
   body: { flex: 1 },
   title: { fontSize: 13, fontWeight: '700', color: Colors.textDark },

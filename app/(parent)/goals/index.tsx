@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
+import ItemGraphic from '@/components/ItemGraphic';
 
 const CATEGORY_EMOJI: Record<string, string> = {
   homework: '📚', math: '➕', chores: '🧹', cooking: '🍳',
@@ -112,7 +113,12 @@ export default function GoalsScreen() {
               activeOpacity={0.7}
             >
               <View style={styles.cardTop}>
-                <Text style={styles.catEmoji}>{CATEGORY_EMOJI[item.category] ?? '🎯'}</Text>
+                <ItemGraphic
+                  emoji={CATEGORY_EMOJI[item.category] ?? '🎯'}
+                  size={24}
+                  mode="parent"
+                  style={{ marginRight: 12 }}
+                />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.catName}>
                     {item.category.charAt(0).toUpperCase() + item.category.slice(1).replace(/_/g, ' ')}

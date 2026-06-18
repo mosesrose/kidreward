@@ -21,7 +21,7 @@ export default function IconPicker({
   selected,
   onSelect,
   iconColor = Colors.textMid,
-  activeColor = Colors.purple,
+  activeColor = Colors.parentAccent,
 }: Props) {
   return (
     <ScrollView

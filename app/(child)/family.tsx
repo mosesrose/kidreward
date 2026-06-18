@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
+import ItemGraphic from '@/components/ItemGraphic';
 
 const CATEGORY_EMOJI: Record<string, string> = {
   homework: '📚', math: '➕', chores: '🧹', cooking: '🍳',
@@ -166,7 +167,12 @@ export default function FamilyScreen() {
         ) : (
           weekStats.map(stat => (
             <View key={stat.category} style={styles.catCard}>
-              <Text style={styles.catEmoji}>{CATEGORY_EMOJI[stat.category] ?? '🎯'}</Text>
+              <ItemGraphic
+                emoji={CATEGORY_EMOJI[stat.category] ?? '🎯'}
+                size={20}
+                mode="child"
+                style={styles.catGraphic}
+              />
               <View style={{ flex: 1 }}>
                 <Text style={styles.catName}>
                   {stat.category.charAt(0).toUpperCase() + stat.category.slice(1).replace('_', ' ')}
@@ -279,7 +285,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 12,
     padding: 12, marginBottom: 8,
   },
-  catEmoji: { fontSize: 24 },
+  catGraphic: { width: 40, height: 40, borderWidth: 1, shadowOffset: { width: 2, height: 2 } },
   catName:  { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.kidText },
   catMeta:  { fontFamily: Fonts.body,         fontSize: 11, color: Colors.kidMuted, marginTop: 2 },
   catGems:  { fontFamily: Fonts.bodyBold,     fontSize: 13, color: Colors.kidGreenDim },

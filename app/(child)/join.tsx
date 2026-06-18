@@ -112,7 +112,7 @@ export default function JoinFamily() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.childBg },
+  container: { flex: 1, backgroundColor: Colors.kidBg },
   inner: {
     flex: 1, paddingHorizontal: 28, paddingTop: 100,
   },
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   },
 
   codeInput: {
-    backgroundColor: Colors.childCard,
+    backgroundColor: Colors.kidCard,
     borderRadius: 18, paddingVertical: 22,
     fontSize: 36, fontWeight: '700',
     color: Colors.childAccent, letterSpacing: 10,
