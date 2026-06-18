@@ -14,6 +14,7 @@ import {
   PlusJakartaSans_600SemiBold,
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { MockAuthProvider } from '@/contexts/MockAuthContext';
 import { configureNotificationChannels } from '@/lib/notifications-config';
@@ -48,8 +49,8 @@ export default function RootLayout() {
     'PlusJakartaSans-SemiBold':     PlusJakartaSans_600SemiBold,
     'PlusJakartaSans-Bold':         PlusJakartaSans_700Bold,
     // Explicitly preload icon fonts so they render on the static web export
-    'MaterialIcons':          require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf'),
-    'MaterialCommunityIcons': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf'),
+    ...MaterialIcons.font,
+    ...MaterialCommunityIcons.font,
   });
 
   useEffect(() => {
