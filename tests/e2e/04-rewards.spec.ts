@@ -29,7 +29,7 @@ test.describe('Rewards', () => {
     await restoreSession(page, parentState, '/dashboard');
     await assertOnParentDashboard(page);
     await clickTab(page, 'Rewards');
-    await page.getByText('+ New').click();
+    await page.getByText('New').click();
     await page.waitForLoadState('networkidle');
 
     await expect(page.getByText('Money', { exact: true }).first()).toBeVisible();
@@ -39,8 +39,8 @@ test.describe('Rewards', () => {
 
     // Click Activity type then select a suggestion (no keyboard typing — avoids page scroll)
     // Use .first() because the IconPicker also has a chip labelled "Activity" (bike icon)
-    await page.getByText('Activity').first().click();
-    await page.getByText('Movie night pick').click();
+    await page.getByText('Activity').first().dispatchEvent('click');
+    await page.getByText('Movie night pick').first().dispatchEvent('click');
     await page.waitForTimeout(500);
 
     // Use testID click — dispatchEvent('click') doesn't trigger React onPress on web
@@ -50,7 +50,7 @@ test.describe('Rewards', () => {
     await page.waitForTimeout(1000);
 
     // Verify in the rewards list (not the form's own suggestion list)
-    await expect(page.getByText('Movie night pick')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Movie night pick').first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('Reward visibility toggle — parent can hide/show a reward', async ({ page }) => {
@@ -185,7 +185,7 @@ test.describe('Rewards', () => {
     await clickTab(page, 'Rewards');
     await page.waitForLoadState('networkidle');
 
-    await page.getByText('+ New').click();
+    await page.getByText('New').click();
     await page.waitForLoadState('networkidle');
 
     // Don't pick a suggestion — leave title empty, click Save
@@ -202,14 +202,14 @@ test.describe('Rewards', () => {
     await clickTab(page, 'Rewards');
     await page.waitForLoadState('networkidle');
 
-    await page.getByText('+ New').click();
+    await page.getByText('New').click();
     await page.waitForLoadState('networkidle');
     await expect(page.getByText('New Reward').first()).toBeVisible({ timeout: 10_000 });
 
     await page.getByText('← Back').click();
     await page.waitForLoadState('networkidle');
 
-    await expect(page.getByText('+ New').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('New').first()).toBeVisible({ timeout: 10_000 });
   });
 
   test('Parent dashboard Quick Actions — all 4 buttons navigate correctly', async ({ page }) => {

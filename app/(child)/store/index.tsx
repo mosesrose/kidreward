@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Reward } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
-import ItemIcon from '@/components/ItemIcon';
+import ItemGraphic from '@/components/ItemGraphic';
 import { ChildSounds } from '@/lib/sounds';
 
 const TYPE_LABEL: Record<string, string> = {
@@ -101,13 +101,13 @@ export default function ChildStore() {
       <View key={item.id} style={[styles.card, !canAfford && styles.cardLocked]}>
         {/* Icon + cost row */}
         <View style={styles.cardTop}>
-          <View style={[styles.iconBox, !canAfford && styles.iconBoxLocked]}>
-            <ItemIcon
-              emoji={item.emoji}
-              size={40}
-              color={canAfford ? Colors.kidGreen : Colors.kidMuted}
-            />
-          </View>
+          <ItemGraphic
+            emoji={item.emoji}
+            size={36}
+            mode="child"
+            color={canAfford ? Colors.kidAccent : Colors.kidMuted}
+            style={!canAfford && { opacity: 0.5 }}
+          />
           <View style={styles.costBadge}>
             <Text style={styles.costText}>{item.gem_cost} 💎</Text>
           </View>

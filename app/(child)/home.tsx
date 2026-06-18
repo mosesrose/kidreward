@@ -12,6 +12,7 @@ import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
 import CelebrationOverlay from '@/components/CelebrationOverlay';
+import ItemGraphic from '@/components/ItemGraphic';
 import { getLevel } from '@/constants/levels';
 
 export default function ChildHome() {
@@ -247,10 +248,13 @@ export default function ChildHome() {
                   onPress={() => router.push(`/(child)/challenges/${c.id}`)}
                   activeOpacity={0.85}
                 >
-                  {/* Image placeholder */}
-                  <View style={styles.questImageBox}>
-                    <Text style={styles.questEmoji}>{c.emoji ?? '⭐'}</Text>
-                  </View>
+                  {/* Item Graphic */}
+                  <ItemGraphic
+                    emoji={c.emoji}
+                    size={32}
+                    mode="child"
+                    style={styles.questGraphic}
+                  />
 
                   <View style={styles.questBody}>
                     {/* Quest number badge */}
@@ -501,13 +505,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     elevation: 0,
   },
-  questImageBox: {
+  questGraphic: {
     width: 80,
-    backgroundColor: Colors.kidCard,
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: 80,
+    borderWidth: 0,
+    borderRightWidth: 2,
   },
-  questEmoji: { fontSize: 32 },
   questBody: { flex: 1, padding: 12, gap: 6 },
   questNumBadge: {
     alignSelf: 'flex-start',
