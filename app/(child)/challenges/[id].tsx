@@ -10,7 +10,7 @@ import { supabase, Challenge, Completion } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
 import CelebrationOverlay from '@/components/CelebrationOverlay';
-import ItemIcon from '@/components/ItemIcon';
+import ItemGraphic from '@/components/ItemGraphic';
 
 const CATEGORY_COLOR: Record<string, string> = {
   homework: '#c99ce2', math: '#a4b0f0', chores: '#8fd9c2', cooking: '#ffa0a0',
@@ -104,7 +104,7 @@ export default function ChildChallengeDetail() {
         {/* Banner card */}
         <View style={styles.bannerCard}>
           <View style={[styles.bannerBg, { backgroundColor: catColor + '22' }]}>
-            <ItemIcon emoji={challenge.emoji} size={64} color={catColor} />
+            <ItemGraphic emoji={challenge.emoji} size={64} color={catColor} mode="child" />
           </View>
           <View style={styles.bannerOverlay}>
             <View style={styles.catChip}>

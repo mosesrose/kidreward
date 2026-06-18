@@ -95,7 +95,6 @@ export default function ChildLayout() {
         }}
       />
       {/* Hidden routes */}
-      <Tabs.Screen name="challenges/index" options={{ href: null }} />
       <Tabs.Screen name="challenges/[id]"  options={{ href: null }} />
       <Tabs.Screen name="join"             options={{ href: null }} />
     </Tabs>

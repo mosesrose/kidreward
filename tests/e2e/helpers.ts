@@ -74,7 +74,7 @@ export async function signUp(
   });
 
   // Click the BUTTON — exact emoji text distinguishes it from heading "Create account 🎉"
-  await page.getByText('Create Account 🚀').click({ timeout: 10_000 });
+  await page.getByText('ACCESS GRANTED →').click({ timeout: 10_000 });
 
   // If an alert fired, signup failed — throw with the message
   await page.waitForTimeout(1000);
@@ -144,9 +144,9 @@ export async function signUpChildForTest(
 // ── Assertion helpers ─────────────────────────────────────────
 export async function assertOnParentDashboard(page: Page) {
   await expect(
-    page.getByText(/Hello,/)
-      .or(page.getByText('Your Kids'))
-      .or(page.getByText('Quick Actions'))
+    page.getByText(/Welcome,/)
+      .or(page.getByText('THIS WEEK'))
+      .or(page.getByText('ACTION NEEDED'))
       .first()
   ).toBeVisible({ timeout: SUPABASE_WAIT });
 }
@@ -155,9 +155,9 @@ export async function assertOnChildDashboard(page: Page) {
   await expect(
     page.getByText(/Hey,/)
       .or(page.getByText(/Hi /))
-      .or(page.getByText('Active Missions'))
-      .or(page.getByText('No missions yet'))
-      .or(page.getByText('YOUR GEMS'))
+      .or(page.getByText('Active Quests'))
+      .or(page.getByText('No quests yet'))
+      .or(page.getByText('QUESTS'))
       .or(page.getByText('gems available', { exact: false }))
       .first()
   ).toBeVisible({ timeout: SUPABASE_WAIT });
@@ -311,7 +311,7 @@ export async function setupFamilyPair(browser: any): Promise<{
   // We use the invite created in step 4 to go through signup-child.tsx.
   const c = await browser.newPage();
   await gotoWelcome(c);
-  await c.getByText('Join with invite code', { exact: false }).click();
+  await c.getByText("I'M A KID", { exact: false }).click();
   await c.waitForLoadState('networkidle');
   await c.waitForTimeout(500);
 

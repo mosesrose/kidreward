@@ -99,7 +99,7 @@ test.describe('Challenges', () => {
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
     test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
-    await clickTab(page, 'Missions');
+    await clickTab(page, 'Quests');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -114,9 +114,9 @@ test.describe('Challenges', () => {
       }
       return false;
     }
-    const hasMissions = (await Promise.all(templateTitles.map(anyVisible))).some(Boolean);
+    const hasQuests = (await Promise.all(templateTitles.map(anyVisible))).some(Boolean);
     const hasEmpty = await page.getByText('No missions yet').isVisible({ timeout: 1000 }).catch(() => false);
-    expect(hasMissions || hasEmpty).toBeTruthy();
+    expect(hasQuests || hasEmpty).toBeTruthy();
   });
 
   test('US-012 | Child submits "I Did It!" with a note', async ({ page }) => {
@@ -127,7 +127,7 @@ test.describe('Challenges', () => {
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
     test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
-    await clickTab(page, 'Missions');
+    await clickTab(page, 'Quests');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -187,7 +187,7 @@ test.describe('Challenges', () => {
     await page.waitForTimeout(2000);
 
     await expect(
-      page.getByText('Waiting for parent').or(page.getByText('Waiting for review'))
+      page.getByText('AWAITING').or(page.getByText('Waiting for review'))
         .or(page.getByText('Submitted')).or(page.getByText('approved')).first()
     ).toBeVisible({ timeout: 10_000 });
   });
@@ -228,7 +228,7 @@ test.describe('Challenges', () => {
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
     test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
-    await clickTab(page, 'Missions');
+    await clickTab(page, 'Quests');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -239,7 +239,7 @@ test.describe('Challenges', () => {
       }
       return false;
     }
-    await expect.poll(() => anyVisible(title), { timeout: 15_000, message: 'challenge never appeared on Missions tab' }).toBe(true);
+    await expect.poll(() => anyVisible(title), { timeout: 15_000, message: 'challenge never appeared on Quests tab' }).toBe(true);
 
     // Fire onPress via React fiber injection (Expo Router web overlay intercepts pointer events)
     await page.evaluate((t: string) => {
@@ -276,7 +276,7 @@ test.describe('Challenges', () => {
     await page.waitForTimeout(2000);
 
     await expect(
-      page.getByText('Waiting for parent').or(page.getByText('Waiting for review'))
+      page.getByText('AWAITING').or(page.getByText('Waiting for review'))
         .or(page.getByText('Submitted')).first()
     ).toBeVisible({ timeout: 10_000 });
 
@@ -343,7 +343,7 @@ test.describe('Challenges', () => {
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
     test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
-    await clickTab(page, 'Missions');
+    await clickTab(page, 'Quests');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 
@@ -354,7 +354,7 @@ test.describe('Challenges', () => {
       }
       return false;
     }
-    await expect.poll(() => anyVisible(title), { timeout: 15_000, message: 'challenge never appeared on Missions tab' }).toBe(true);
+    await expect.poll(() => anyVisible(title), { timeout: 15_000, message: 'challenge never appeared on Quests tab' }).toBe(true);
 
     await page.evaluate((t: string) => {
       for (const el of Array.from(document.querySelectorAll('*'))) {
@@ -390,7 +390,7 @@ test.describe('Challenges', () => {
     await page.waitForTimeout(2000);
 
     await expect(
-      page.getByText('Waiting for parent').or(page.getByText('Waiting for review'))
+      page.getByText('AWAITING').or(page.getByText('Waiting for review'))
         .or(page.getByText('Submitted')).first()
     ).toBeVisible({ timeout: 10_000 });
 
@@ -484,7 +484,7 @@ test.describe('Challenges', () => {
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
     test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
-    await clickTab(page, 'Missions');
+    await clickTab(page, 'Quests');
     await page.waitForLoadState('networkidle');
 
     // If a mission card exists, tap it and verify ← Back works
@@ -496,7 +496,7 @@ test.describe('Challenges', () => {
       await expect(page.getByText('← Back')).toBeVisible({ timeout: 10_000 });
       await page.getByText('← Back').click();
       await page.waitForLoadState('networkidle');
-      await expect(page.getByText('Missions').or(page.getByText('Active Missions')).first()).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText('Quests').or(page.getByText('Active Quests')).first()).toBeVisible({ timeout: 10_000 });
     }
   });
 
@@ -580,7 +580,7 @@ test.describe('Challenges', () => {
     const onJoin = await page.getByText('Join Your Family!').isVisible({ timeout: 3000 }).catch(() => false);
     test.skip(!!onJoin, 'Child not in family — pairing setup failed');
 
-    await clickTab(page, 'Missions');
+    await clickTab(page, 'Quests');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
 

@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
-import ItemIcon from '@/components/ItemIcon';
+import ItemGraphic from '@/components/ItemGraphic';
 
 type ChallengeWithPending = Challenge & { pending_count: number };
 
@@ -74,13 +74,13 @@ export default function ChallengesScreen() {
               style={styles.card}
               onPress={() => router.push(`/(parent)/challenges/${item.id}`)}
             >
-              <View style={[styles.iconBox, item.status !== 'active' && styles.iconBoxDim]}>
-                <ItemIcon
-                  emoji={item.emoji}
-                  size={26}
-                  color={item.status === 'active' ? Colors.primary : Colors.onSurfaceVariant}
-                />
-              </View>
+              <ItemGraphic
+                emoji={item.emoji}
+                size={26}
+                mode="parent"
+                color={item.status === 'active' ? Colors.primary : Colors.onSurfaceVariant}
+                style={[item.status !== 'active' && styles.iconBoxDim]}
+              />
               <View style={styles.cardBody}>
                 <Text style={[styles.cardTitle, item.status !== 'active' && styles.dim]}>{item.title}</Text>
                 <Text style={styles.cardMeta}>

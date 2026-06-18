@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
+import ItemGraphic from '@/components/ItemGraphic';
 
 export default function ProgressScreen() {
   const { profile } = useAuth();
@@ -101,7 +102,12 @@ export default function ProgressScreen() {
                 <View style={styles.timelineDot} />
                 <View style={styles.cardContent}>
                   <View style={styles.cardRow}>
-                    <Text style={styles.cardEmoji}>{(item as any).challenges?.emoji ?? '⭐'}</Text>
+                    <ItemGraphic
+                      emoji={(item as any).challenges?.emoji}
+                      size={20}
+                      mode="child"
+                      style={styles.cardGraphic}
+                    />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.cardTitle}>{(item as any).challenges?.title}</Text>
                       <Text style={styles.cardDate}>
@@ -123,7 +129,12 @@ export default function ProgressScreen() {
               <View style={[styles.timelineDot, { backgroundColor: Colors.kidAccent }]} />
               <View style={styles.cardContent}>
                 <View style={styles.cardRow}>
-                  <Text style={styles.cardEmoji}>{reward?.emoji ?? '🎁'}</Text>
+                  <ItemGraphic
+                    emoji={reward?.emoji}
+                    size={20}
+                    mode="child"
+                    style={styles.cardGraphic}
+                  />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.cardTitle}>{reward?.title}</Text>
                     <Text style={styles.cardDate}>
@@ -203,7 +214,7 @@ const styles = StyleSheet.create({
   },
   cardContent: { flex: 1, padding: 14 },
   cardRow:     { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  cardEmoji:   { fontSize: 24 },
+  cardGraphic: { width: 40, height: 40, borderWidth: 1, shadowOffset: { width: 2, height: 2 } },
   cardTitle:   { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.kidText },
   cardDate:    { fontFamily: Fonts.body,         fontSize: 11, color: Colors.kidMuted, marginTop: 2 },
 

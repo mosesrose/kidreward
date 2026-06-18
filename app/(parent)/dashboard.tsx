@@ -10,6 +10,7 @@ import { supabase, Completion, FamilyMember } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
 import ActivityFeed from '@/components/ActivityFeed';
+import ItemGraphic from '@/components/ItemGraphic';
 import { sendApprovalPush, sendRewardFulfilledPush } from '@/lib/push-notifications';
 
 const QUOTES = [
@@ -206,7 +207,12 @@ export default function ParentDashboard() {
               {pendingCompletions.map((comp) => (
                 <View key={comp.id} style={[styles.card, styles.pendingCard]}>
                   <View style={styles.actionTop}>
-                    <Text style={styles.avatar}>{comp.profiles?.avatar_emoji ?? '🧒'}</Text>
+                    <ItemGraphic
+                      emoji={comp.challenges?.emoji}
+                      size={24}
+                      mode="parent"
+                      style={{ marginRight: 12 }}
+                    />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.actionTitle}>{comp.challenges?.title}</Text>
                       <Text style={styles.actionMeta}>
@@ -235,7 +241,12 @@ export default function ParentDashboard() {
               {pendingRedemptions.map((red) => (
                 <View key={red.id} style={[styles.card, styles.pendingCard]}>
                   <View style={styles.actionTop}>
-                    <Text style={styles.avatar}>{red.profiles?.avatar_emoji ?? '🧒'}</Text>
+                    <ItemGraphic
+                      emoji={red.rewards?.emoji}
+                      size={24}
+                      mode="parent"
+                      style={{ marginRight: 12 }}
+                    />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.actionTitle}>{red.rewards?.title}</Text>
                       <Text style={styles.actionMeta}>

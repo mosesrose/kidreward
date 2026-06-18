@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Reward } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
-import ItemIcon from '@/components/ItemIcon';
+import ItemGraphic from '@/components/ItemGraphic';
 
 const TYPE_COLORS: Record<string, string> = {
   money:       '#00C853',
@@ -101,13 +101,13 @@ export default function RewardsScreen() {
 
             {/* Body */}
             <View style={styles.cardBody}>
-              <View style={styles.iconBox}>
-                <ItemIcon
-                  emoji={item.emoji}
-                  size={28}
-                  color={item.is_active ? Colors.parentAccent : Colors.parentMuted}
-                />
-              </View>
+              <ItemGraphic
+                emoji={item.emoji}
+                size={28}
+                mode="parent"
+                color={item.is_active ? Colors.parentAccent : Colors.parentMuted}
+                style={[!item.is_active && styles.dim]}
+              />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.rewardTitle, !item.is_active && styles.dim]}>{item.title}</Text>
                 {item.description ? (
