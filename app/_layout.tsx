@@ -47,6 +47,9 @@ export default function RootLayout() {
     'PlusJakartaSans-Regular':      PlusJakartaSans_400Regular,
     'PlusJakartaSans-SemiBold':     PlusJakartaSans_600SemiBold,
     'PlusJakartaSans-Bold':         PlusJakartaSans_700Bold,
+    // Explicitly preload icon fonts so they render on the static web export
+    'MaterialIcons':          require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf'),
+    'MaterialCommunityIcons': require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.ttf'),
   });
 
   useEffect(() => {
