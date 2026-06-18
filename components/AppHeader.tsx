@@ -10,10 +10,15 @@ interface Props {
 
 export default function AppHeader({ mode }: Props) {
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, {
+      backgroundColor: mode === 'child' ? Colors.kidHeader : Colors.surfaceContainerLow,
+      borderBottomColor: mode === 'child' ? 'rgba(255,255,255,0.08)' : Colors.outlineVariant,
+    }]}>
       <View style={styles.left}>
         <View style={styles.avatar} />
-        <Text style={styles.brand}>KidReward</Text>
+        <Text style={[styles.brand, { color: mode === 'child' ? Colors.kidAccent : Colors.primary }]}>
+          KidReward
+        </Text>
       </View>
 
       {mode === 'parent' && (
@@ -31,9 +36,7 @@ export default function AppHeader({ mode }: Props) {
 const styles = StyleSheet.create({
   header: {
     height: 56,
-    backgroundColor: Colors.surfaceContainerLow,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.outlineVariant,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -47,7 +50,6 @@ const styles = StyleSheet.create({
   brand: {
     fontFamily: Fonts.kidsH1,
     fontSize: 20,
-    color: Colors.primary,
   },
   settingsBtn: {
     width: 40, height: 40, borderRadius: 20,

@@ -273,8 +273,8 @@ export default function ChildHome() {
 }
 
 const styles = StyleSheet.create({
-  safe:    { flex: 1, backgroundColor: Colors.surface },
-  scroll:  { flex: 1 },
+  safe:    { flex: 1, backgroundColor: Colors.kidBg },
+  scroll:  { flex: 1, backgroundColor: Colors.kidBg },
   content: { paddingBottom: 40 },
 
   heroRow: {
@@ -312,57 +312,58 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: Fonts.kidsH1,
     fontSize: 20,
-    color: Colors.onSurface,
+    color: Colors.kidText,
   },
   sectionCount: {
     fontFamily: Fonts.bodyBold,
     fontSize: 12,
-    color: Colors.onSurfaceVariant,
+    color: Colors.kidMuted,
     letterSpacing: 0.5,
   },
 
   segmented: {
     flexDirection: 'row',
-    backgroundColor: Colors.surfaceContainerHigh,
+    backgroundColor: Colors.kidSegBg,
     borderRadius: 9999,
     padding: 4,
     marginBottom: 16,
   },
   seg:       { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 9999 },
-  segOn:     { backgroundColor: Colors.white },
-  segText:   { fontFamily: Fonts.body, fontSize: 14, color: Colors.onSurfaceVariant },
-  segTextOn: { fontFamily: Fonts.bodyBold, color: Colors.primary },
+  segOn:     { backgroundColor: Colors.kidSegOn },
+  segText:   { fontFamily: Fonts.body, fontSize: 14, color: Colors.kidMuted },
+  segTextOn: { fontFamily: Fonts.bodyBold, color: Colors.kidText },
 
   questCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.kidCard,
+    borderWidth: 1,
+    borderColor: Colors.kidCardBorder,
     borderRadius: 24,
     padding: 14,
     marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    shadowColor: 'rgba(103,80,164,1)',
+    shadowColor: 'rgba(0,0,0,0.5)',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.20,
     shadowRadius: 16,
     elevation: 3,
   },
   questCardDone: {
-    backgroundColor: Colors.surfaceContainerHigh,
     shadowOpacity: 0,
     elevation: 0,
     opacity: 0.6,
   },
   questIcon: {
     width: 56, height: 56, borderRadius: 16,
-    backgroundColor: Colors.secondaryContainer,
+    backgroundColor: Colors.kidIconBg,
     alignItems: 'center', justifyContent: 'center',
   },
-  questIconDone: { backgroundColor: Colors.surfaceContainerHighest },
+  questIconDone: { backgroundColor: 'rgba(255,255,255,0.06)' },
   questBody:  { flex: 1 },
-  questTitle: { fontFamily: Fonts.bodySemiBold, fontSize: 16, color: Colors.onSurface, marginBottom: 2 },
-  questTitleDone: { color: Colors.onSurfaceVariant },
-  questMeta:  { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurfaceVariant },
+  questTitle: { fontFamily: Fonts.bodySemiBold, fontSize: 16, color: Colors.kidText, marginBottom: 2 },
+  questTitleDone: { color: Colors.kidMuted },
+  questMeta:  { fontFamily: Fonts.body, fontSize: 12, color: Colors.kidMuted },
 
   doneCircle: {
     width: 40, height: 40, borderRadius: 20,
@@ -382,8 +383,8 @@ const styles = StyleSheet.create({
 
   empty: { alignItems: 'center', paddingVertical: 40 },
   emptyIcon:  { fontSize: 40, marginBottom: 8 },
-  emptyTitle: { fontFamily: Fonts.kidsH1, fontSize: 18, color: Colors.onSurface, marginBottom: 4 },
-  emptyMeta:  { fontFamily: Fonts.body,   fontSize: 14, color: Colors.onSurfaceVariant },
+  emptyTitle: { fontFamily: Fonts.kidsH1, fontSize: 18, color: Colors.kidText, marginBottom: 4 },
+  emptyMeta:  { fontFamily: Fonts.body,   fontSize: 14, color: Colors.kidMuted },
 
   storeCta: {
     margin: 20,

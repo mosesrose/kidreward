@@ -153,37 +153,39 @@ export default function ProgressScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.surface },
+  safe: { flex: 1, backgroundColor: Colors.kidBg },
   list: { padding: 20, paddingBottom: 40 },
 
   hero: {
-    backgroundColor: Colors.white, borderRadius: 16, padding: 20, marginBottom: 24,
+    backgroundColor: Colors.kidCard, borderRadius: 16, padding: 20, marginBottom: 24,
+    borderWidth: 1, borderColor: Colors.kidCardBorder,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
+    shadowOpacity: 0.20, shadowRadius: 15, elevation: 1,
   },
-  heroTitle: { fontFamily: Fonts.kidsH1, fontSize: 24, color: Colors.onSurface, marginBottom: 16 },
+  heroTitle: { fontFamily: Fonts.kidsH1, fontSize: 24, color: Colors.kidText, marginBottom: 16 },
   statsRow:  { flexDirection: 'row', alignItems: 'center' },
   stat:      { flex: 1, alignItems: 'center' },
-  statNum:   { fontFamily: Fonts.kidsH1, fontSize: 28, color: Colors.primary },
-  statLabel: { fontFamily: Fonts.body,   fontSize: 11, color: Colors.onSurfaceVariant, marginTop: 2 },
-  statDivider: { width: 1, height: 40, backgroundColor: Colors.outlineVariant },
+  statNum:   { fontFamily: Fonts.kidsH1, fontSize: 28, color: Colors.kidAccent },
+  statLabel: { fontFamily: Fonts.body,   fontSize: 11, color: Colors.kidMuted, marginTop: 2 },
+  statDivider: { width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.10)' },
 
   sectionLabel: {
     fontFamily: Fonts.bodyBold, fontSize: 11,
-    color: Colors.onSurfaceVariant, letterSpacing: 1.5, marginBottom: 10, marginTop: 8,
+    color: Colors.kidMuted, letterSpacing: 1.5, marginBottom: 10, marginTop: 8,
   },
 
   card: {
-    backgroundColor: Colors.white, borderRadius: 12,
+    backgroundColor: Colors.kidCard, borderRadius: 12,
+    borderWidth: 1, borderColor: Colors.kidCardBorder,
     padding: 14, marginBottom: 8,
     flexDirection: 'row', alignItems: 'center', gap: 12,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
+    shadowOpacity: 0.20, shadowRadius: 15, elevation: 1,
   },
   cardEmoji: { fontSize: 28 },
   cardBody:  { flex: 1 },
-  cardTitle: { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.onSurface },
-  cardDate:  { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2 },
+  cardTitle: { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.kidText },
+  cardDate:  { fontFamily: Fonts.body, fontSize: 12, color: Colors.kidMuted, marginTop: 2 },
   gemPill: {
     backgroundColor: Colors.successContainer, borderRadius: 9999,
     paddingHorizontal: 10, paddingVertical: 4,
@@ -192,19 +194,21 @@ const styles = StyleSheet.create({
 
   rewardCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: Colors.white, borderRadius: 12, padding: 14, marginBottom: 8,
+    backgroundColor: Colors.kidCard, borderRadius: 12,
+    borderWidth: 1, borderColor: Colors.kidCardBorder,
+    padding: 14, marginBottom: 8,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 1,
+    shadowOpacity: 0.20, shadowRadius: 8, elevation: 1,
   },
   rewardEmoji:  { fontSize: 28 },
   rewardInfo:   { flex: 1 },
-  rewardTitle:  { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.onSurface },
-  rewardMeta:   { fontFamily: Fonts.body, fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2 },
+  rewardTitle:  { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.kidText },
+  rewardMeta:   { fontFamily: Fonts.body, fontSize: 12, color: Colors.kidMuted, marginTop: 2 },
   consumeBtn: {
-    backgroundColor: Colors.primaryFixed, borderRadius: 9999,
+    backgroundColor: Colors.kidIconBg, borderRadius: 9999,
     paddingHorizontal: 12, paddingVertical: 6,
   },
-  consumeBtnText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.primary },
+  consumeBtnText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.kidAccent },
   consumedBadge: {
     backgroundColor: Colors.tertiaryFixed, borderRadius: 9999,
     paddingHorizontal: 12, paddingVertical: 6,
@@ -212,5 +216,5 @@ const styles = StyleSheet.create({
   consumedBadgeText: { fontFamily: Fonts.bodyBold, fontSize: 12, color: Colors.onTertiaryFixed },
 
   empty: { alignItems: 'center', paddingTop: 40 },
-  emptyText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  emptyText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.kidMuted, textAlign: 'center' },
 });

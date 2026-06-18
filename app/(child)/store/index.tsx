@@ -187,7 +187,7 @@ export default function ChildStore() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.surface },
+  safe: { flex: 1, backgroundColor: Colors.kidBg },
 
   heroRow: {
     alignItems: 'center',
@@ -195,31 +195,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 8,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.outlineVariant,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   heroIcon:  { marginBottom: 4 },
-  heroTitle: { fontFamily: Fonts.kidsDisplay, fontSize: 32, color: Colors.primary },
+  heroTitle: { fontFamily: Fonts.kidsDisplay, fontSize: 32, color: Colors.kidAccent },
 
   list: { padding: 20, paddingBottom: 40 },
   sectionLabel: {
     fontFamily: Fonts.bodyBold,
     fontSize: 11,
-    color: Colors.onSurfaceVariant,
+    color: Colors.kidMuted,
     letterSpacing: 1.5,
     marginTop: 8,
     marginBottom: 12,
   },
 
   rewardCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.kidCard,
+    borderWidth: 1,
+    borderColor: Colors.kidCardBorder,
     borderRadius: 40,
     padding: 24,
     marginBottom: 16,
     alignItems: 'center',
     position: 'relative',
-    shadowColor: 'rgba(103,80,164,1)',
+    shadowColor: 'rgba(0,0,0,0.5)',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.10,
+    shadowOpacity: 0.20,
     shadowRadius: 16,
     elevation: 3,
   },
@@ -240,11 +242,11 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 16,
   },
-  rewardIconCircleLocked: { backgroundColor: Colors.surfaceContainerHigh },
+  rewardIconCircleLocked: { backgroundColor: 'rgba(255,255,255,0.06)' },
 
-  rewardTitle: { fontFamily: Fonts.kidsH1, fontSize: 20, color: Colors.onSurface, textAlign: 'center', marginBottom: 4 },
-  rewardTitleLocked: { color: Colors.onSurfaceVariant },
-  rewardType: { fontFamily: Fonts.body, fontSize: 13, color: Colors.onSurfaceVariant, marginBottom: 16 },
+  rewardTitle: { fontFamily: Fonts.kidsH1, fontSize: 20, color: Colors.kidText, textAlign: 'center', marginBottom: 4 },
+  rewardTitleLocked: { color: Colors.kidMuted },
+  rewardType: { fontFamily: Fonts.body, fontSize: 13, color: Colors.kidMuted, marginBottom: 16 },
 
   pendingChip: {
     backgroundColor: Colors.warningContainer,
@@ -252,7 +254,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 8,
   },
   pendingChipText: { fontFamily: Fonts.bodyBold, fontSize: 13, color: Colors.warning },
-  processingText:  { fontFamily: Fonts.body, fontSize: 13, color: Colors.onSurfaceVariant },
+  processingText:  { fontFamily: Fonts.body, fontSize: 13, color: Colors.kidMuted },
 
   confirmRow:  { flexDirection: 'row', gap: 8, width: '100%' },
   confirmBtn: {
@@ -262,9 +264,9 @@ const styles = StyleSheet.create({
   confirmBtnText: { fontFamily: Fonts.bodyBold, fontSize: 14, color: Colors.onTertiaryFixed },
   cancelBtn: {
     flex: 1, borderRadius: 9999, paddingVertical: 12, alignItems: 'center',
-    borderWidth: 1, borderColor: Colors.outlineVariant,
+    borderWidth: 1, borderColor: Colors.kidCardBorder,
   },
-  cancelBtnText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.onSurfaceVariant },
+  cancelBtnText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.kidMuted },
 
   unlockBtn: {
     width: '100%', backgroundColor: Colors.primary,
@@ -275,12 +277,12 @@ const styles = StyleSheet.create({
   unlockBtnText: { fontFamily: Fonts.bodyBold, fontSize: 16, color: Colors.white },
 
   needMoreBtn: {
-    width: '100%', backgroundColor: Colors.surfaceContainerHigh,
+    width: '100%', backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 9999, paddingVertical: 14, alignItems: 'center',
   },
-  needMoreText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.onSurfaceVariant },
+  needMoreText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.kidMuted },
 
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyTitle: { fontFamily: Fonts.kidsH1, fontSize: 18, color: Colors.onSurface, marginBottom: 4 },
-  emptyMeta:  { fontFamily: Fonts.body,   fontSize: 14, color: Colors.onSurfaceVariant },
+  emptyTitle: { fontFamily: Fonts.kidsH1, fontSize: 18, color: Colors.kidText, marginBottom: 4 },
+  emptyMeta:  { fontFamily: Fonts.body,   fontSize: 14, color: Colors.kidMuted },
 });

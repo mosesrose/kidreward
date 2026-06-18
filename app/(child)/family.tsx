@@ -124,24 +124,25 @@ export default function FamilyScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: Colors.surface },
+  safe:   { flex: 1, backgroundColor: Colors.kidBg },
   scroll: { padding: 20, paddingBottom: 40 },
 
-  pageTitle: { fontFamily: Fonts.kidsH1, fontSize: 28, color: Colors.onSurface, marginBottom: 20 },
+  pageTitle: { fontFamily: Fonts.kidsH1, fontSize: 28, color: Colors.kidText, marginBottom: 20 },
 
   sectionLabel: {
     fontFamily: Fonts.bodyBold, fontSize: 11,
-    color: Colors.onSurfaceVariant, letterSpacing: 1.5, marginBottom: 12,
+    color: Colors.kidMuted, letterSpacing: 1.5, marginBottom: 12,
   },
 
   memberRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: Colors.white, borderRadius: 12, padding: 14, marginBottom: 8,
+    backgroundColor: Colors.kidCard, borderRadius: 12, padding: 14, marginBottom: 8,
+    borderWidth: 1, borderColor: Colors.kidCardBorder,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
+    shadowOpacity: 0.20, shadowRadius: 15, elevation: 1,
   },
   memberAvatar: { fontSize: 28 },
-  memberName:   { flex: 1, fontFamily: Fonts.bodySemiBold, fontSize: 15, color: Colors.onSurface },
+  memberName:   { flex: 1, fontFamily: Fonts.bodySemiBold, fontSize: 15, color: Colors.kidText },
   gemPill: {
     backgroundColor: Colors.tertiaryFixed, borderRadius: 9999,
     paddingHorizontal: 10, paddingVertical: 4,
@@ -150,23 +151,25 @@ const styles = StyleSheet.create({
 
   catCard: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: Colors.white, borderRadius: 12, padding: 14, marginBottom: 8,
+    backgroundColor: Colors.kidCard, borderRadius: 12, padding: 14, marginBottom: 8,
+    borderWidth: 1, borderColor: Colors.kidCardBorder,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03, shadowRadius: 15, elevation: 1,
+    shadowOpacity: 0.20, shadowRadius: 15, elevation: 1,
   },
   catEmoji: { fontSize: 28 },
   catBody:  { flex: 1 },
-  catName:  { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.onSurface },
-  catMeta:  { fontFamily: Fonts.body,         fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2 },
-  catGems:  { fontFamily: Fonts.bodyBold,     fontSize: 14, color: Colors.primary },
+  catName:  { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.kidText },
+  catMeta:  { fontFamily: Fonts.body,         fontSize: 12, color: Colors.kidMuted, marginTop: 2 },
+  catGems:  { fontFamily: Fonts.bodyBold,     fontSize: 14, color: Colors.kidAccent },
 
   totalCard: {
-    backgroundColor: Colors.primary, borderRadius: 12, padding: 18,
+    backgroundColor: Colors.kidCard, borderRadius: 12, padding: 18,
+    borderWidth: 1, borderColor: Colors.kidCardBorder,
     alignItems: 'center', marginTop: 16,
   },
-  totalLabel: { fontFamily: Fonts.body, fontSize: 13, color: 'rgba(255,255,255,0.75)' },
-  totalNum:   { fontFamily: Fonts.kidsH1, fontSize: 20, color: Colors.white, marginTop: 4 },
+  totalLabel: { fontFamily: Fonts.body, fontSize: 13, color: Colors.kidMuted },
+  totalNum:   { fontFamily: Fonts.kidsH1, fontSize: 20, color: Colors.kidText, marginTop: 4 },
 
   empty: { alignItems: 'center', paddingVertical: 40 },
-  emptyText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.onSurfaceVariant, textAlign: 'center' },
+  emptyText: { fontFamily: Fonts.body, fontSize: 14, color: Colors.kidMuted, textAlign: 'center' },
 });

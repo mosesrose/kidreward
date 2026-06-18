@@ -12,7 +12,7 @@ function TabIcon({
     <MaterialIcons
       name={name}
       size={24}
-      color={focused ? Colors.primary : Colors.onSurfaceVariant}
+      color={focused ? Colors.kidAccent : 'rgba(255,255,255,0.4)'}
     />
   );
 }
@@ -23,14 +23,14 @@ export default function ChildLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.white,
-          borderTopColor: Colors.outlineVariant,
+          backgroundColor: Colors.kidTab,
+          borderTopColor: 'rgba(255,255,255,0.08)',
           borderTopWidth: 1,
           height: 64,
           paddingBottom: 8,
         },
-        tabBarActiveTintColor:   Colors.primary,
-        tabBarInactiveTintColor: Colors.onSurfaceVariant,
+        tabBarActiveTintColor:   Colors.kidAccent,
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.4)',
         tabBarLabelStyle: {
           fontFamily: Fonts.bodyBold,
           fontSize: 10,

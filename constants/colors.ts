@@ -67,6 +67,19 @@ export const Colors = {
   border:      '#cbc4d2',
   surfaceSoft: '#e9ddff',
 
+  // ── Child / Kid mode — dark gamified ─────────────────────────────────────
+  kidBg:         '#1A0A3C',   // main dark background
+  kidCard:       '#2D1B69',   // card surfaces
+  kidCardBorder: 'rgba(255,255,255,0.10)',
+  kidText:       '#FFFFFF',   // primary text
+  kidMuted:      'rgba(255,255,255,0.55)',  // secondary text
+  kidAccent:     '#00D4FF',   // gem cyan accent
+  kidHeader:     '#130830',   // slightly darker header bar
+  kidTab:        '#0F0628',   // bottom tab bar
+  kidSegBg:      'rgba(255,255,255,0.08)',  // segmented control track
+  kidSegOn:      'rgba(255,255,255,0.18)',  // segmented control active
+  kidIconBg:     'rgba(0,212,255,0.15)',    // icon container in kid card
+
   // ── Challenge category colours (unchanged) ────────────────────────────────
   cat: {
     phone:    '#FF8E8E',
