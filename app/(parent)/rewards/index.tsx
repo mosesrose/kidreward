@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Reward } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
-import { FALLBACK_ICON } from '@/constants/icons';
+import ItemIcon from '@/components/ItemIcon';
 
 const TYPE_COLORS: Record<string, string> = {
   money:       '#00C853',
@@ -102,8 +102,8 @@ export default function RewardsScreen() {
             {/* Body */}
             <View style={styles.cardBody}>
               <View style={styles.iconBox}>
-                <MaterialIcons
-                  name={(item.emoji || FALLBACK_ICON) as any}
+                <ItemIcon
+                  emoji={item.emoji}
                   size={28}
                   color={item.is_active ? Colors.parentAccent : Colors.parentMuted}
                 />

@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Reward } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
-import { FALLBACK_ICON } from '@/constants/icons';
+import ItemIcon from '@/components/ItemIcon';
 import { ChildSounds } from '@/lib/sounds';
 
 const TYPE_LABEL: Record<string, string> = {
@@ -102,8 +102,8 @@ export default function ChildStore() {
         {/* Icon + cost row */}
         <View style={styles.cardTop}>
           <View style={[styles.iconBox, !canAfford && styles.iconBoxLocked]}>
-            <MaterialIcons
-              name={(item.emoji || FALLBACK_ICON) as any}
+            <ItemIcon
+              emoji={item.emoji}
               size={40}
               color={canAfford ? Colors.kidGreen : Colors.kidMuted}
             />

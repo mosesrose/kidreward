@@ -3,14 +3,13 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import GemHeader from '@/components/GemHeader';
 import { CHALLENGE_VALUES } from '@/constants/challenges';
-import { FALLBACK_ICON } from '@/constants/icons';
+import ItemIcon from '@/components/ItemIcon';
 
 function ValueChip({ value }: { value: string | null | undefined }) {
   if (!value) return null;
@@ -118,8 +117,8 @@ export default function ChildChallenges() {
                 onPress={() => router.push(`/(child)/challenges/${item.id}`)}
               >
                 <View style={styles.iconWrap}>
-                  <MaterialIcons
-                    name={(item.emoji || FALLBACK_ICON) as any}
+                  <ItemIcon
+                    emoji={item.emoji}
                     size={26}
                     color={done ? Colors.childMuted : Colors.childAccent}
                   />

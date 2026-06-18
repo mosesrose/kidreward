@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Challenge } from '@/lib/supabase';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
-import { FALLBACK_ICON } from '@/constants/icons';
+import ItemIcon from '@/components/ItemIcon';
 
 type ChallengeWithPending = Challenge & { pending_count: number };
 
@@ -75,8 +75,8 @@ export default function ChallengesScreen() {
               onPress={() => router.push(`/(parent)/challenges/${item.id}`)}
             >
               <View style={[styles.iconBox, item.status !== 'active' && styles.iconBoxDim]}>
-                <MaterialIcons
-                  name={(item.emoji || FALLBACK_ICON) as any}
+                <ItemIcon
+                  emoji={item.emoji}
                   size={26}
                   color={item.status === 'active' ? Colors.primary : Colors.onSurfaceVariant}
                 />
