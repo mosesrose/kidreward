@@ -9,14 +9,19 @@ interface Props {
 }
 
 export default function AppHeader({ mode }: Props) {
+  const isChild = mode === 'child';
   return (
     <View style={[styles.header, {
-      backgroundColor: mode === 'child' ? Colors.kidHeader : Colors.surfaceContainerLow,
-      borderBottomColor: mode === 'child' ? 'rgba(255,255,255,0.08)' : Colors.outlineVariant,
+      backgroundColor: isChild ? Colors.kidBg : Colors.parentBg,
+      borderBottomColor: isChild ? Colors.kidBorder : Colors.parentBorder,
+      borderBottomWidth: isChild ? 2 : 1,
     }]}>
       <View style={styles.left}>
-        <View style={styles.avatar} />
-        <Text style={[styles.brand, { color: mode === 'child' ? Colors.kidAccent : Colors.primary }]}>
+        <View style={[
+          styles.avatar,
+          { borderColor: isChild ? Colors.kidBorder : Colors.parentAccent },
+        ]} />
+        <Text style={[styles.brand, { color: isChild ? Colors.kidAccent : Colors.parentAccent }]}>
           KidReward
         </Text>
       </View>
@@ -26,7 +31,7 @@ export default function AppHeader({ mode }: Props) {
           style={styles.settingsBtn}
           onPress={() => router.push('/(parent)/settings')}
         >
-          <MaterialIcons name="settings" size={22} color={Colors.onSurfaceVariant} />
+          <MaterialIcons name="settings" size={22} color={Colors.parentMuted} />
         </TouchableOpacity>
       )}
     </View>
@@ -36,7 +41,6 @@ export default function AppHeader({ mode }: Props) {
 const styles = StyleSheet.create({
   header: {
     height: 56,
-    borderBottomWidth: 1,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -45,7 +49,8 @@ const styles = StyleSheet.create({
   left: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   avatar: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: Colors.secondaryContainer,
+    borderWidth: 2,
+    backgroundColor: Colors.kidCard,
   },
   brand: {
     fontFamily: Fonts.kidsH1,

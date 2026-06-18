@@ -1,18 +1,45 @@
 import { Tabs } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '@/constants/colors';
 import { Fonts } from '@/constants/fonts';
 
-type IconName = React.ComponentProps<typeof MaterialIcons>['name'];
+function QuestIcon({ focused }: { focused: boolean }) {
+  return (
+    <MaterialCommunityIcons
+      name="sword-cross"
+      size={24}
+      color={focused ? Colors.kidGreen : Colors.kidMuted}
+    />
+  );
+}
 
-function TabIcon({
-  name, focused,
-}: { name: IconName; focused: boolean }) {
+function MapIcon({ focused }: { focused: boolean }) {
   return (
     <MaterialIcons
-      name={name}
+      name="map"
       size={24}
-      color={focused ? Colors.kidAccent : 'rgba(255,255,255,0.4)'}
+      color={focused ? Colors.kidGreen : Colors.kidMuted}
+    />
+  );
+}
+
+function LootIcon({ focused }: { focused: boolean }) {
+  return (
+    <MaterialIcons
+      name="card-giftcard"
+      size={24}
+      color={focused ? Colors.kidGreen : Colors.kidMuted}
+    />
+  );
+}
+
+function HeroIcon({ focused }: { focused: boolean }) {
+  return (
+    <MaterialIcons
+      name="person"
+      size={24}
+      color={focused ? Colors.kidGreen : Colors.kidMuted}
     />
   );
 }
@@ -23,18 +50,18 @@ export default function ChildLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.kidTab,
-          borderTopColor: 'rgba(255,255,255,0.08)',
-          borderTopWidth: 1,
+          backgroundColor: Colors.kidTabBg,
+          borderTopWidth: 2,
+          borderTopColor: Colors.kidBorder,
           height: 64,
           paddingBottom: 8,
         },
-        tabBarActiveTintColor:   Colors.kidAccent,
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.4)',
+        tabBarActiveTintColor:   Colors.kidGreen,
+        tabBarInactiveTintColor: Colors.kidMuted,
         tabBarLabelStyle: {
           fontFamily: Fonts.bodyBold,
           fontSize: 10,
-          letterSpacing: 1,
+          letterSpacing: 2,
           textTransform: 'uppercase',
         },
       }}
@@ -42,29 +69,29 @@ export default function ChildLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ focused }) => <TabIcon name="home" focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
-        name="store/index"
-        options={{
-          title: 'Store',
-          tabBarIcon: ({ focused }) => <TabIcon name="card-giftcard" focused={focused} />,
+          title: 'Quests',
+          tabBarIcon: ({ focused }) => <QuestIcon focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
-          title: 'Progress',
-          tabBarIcon: ({ focused }) => <TabIcon name="leaderboard" focused={focused} />,
+          title: 'Map',
+          tabBarIcon: ({ focused }) => <MapIcon focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="store/index"
+        options={{
+          title: 'Loot',
+          tabBarIcon: ({ focused }) => <LootIcon focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="family"
         options={{
-          title: 'Family',
-          tabBarIcon: ({ focused }) => <TabIcon name="group" focused={focused} />,
+          title: 'Hero',
+          tabBarIcon: ({ focused }) => <HeroIcon focused={focused} />,
         }}
       />
       {/* Hidden routes */}

@@ -49,10 +49,6 @@ export const Colors = {
   childText:    '#1d1b20',
   childMuted:   '#494551',
 
-  parentBg:     '#fdf7ff',
-  parentCard:   '#ffffff',
-  parentBorder: '#cbc4d2',
-
   gem:     '#4f378a',
   gemGlow: '#6750a4',
 
@@ -67,18 +63,41 @@ export const Colors = {
   border:      '#cbc4d2',
   surfaceSoft: '#e9ddff',
 
-  // ── Child / Kid mode — dark gamified ─────────────────────────────────────
-  kidBg:         '#1A0A3C',   // main dark background
-  kidCard:       '#2D1B69',   // card surfaces
-  kidCardBorder: 'rgba(255,255,255,0.10)',
-  kidText:       '#FFFFFF',   // primary text
-  kidMuted:      'rgba(255,255,255,0.55)',  // secondary text
-  kidAccent:     '#00D4FF',   // gem cyan accent
-  kidHeader:     '#130830',   // slightly darker header bar
-  kidTab:        '#0F0628',   // bottom tab bar
-  kidSegBg:      'rgba(255,255,255,0.08)',  // segmented control track
-  kidSegOn:      'rgba(255,255,255,0.18)',  // segmented control active
-  kidIconBg:     'rgba(0,212,255,0.15)',    // icon container in kid card
+  // ── Child (kid) dark gaming ──────────────────────────────────────────────
+  kidBg:          '#1a0b2e',
+  kidCard:        '#231437',
+  kidCardHigh:    '#3d2e52',
+  kidBorder:      '#bc13fe',
+  kidBorderSoft:  'rgba(188,19,254,0.3)',
+  kidText:        '#eddcff',
+  kidMuted:       '#d4c0d7',
+  kidAccent:      '#ebb2ff',
+  kidGreen:       '#2ff801',
+  kidGreenText:   '#053900',
+  kidGreenDim:    '#2ae500',
+  kidActionGreen: '#39ff14',
+  kidTabBg:       '#3d2e52',
+  kidDark:        '#150629',
+  kidErrorBg:     '#93000a',
+
+  // Legacy kid aliases (kept for components that still reference them)
+  kidHeader:     '#1a0b2e',
+  kidTab:        '#3d2e52',
+  kidCardBorder: 'rgba(188,19,254,0.3)',
+  kidSegBg:      'rgba(188,19,254,0.12)',
+  kidSegOn:      'rgba(188,19,254,0.35)',
+  kidIconBg:     'rgba(235,178,255,0.15)',
+
+  // ── Parent light professional ─────────────────────────────────────────────
+  parentBg:       '#f8f7f4',
+  parentCard:     '#ffffff',
+  parentSurface:  '#f0efed',
+  parentBorder:   'rgba(157,139,160,0.15)',
+  parentText:     '#1a0b2e',
+  parentMuted:    '#9d8ba0',
+  parentAccent:   '#7ca982',
+  parentSecondary:'#e8f0e9',
+  parentSecText:  '#254f30',
 
   // ── Challenge category colours (unchanged) ────────────────────────────────
   cat: {
