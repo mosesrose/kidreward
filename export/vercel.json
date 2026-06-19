@@ -1,0 +1,5 @@
+{
+  "framework": "expo",
+  "buildCommand": "npx expo export:embed --platform web",
+  "outputDirectory": "dist"
+}
